@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>18.0</version>
+			<version>28.2-jre</version>
 		</dependency>
 
 		<!-- Pi's GPIO library to talk to various hardware bits -->
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>commons-configuration</groupId>
 			<artifactId>commons-configuration</artifactId>
-			<version>1.9</version>
+			<version>1.10</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>commons-logging</artifactId>
@@ -52,11 +52,18 @@
 			</exclusions>
 		</dependency>
 
+		<!-- Use the latest commons logging -->
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.2</version>
+		</dependency>
+
 		<!-- Bean utils (required by commons above) -->
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
-			<version>1.8.3</version>
+			<version>1.9.4</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>commons-logging</artifactId>
@@ -64,6 +71,22 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.4</version>
+		</dependency>
+
+		<!-- Lanterna is to help with drawing things in text mode -->
+		<dependency>
+			<groupId>com.googlecode.lanterna</groupId>
+			<artifactId>lanterna</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+
+
 
 	</dependencies>
 </project>
