@@ -29,7 +29,7 @@ public enum DistriBBS {
       connectivity = new Connectivity(configuration.getConfig("connectivity"));
       
       // Init node services
-   
+      connectivity.start();
       
       
       // All done

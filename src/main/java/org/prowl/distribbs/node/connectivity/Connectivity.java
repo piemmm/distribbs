@@ -32,12 +32,12 @@ public class Connectivity {
       for (HierarchicalConfiguration c: cxs) {
          String className = c.getString("type");
          try {
-            Connector con = (Connector)Class.forName(className).newInstance();
+            Connector con = (Connector)Class.forName(className).getConstructor(HierarchicalConfiguration.class).newInstance(c);
             connectors.add(con);
             LOG.info("Added connector: " +className);
          } catch(Throwable e) {
             // Something blew up. Log it and carry on.
-            LOG.error("Unable to start connector: " + className, e);
+            LOG.error("Unable to add connector: " + className, e);
          }
          
       }
@@ -49,8 +49,13 @@ public class Connectivity {
    public void start() {
       LOG.info("Starting connectivity...");
       for (Connector connector: connectors) {
+         try {
          LOG.info("Starting: "+connector.getName());
          connector.start();
+         
+         } catch(Throwable e) {
+            LOG.error("Unable to start connector: "+connector.getName(), e);
+         }
       }
    }
    
