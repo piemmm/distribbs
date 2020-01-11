@@ -9,34 +9,40 @@
 	<!-- Connectivity setup -->
 	<connectivity>
 
-		<!-- Connector types (LoRa, IPv4, IPv6, AX25) -->
+		<!-- Connector types can be: LoRa, IPv4, IPv6, AX25, GPS -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.lora.LoRa</type>
+			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
+			<modulation>MSK</modulation>
+			<!-- Should we announce (send our callsign) every X minutes? -->
 			<announce>true</announce>
 			<!-- Announces the node via LoRa every X minutes (minimum 15) -->
 			<announcePeriod>60</announcePeriod>
 		</connector>
 
+		<!-- Our internal GPS connector -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.gps.GPS</type>
 		</connector>
 
+		<!-- IPv4 connector. Have one of these sections for each node that you 
+			want to connect to -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>
 			<listen>0.0.0.0</listen>
 			<localip>0.0.0.0</localip>
 			<announce>true</announce>
 			<remoteCall>N0CALL</remoteCall> <!-- The remote nodes callsign -->
-			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique
-			</peerSecret> <!-- Shared between both nodes -->
+			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique</peerSecret> <!-- Shared between both nodes -->
 		</connector>
 
-		<!-- AX25 uses the callsign defined in 'callsign' above -->
+		<!-- AX25 uses the callsign defined in 'callsign' above. -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.ax25.AX25</type>
 			<!-- Sends a UI announce packet every X minutes (minimum 15) -->
 			<announce>true</announce>
 			<announcePeriod>60</announcePeriod>
+			<bbsEnabled>false</bbsEnabled> <!-- Are we a BBS? If true then people can send/rx from you using a text only interface -->
 		</connector>
 
 	</connectivity>

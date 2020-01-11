@@ -1,4 +1,4 @@
-package org.prowl.distribbs.services.newsgroups;
+package org.prowl.distribbs.services.messages;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,21 +14,25 @@ import org.prowl.distribbs.services.Priority;
 import org.prowl.distribbs.utils.Tools;
 
 /**
- * A news message is from a user to a newsgroup
+ * A message represents a communication from one person to another, similar to
+ * email.
+ * 
+ * This implementation supports unicode
+ *
  */
-public class NewsMessage extends Packetable {
+public class MailMessage extends Packetable {
 
    private static final Log LOG = LogFactory.getLog("Message");
 
    private long             date;
    private String           from;
-   private String           group;
+   private String           to;
    private String           subject;
    private String           body;
 
-   public NewsMessage() {
-      // News messages are background work for nodes so are low priority.
+   public MailMessage() {
       priority = Priority.LOW;
+
    }
 
    public String getFrom() {
@@ -39,12 +43,12 @@ public class NewsMessage extends Packetable {
       this.from = from.toUpperCase(Locale.ENGLISH);;
    }
 
-   public String getGroup() {
-      return group;
+   public String getTo() {
+      return to;
    }
 
-   public void setGroup(String group) {
-      this.group = group.toUpperCase(Locale.ENGLISH);;
+   public void setTo(String to) {
+      this.to = to.toUpperCase(Locale.ENGLISH);;
    }
 
    public long getDate() {
@@ -79,25 +83,25 @@ public class NewsMessage extends Packetable {
     */
    public byte[] toPacket() {
 
-      try (ByteArrayOutputStream bos = new ByteArrayOutputStream(subject.length() + body.length() + group.length() + 30);
+      try (ByteArrayOutputStream bos = new ByteArrayOutputStream(subject.length() + body.length() + to.length() + 30);
             DataOutputStream dout = new DataOutputStream(bos)) {
 
          // String.length measures UTF units, which is no good to use, so we will use the
          // byte array size.
-         byte[] groupArray = group.getBytes();
+         byte[] toArray = to.getBytes();
          byte[] fromArray = from.getBytes();
          byte[] subjectArray = subject.getBytes();
          byte[] bodyArray = body.getBytes();
 
          // Start off with the date
          dout.writeLong(date);
-
+         
          // Originating and latest paths
          toPacketPaths(dout);
 
          // Signed int, 4 bytes, easily handled by other systems.
-         dout.writeInt(groupArray.length);
-         dout.write(groupArray);
+         dout.writeInt(toArray.length);
+         dout.write(toArray);
 
          dout.writeInt(fromArray.length);
          dout.write(fromArray);
@@ -107,7 +111,7 @@ public class NewsMessage extends Packetable {
 
          dout.writeInt(bodyArray.length);
          dout.write(bodyArray);
-
+         
          dout.flush();
          dout.close();
          return bos.toByteArray();
@@ -121,24 +125,22 @@ public class NewsMessage extends Packetable {
    /**
     * Deserialise from a byte array
     * 
-    * @param packet The serialised form of the news message
+    * @param packet The serialised form of the message
     */
-   public NewsMessage fromPacket(byte[] packet) throws InvalidMessageException {
+   public MailMessage fromPacket(byte[] packet) throws InvalidMessageException {
 
       try (ByteArrayInputStream bin = new ByteArrayInputStream(packet);
             DataInputStream din = new DataInputStream(bin)) {
 
          long date = din.readLong();
-
          fromPacketPaths(din);
-
-         String group = Tools.readString(din, din.readInt());
+         String to = Tools.readString(din, din.readInt());
          String from = Tools.readString(din, din.readInt());
          String subject = Tools.readString(din, din.readInt());
          String body = Tools.readString(din, din.readInt());
 
          setDate(date);
-         setGroup(group);
+         setTo(to);
          setFrom(from);
          setSubject(subject);
          setBody(body);

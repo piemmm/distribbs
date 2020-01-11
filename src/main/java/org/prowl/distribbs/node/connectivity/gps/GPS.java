@@ -19,15 +19,26 @@ import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
 
+import net.sf.marineapi.nmea.parser.DataNotAvailableException;
+import net.sf.marineapi.nmea.parser.SentenceFactory;
+import net.sf.marineapi.nmea.sentence.GLLSentence;
+import net.sf.marineapi.nmea.sentence.GSASentence;
+import net.sf.marineapi.nmea.sentence.Sentence;
+import net.sf.marineapi.nmea.util.GpsFixStatus;
+import net.sf.marineapi.nmea.util.Position;
+
 public class GPS implements Connector {
 
    private static final Log          LOG = LogFactory.getLog("GPS");
 
    private HierarchicalConfiguration config;
    private Serial                    serial;
+   private SentenceFactory           sf;
+   private static Position           currentPosition;
 
    public GPS(HierarchicalConfiguration config) {
       this.config = config;
+      sf = SentenceFactory.getInstance();
    }
 
    public void start() throws IOException {
@@ -35,62 +46,97 @@ public class GPS implements Connector {
       serial = SerialFactory.createInstance();
       // create and register the serial data listener
       serial.addListener(new SerialDataEventListener() {
+         StringBuilder sb = new StringBuilder();
+
          @Override
          public void dataReceived(SerialDataEvent event) {
 
-            // NOTE! - It is extremely important to read the data received from the
-            // serial port. If it does not get read from the receive buffer, the
-            // buffer will continue to grow and consume memory.
-
-            // print out the data received to the console
+            /**
+             * Read the data from the serial port
+             */
             try {
-               LOG.debug("[ASCII DATA] " + event.getAsciiString());
-               
-               
-               
-               
-               
+
+               byte[] dat = event.getBytes();
+               // Parse the serial rx data into each GPS sentence
+               for (int b : dat) {
+                  if (b > 31) {
+                     sb.append((char) b);
+                  } else if (b == 10 || b == 13) {
+                     String sentence = sb.toString();
+                     sb.delete(0, sb.length());
+                     if (sentence.length() > 0) {
+                        parseSentence(sentence);
+                     }
+                  }
+                  // If for some reason we never get a return, then
+                  // discard the data rather than run out of ram.
+                  if (sb.length() > 100000) {
+                     sb.delete(0, sb.length());
+                  }
+               }
             } catch (Throwable e) {
                LOG.error(e);
             }
-            
+
          }
       });
 
       // create serial config object
       SerialConfig config = new SerialConfig();
 
-      
       try {
-      // set default serial settings (device, baud rate, flow control, etc)
-      //
-      // by default, use the DEFAULT com port on the Raspberry Pi (exposed on GPIO
-      // header)
-      // NOTE: this utility method will determine the default serial port for the
-      // detected platform and board/model. For all Raspberry Pi models
-      // except the 3B, it will return "/dev/ttyAMA0". For Raspberry Pi
-      // model 3B may return "/dev/ttyS0" or "/dev/ttyAMA0" depending on
-      // environment configuration.
-      config.device(SerialPort.getDefaultPort())
-            .baud(Baud._9600)
-            .dataBits(DataBits._8)
-            .parity(Parity.NONE)
-            .stopBits(StopBits._1)
-            .flowControl(FlowControl.NONE);
 
-      
-      // open the default serial device/port with the configuration settings
-      serial.open(config);
+         config.device(SerialPort.getDefaultPort())
+               .baud(Baud._9600)
+               .dataBits(DataBits._8)
+               .parity(Parity.NONE)
+               .stopBits(StopBits._1)
+               .flowControl(FlowControl.NONE);
 
-      } catch(InterruptedException e) {
+         // open the default serial device/port with the configuration settings
+         serial.open(config);
+
+      } catch (InterruptedException e) {
          // Rethrow as IOE
          throw new IOException(e);
       }
- 
+
    }
 
    public void stop() {
 
+   }
+
+   /**
+    * Parse the GPS sentence into easier to manage positional data.
+    * 
+    * @param sentence the raw NMEA GPS data (GPGLL, GPGSV, etc)
+    */
+   public void parseSentence(String sentence) {
+      try {
+         Sentence parsed = sf.createParser(sentence);
+         if (parsed instanceof GLLSentence) {
+            currentPosition = ((GLLSentence) parsed).getPosition();
+         } else if (parsed instanceof GSASentence) {
+            GpsFixStatus status = ((GSASentence) parsed).getFixStatus();
+            if (status == GpsFixStatus.GPS_NA) {
+               currentPosition = null;
+            }
+         }
+      } catch (DataNotAvailableException e) {
+         // GPS data not available
+      } catch (Throwable e) {
+         LOG.error(e);
+      }
+   }
+
+   /**
+    * Returns the curent known position, or null if no fix
+    * 
+    * @return
+    */
+   public static Position getCurrentPosition() {
+      return currentPosition;
    }
 
    public String getName() {
