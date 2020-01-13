@@ -29,10 +29,12 @@
 			want to connect to -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>
-			<listen>0.0.0.0</listen>
-			<localip>0.0.0.0</localip>
+			<listenIp>0.0.0.0</listenIp> <!-- The IP to listen to requests on -->
+			<listenPort>0</listenPort> <!-- The port to listen on -->
+			<remoteIp>0.0.0.0</remoteIp> <!-- The remote ip we are connecting to -->
+			<remotePort>0</remotePort> <!-- The remote port to connect to -->
 			<announce>true</announce>
-			<remoteCall>N0CALL</remoteCall> <!-- The remote nodes callsign -->
+			<remoteCallsign>N0CALL</remoteCallsign> <!-- The remote nodes callsign -->
 			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique</peerSecret> <!-- Shared between both nodes -->
 		</connector>
 

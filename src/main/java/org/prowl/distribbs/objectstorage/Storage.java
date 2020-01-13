@@ -96,14 +96,14 @@ public class Storage {
    /**
     * Store an APRS message
     * 
-    * Paths are: module:date:{date}packetFile
+    * Paths are: module:date:{date}_packetFile
     * 
     * @param message
     */
    public void storeAPRSMessage(APRSMessage message) throws IOException {
       // Get the location to save the file and make sure the directory structure
       // exists
-      String filename = Long.toString(message.getDate()) + Tools.md5(message.getBody());
+      String filename = Long.toString(message.getDate()) + "_" + Tools.md5(message.getBody());
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + APRS + File.separator + timeToSlot(message.getDate()));
 
       // Now write it to disk
@@ -117,9 +117,8 @@ public class Storage {
    }
 
    private void storeData(File file, byte[] data) throws IOException {
-
+      // Ensure directory tree exists
       file.getParentFile().mkdirs();
-
       if (!file.getParentFile().exists()) {
          throw new IOException("Unable to create directory: " + file.getParentFile().getAbsolutePath());
       }
@@ -135,6 +134,61 @@ public class Storage {
    }
 
    /**
+    * Get a list of news group messages going back as far as date X.
+    */
+   private File[] listNewsMessages(String group, long earliestDate) throws IOException {
+      ArrayList<File> files = new ArrayList<>();
+      File[] dates = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
+      if (dates != null) {
+         for (File date : dates) {
+            try {
+               if (Long.parseLong(date.getName()) > earliestDate) {
+                  File[] groups = date.listFiles();
+                  if (groups != null) {
+                     for (File groupf : groups) {
+                        if (groupf.getName().equals(group) || group == null) {
+                           File[] messages = groupf.listFiles();
+                           if (messages != null) {
+                              files.addAll(Arrays.asList(messages));
+                           }
+                        }
+                     }
+                  }
+               }
+            } catch (NumberFormatException e) {
+               // Ignore the 'not a date' file
+               LOG.debug("Ignoring file path:" + date, e);
+            }
+         }
+      }
+      return files.toArray(new File[files.size()]);
+   }
+
+   /**
+    * Get a list of all news group messages going back as far as date X.
+    */
+   private File[] listNewsMessages(long earliestDate) throws IOException {
+      return listNewsMessages(null, earliestDate);
+   }
+
+   /**
+    * Get a mail messages for a callsign
+    */
+   private File[] listMailMessages(String callsign, long earliestDate) throws IOException {
+      ArrayList<File> files = new ArrayList<>();
+      File[] dates = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
+      if (dates != null) {
+         for (File date : dates) {
+            File[] messages = date.listFiles();
+            if (messages != null) {
+               files.addAll(Arrays.asList(messages));
+            }
+         }
+      }
+      return files.toArray(new File[files.size()]);
+   }
+
+   /**
     * Get a list of known chat groups
     * 
     * @return
@@ -143,9 +197,11 @@ public class Storage {
    private String[] listChatGroups() throws IOException {
       ArrayList<String> results = new ArrayList<>();
       File[] groups = new File(locationDir.getAbsolutePath() + File.separator + CHAT + File.separator).listFiles();
-      for (File file : groups) {
-         if (file.isDirectory()) {
-            results.add(file.getName().toUpperCase(Locale.ENGLISH));
+      if (groups != null) {
+         for (File file : groups) {
+            if (file.isDirectory()) {
+               results.add(file.getName().toUpperCase(Locale.ENGLISH));
+            }
          }
       }
       return results.toArray(new String[results.size()]);
@@ -165,21 +221,27 @@ public class Storage {
    private File[] listChatMessages(String chatGroup, long earliestDate) throws IOException {
       ArrayList<File> files = new ArrayList<>();
       File[] dates = new File(locationDir.getAbsolutePath() + File.separator + CHAT + File.separator + chatGroup).listFiles();
-      for (File file : dates) {
-         try {
-            if (Long.parseLong(file.getName()) > earliestDate) {
-               files.addAll(Arrays.asList(file.listFiles()));
+      if (dates != null) {
+         for (File file : dates) {
+            try {
+               if (Long.parseLong(file.getName()) > earliestDate) {
+                  File[] messages = file.listFiles();
+                  if (messages != null) {
+                     files.addAll(Arrays.asList(messages));
+                  }
+               }
+            } catch (Throwable e) {
+               LOG.debug("Exception accessing chat file:" + file, e);
+               // Not a file we can use, so ignore.
             }
-         } catch (Throwable e) {
-            LOG.debug("Exception accessing chat file:" + file, e);
-            // Not a file we can use, so ignore.
          }
       }
       return files.toArray(new File[files.size()]);
    }
-   
+
    /**
     * Retrieve a chat message
+    * 
     * @param f
     * @return
     * @throws IOException
@@ -188,14 +250,15 @@ public class Storage {
       ChatMessage message = new ChatMessage();
       try {
          message.fromPacket(loadData(f));
-      } catch(InvalidMessageException e) {
+      } catch (InvalidMessageException e) {
          throw new IOException(e);
       }
       return message;
    }
-   
+
    /**
     * Retrieve a news message
+    * 
     * @param f
     * @return
     * @throws IOException
@@ -204,14 +267,15 @@ public class Storage {
       NewsMessage message = new NewsMessage();
       try {
          message.fromPacket(loadData(f));
-      } catch(InvalidMessageException e) {
+      } catch (InvalidMessageException e) {
          throw new IOException(e);
       }
       return message;
    }
-   
+
    /**
     * Retrieve an APRS packet
+    * 
     * @param f
     * @return
     * @throws IOException
@@ -220,14 +284,15 @@ public class Storage {
       APRSMessage message = new APRSMessage();
       try {
          message.fromPacket(loadData(f));
-      } catch(InvalidMessageException e) {
+      } catch (InvalidMessageException e) {
          throw new IOException(e);
       }
       return message;
    }
-   
+
    /**
     * Retrieve a mail message
+    * 
     * @param f
     * @return
     * @throws IOException
@@ -236,7 +301,7 @@ public class Storage {
       MailMessage message = new MailMessage();
       try {
          message.fromPacket(loadData(f));
-      } catch(InvalidMessageException e) {
+      } catch (InvalidMessageException e) {
          throw new IOException(e);
       }
       return message;
