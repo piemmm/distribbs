@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -36,7 +37,7 @@ class TestStorage {
       testMessage.setFrom("G0SGY");
       testMessage.setGroup("TESTING");
       testMessage.setPriority(Priority.LOW);
-      testMessage.setDate(System.currentTimeMillis());
+      testMessage.setDate(1579103633244l);
       
       // Ensure our test message does not exist
       storage.getNewsMessageFile(testMessage).delete();
@@ -79,4 +80,9 @@ class TestStorage {
       
    }
 
+   
+   @AfterAll
+   public void cleanUp() {
+      storage.getNewsMessageFile(testMessage).delete();
+   }
 }
