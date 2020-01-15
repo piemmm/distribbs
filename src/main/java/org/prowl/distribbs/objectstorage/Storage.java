@@ -77,6 +77,8 @@ public class Storage {
       return getMailMessageFile(message).exists();
    }
 
+   
+   
    /**
     * Store a chat message
     * 

@@ -1,11 +1,15 @@
 package org.prowl.distribbs.services.messages;
 
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class MessageTest extends TestCase {
+public class MessageTest  {
 
    public static final long   TEST_DATE    = 1234567890l;
    public static final String TEST_TO      = "G0SGY";
@@ -16,6 +20,7 @@ public class MessageTest extends TestCase {
    /**
     * Serialisation test
     */
+   @Test
    public void testSerialise() {
 
       MailMessage message = new MailMessage();
