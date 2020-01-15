@@ -68,9 +68,8 @@ public class APRSMessage extends Packetable {
    /**
     * Deserialise a packet into this object
     */
-   public APRSMessage fromPacket(byte[] packet) throws InvalidMessageException {
-      try (ByteArrayInputStream bin = new ByteArrayInputStream(packet);
-            DataInputStream din = new DataInputStream(bin)) {
+   public APRSMessage fromPacket(DataInputStream din) throws InvalidMessageException {
+      try {
 
          long date = din.readLong();
          fromPacketPaths(din);

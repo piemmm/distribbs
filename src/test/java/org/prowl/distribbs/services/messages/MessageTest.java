@@ -1,5 +1,8 @@
 package org.prowl.distribbs.services.messages;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+
 import junit.framework.TestCase;
 
 public class MessageTest extends TestCase {
@@ -25,7 +28,7 @@ public class MessageTest extends TestCase {
       byte[] serialised = message.toPacket();
 
       try {
-         MailMessage message2 = new MailMessage().fromPacket(serialised);
+         MailMessage message2 = new MailMessage().fromPacket(new DataInputStream(new ByteArrayInputStream(serialised)));
          assertEquals(TEST_BODY, message2.getBody());
          assertEquals(TEST_DATE, message2.getDate());
          assertEquals(TEST_TO, message2.getTo());

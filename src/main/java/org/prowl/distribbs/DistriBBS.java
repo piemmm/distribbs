@@ -2,6 +2,7 @@ package org.prowl.distribbs;
 
 import org.prowl.distribbs.config.Config;
 import org.prowl.distribbs.node.connectivity.Connectivity;
+import org.prowl.distribbs.objectstorage.Storage;
 
 /**
  * DistriBBS starting class
@@ -14,6 +15,7 @@ public enum DistriBBS {
 
    private Config       configuration;
    private Connectivity connectivity;
+   private Storage      storage;
 
    DistriBBS() {
    }
@@ -24,29 +26,34 @@ public enum DistriBBS {
       configuration = new Config();
 
       // Init object storage
-
-
+      storage = new Storage(configuration.getConfig("storage"));
+      
       // Init node connectors
       connectivity = new Connectivity(configuration.getConfig("connectivity"));
 
       // Init node services
       connectivity.start();
 
-
       // All done
-      Thread t = new Thread() { 
+      Thread t = new Thread() {
          public void run() {
             while (true) {
-               try { 
+               try {
                   Thread.sleep(1000);
 
-               } catch(InterruptedException e) {
+               } catch (InterruptedException e) {
                   e.printStackTrace();
                }
             }
          }
       };
       t.start();
+   }
+
+   
+   
+   public Storage getStorage() {
+      return storage;
    }
 
    public static void main(String[] args) {

@@ -2,11 +2,12 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.prowl.distribbs.services.chat.ChatMessage;
 
-public class NewChatMessage extends BaseEvent {
+public class NewChatMessageEvent extends BaseEvent {
 
    private ChatMessage message;
 
-   private NewChatMessage(ChatMessage message) {
+   public NewChatMessageEvent(ChatMessage message) {
+      super();
       this.message = message;
    }
 

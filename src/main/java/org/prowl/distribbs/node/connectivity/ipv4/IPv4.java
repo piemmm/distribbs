@@ -10,10 +10,10 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.eventbus.events.NewAPRSMessage;
-import org.prowl.distribbs.eventbus.events.NewChatMessage;
-import org.prowl.distribbs.eventbus.events.NewMailMessage;
-import org.prowl.distribbs.eventbus.events.NewNewsMessage;
+import org.prowl.distribbs.eventbus.events.NewAPRSMessageEvent;
+import org.prowl.distribbs.eventbus.events.NewChatMessageEvent;
+import org.prowl.distribbs.eventbus.events.NewMailMessageEvent;
+import org.prowl.distribbs.eventbus.events.NewNewsMessageEvent;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
@@ -71,25 +71,7 @@ public class IPv4 implements Connector {
       ServerBus.INSTANCE.unregister(this);
    }
 
-   @Subscribe
-   public void newNewsEvent(NewNewsMessage e) {
-
-   }
-
-   @Subscribe
-   public void newMailEvent(NewMailMessage e) {
-
-   }
-
-   @Subscribe
-   public void newChatEvent(NewChatMessage e) {
-
-   }
-
-   @Subscribe
-   public void newAPRSEvent(NewAPRSMessage e) {
-
-   }
+  
 
    public String getName() {
       return getClass().getName();
@@ -114,7 +96,7 @@ public class IPv4 implements Connector {
                try {
                   while (!stop) {
                      Socket connectedClient = incoming.accept();
-                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this);
+                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this, false);
                      sync.start();
                   }
                } catch(Throwable e) {

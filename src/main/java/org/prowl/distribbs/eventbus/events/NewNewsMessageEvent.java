@@ -2,11 +2,12 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.prowl.distribbs.services.newsgroups.NewsMessage;
 
-public class NewNewsMessage extends BaseEvent {
+public class NewNewsMessageEvent extends BaseEvent {
 
    private NewsMessage message;
 
-   public NewNewsMessage(NewsMessage message) {
+   public NewNewsMessageEvent(NewsMessage message) {
+      super();
       this.message = message;
    }
 

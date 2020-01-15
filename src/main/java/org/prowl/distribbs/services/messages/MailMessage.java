@@ -127,10 +127,9 @@ public class MailMessage extends Packetable {
     * 
     * @param packet The serialised form of the message
     */
-   public MailMessage fromPacket(byte[] packet) throws InvalidMessageException {
+   public MailMessage fromPacket(DataInputStream din) throws InvalidMessageException {
 
-      try (ByteArrayInputStream bin = new ByteArrayInputStream(packet);
-            DataInputStream din = new DataInputStream(bin)) {
+      try {
 
          long date = din.readLong();
          fromPacketPaths(din);

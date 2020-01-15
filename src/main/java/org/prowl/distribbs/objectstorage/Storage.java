@@ -1,5 +1,7 @@
 package org.prowl.distribbs.objectstorage;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Properties;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
@@ -50,13 +53,28 @@ public class Storage {
     * @param message
     */
    public void storeMailMessage(MailMessage message) throws IOException {
+      // Write it to disk
+      storeData(getMailMessageFile(message), message.toPacket());
+   }
+
+   public File getMailMessageFile(MailMessage message) {
       // Get the location to save the file and make sure the directory structure
       // exists
       String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + message.getTo() + File.separator + timeToSlot(message.getDate()));
+      if (!itemDir.exists()) {
+         itemDir.mkdirs();
+      }
+      return new File(itemDir, filename);
+   }
 
-      // Now write it to disk
-      storeData(new File(itemDir, filename), message.toPacket());
+   /**
+    * Convenience method for if a message exists already
+    * 
+    * Checks local storage to see if a mail message already exists
+    */
+   public boolean doesMailMessageExist(MailMessage message) {
+      return getMailMessageFile(message).exists();
    }
 
    /**
@@ -67,13 +85,26 @@ public class Storage {
     * @param message
     */
    public void storeChatMessage(ChatMessage message) throws IOException {
-      // Get the location to save the file and make sure the directory structure
-      // exists
+      // Write it to disk
+      storeData(getChatMessageFile(message), message.toPacket());
+   }
+
+   public File getChatMessageFile(ChatMessage message) {
       String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + CHAT + File.separator + message.getGroup() + File.pathSeparator + timeToSlot(message.getDate()));
+      if (!itemDir.exists()) {
+         itemDir.mkdirs();
+      }
+      return new File(itemDir, filename);
+   }
 
-      // Now write it to disk
-      storeData(new File(itemDir, filename), message.toPacket());
+   /**
+    * Convenience method for if a message exists already
+    * 
+    * Checks local storage to see if a chat message already exists
+    */
+   public boolean doesChatMessageExist(ChatMessage message) {
+      return getChatMessageFile(message).exists();
    }
 
    /**
@@ -84,13 +115,26 @@ public class Storage {
     * @param message
     */
    public void storeNewsMessage(NewsMessage message) throws IOException {
-      // Get the location to save the file and make sure the directory structure
-      // exists
+      // Write it to disk
+      storeData(getNewsMessageFile(message), message.toPacket());
+   }
+
+   public File getNewsMessageFile(NewsMessage message) {
       String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + timeToSlot(message.getDate()) + File.pathSeparator + message.getGroup());
+      if (!itemDir.exists()) {
+         itemDir.mkdirs();
+      }
+      return new File(itemDir, filename);
+   }
 
-      // Now write it to disk
-      storeData(new File(itemDir, filename), message.toPacket());
+   /**
+    * Convenience method for if a message exists already
+    * 
+    * Checks local storage to see if a news message already exists
+    */
+   public boolean doesNewsMessageExist(NewsMessage message) {
+      return getNewsMessageFile(message).exists();
    }
 
    /**
@@ -101,15 +145,36 @@ public class Storage {
     * @param message
     */
    public void storeAPRSMessage(APRSMessage message) throws IOException {
+      // Write it to disk
+      storeData(getAPRSMessageFile(message), message.toPacket());
+   }
+
+   public File getAPRSMessageFile(APRSMessage message) {
       // Get the location to save the file and make sure the directory structure
       // exists
       String filename = Long.toString(message.getDate()) + "_" + Tools.md5(message.getBody());
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + APRS + File.separator + timeToSlot(message.getDate()));
-
-      // Now write it to disk
-      storeData(new File(itemDir, filename), message.toPacket());
+      if (!itemDir.exists()) {
+         itemDir.mkdirs();
+      }
+      return new File(itemDir, filename);
    }
 
+   /**
+    * Convenience method for if a message exists already
+    * 
+    * Checks local storage to see if an APRS message already exists
+    */
+   public boolean doesAPRSMessageExist(APRSMessage message) {
+      return getAPRSMessageFile(message).exists();
+   }
+
+   /**
+    * Convert a time in milliseconds to a directory slot.
+    * 
+    * @param timeMillis
+    * @return
+    */
    private final String timeToSlot(long timeMillis) {
       // Split this down into directories about 1 day (86400000millis ish) apart
       String dateStr = Long.toString((int) (timeMillis / 100000000d));
@@ -179,9 +244,15 @@ public class Storage {
       File[] dates = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
       if (dates != null) {
          for (File date : dates) {
-            File[] messages = date.listFiles();
-            if (messages != null) {
-               files.addAll(Arrays.asList(messages));
+            try {
+               if (Long.parseLong(date.getName()) > earliestDate) {
+                  File[] messages = date.listFiles();
+                  if (messages != null) {
+                     files.addAll(Arrays.asList(messages));
+                  }
+               }
+            } catch (NumberFormatException e) {
+               LOG.debug("Invalid file:" + e.getMessage() + "  " + date);
             }
          }
       }
@@ -300,7 +371,8 @@ public class Storage {
    public MailMessage loadMailMessage(File f) throws IOException {
       MailMessage message = new MailMessage();
       try {
-         message.fromPacket(loadData(f));
+         DataInputStream din = loadData(f);
+         message.fromPacket(din);
       } catch (InvalidMessageException e) {
          throw new IOException(e);
       }
@@ -314,14 +386,48 @@ public class Storage {
     * @return
     * @throws IOException
     */
-   private byte[] loadData(File file) throws IOException {
-
-      byte[] data = new byte[(int) file.length()];
-      try (FileInputStream fin = new FileInputStream(file)) {
-         fin.read(data);
-      }
-
-      return data;
+   private DataInputStream loadData(File file) throws IOException {
+      return new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
    }
+   
+   
+   /**
+    * Get the node file given its callsign.
+    * @return
+    */
+   private File getNodePropertiesFile(String callsign) {
+      File file = new File(locationDir.getAbsolutePath() + File.separator +"syncstate"+File.separator+ callsign+".properties" );
+      file.getParentFile().mkdirs();
+      return file;
 
+   }
+   /**
+    * Retrieve a remote nodes sync properties file
+    * This keeps a list of things like the latest times we managed to sync to with this node
+    */
+   public NodeProperties loadNodeProperties(String callsign) {
+      Properties properties = new Properties();
+      try (FileInputStream in = new FileInputStream(getNodePropertiesFile(callsign))) {
+      properties.load(in);
+      } catch(Throwable e) {
+         LOG.debug("Unable to load properties file, or first connection:" + getNodePropertiesFile(callsign));
+      }
+      return new NodeProperties(properties);
+   }
+   
+   
+   /**
+    * Save the node properties file which contains the current sync state
+    * @param callsign The callsign of the remote node
+    * @param properties the properties file to save.
+    */
+   public void saveNodeProperties(String callsign, NodeProperties nodeProperties) {
+     try (FileOutputStream fos = new FileOutputStream(getNodePropertiesFile(callsign))) {
+      nodeProperties.getProperties().store(fos, "DistriBBS node properties file");
+      fos.flush();
+     } catch(Throwable e) {
+        LOG.error("Unable to save properties file: " + getNodePropertiesFile(callsign));
+     }
+   }
+   
 }

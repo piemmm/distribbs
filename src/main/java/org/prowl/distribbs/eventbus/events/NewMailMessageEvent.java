@@ -2,11 +2,11 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.prowl.distribbs.services.messages.MailMessage;
 
-public class NewMailMessage extends BaseEvent {
+public class NewMailMessageEvent extends BaseEvent {
 
    private MailMessage message;
 
-   public NewMailMessage(MailMessage message) {
+   public NewMailMessageEvent(MailMessage message) {
       super();
       this.message = message;
    }

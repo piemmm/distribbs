@@ -123,10 +123,9 @@ public class NewsMessage extends Packetable {
     * 
     * @param packet The serialised form of the news message
     */
-   public NewsMessage fromPacket(byte[] packet) throws InvalidMessageException {
+   public NewsMessage fromPacket(DataInputStream din) throws InvalidMessageException {
 
-      try (ByteArrayInputStream bin = new ByteArrayInputStream(packet);
-            DataInputStream din = new DataInputStream(bin)) {
+      try {
 
          long date = din.readLong();
 

@@ -29,7 +29,7 @@ public abstract class Packetable {
 
    public abstract byte[] toPacket();
 
-   public abstract Packetable fromPacket(byte[] packet) throws InvalidMessageException;
+   public abstract Packetable fromPacket(DataInputStream din) throws InvalidMessageException;
 
    /**
     * Add to the originating and latest paths that this packet has travelled.
@@ -95,4 +95,11 @@ public abstract class Packetable {
       return latestPath;
    }
 
+   public Priority getPriority() {
+      return priority;
+   }
+
+   public void setPriority(Priority priority) {
+      this.priority = priority;
+   }
 }

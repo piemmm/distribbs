@@ -101,9 +101,8 @@ public class ChatMessage extends Packetable {
    /**
     * Deserialise a packet into this object
     */
-   public ChatMessage fromPacket(byte[] packet) throws InvalidMessageException {
-      try (ByteArrayInputStream bin = new ByteArrayInputStream(packet);
-            DataInputStream din = new DataInputStream(bin)) {
+   public ChatMessage fromPacket(DataInputStream din) throws InvalidMessageException {
+      try {
 
          long date = din.readLong();
          fromPacketPaths(din);

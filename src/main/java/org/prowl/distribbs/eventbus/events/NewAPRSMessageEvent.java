@@ -2,11 +2,12 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.prowl.distribbs.services.aprs.APRSMessage;
 
-public class NewAPRSMessage extends BaseEvent {
+public class NewAPRSMessageEvent extends BaseEvent {
 
    private APRSMessage message;
 
-   public NewAPRSMessage(APRSMessage message) {
+   public NewAPRSMessageEvent(APRSMessage message) {
+      super();
       this.message = message;
    }
 
