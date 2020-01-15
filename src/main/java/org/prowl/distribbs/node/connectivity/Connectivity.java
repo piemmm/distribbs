@@ -42,8 +42,11 @@ public class Connectivity {
 
       }
 
-      // TODO: Maybe a check for 0 connectors here and refuse to start because it's a
-      // bit pointless?
+      // If there are no connectors configured then exit as there's little point in continuing.
+      if (connectors.size() == 0) {
+         LOG.error("Not starting as no connectors have been configured");
+         System.exit(1);
+      }
 
    }
 
