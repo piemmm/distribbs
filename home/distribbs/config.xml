@@ -74,6 +74,8 @@
 		</service>
 
 	</services>
+	
+	<storage></storage>
 
 	<!-- Filters are used to hide messages that you do not want to see from 
 		your node using the 'hide' tag, and not carry messages at all using the 'discard' 
