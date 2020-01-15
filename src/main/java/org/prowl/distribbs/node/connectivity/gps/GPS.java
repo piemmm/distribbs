@@ -100,7 +100,7 @@ public class GPS implements Connector {
       } catch (Throwable e) {
          // Try  3B+
          try {
-            config.device(SerialPort.getDefaultPort(BoardType.RaspberryPi_3B_Plus))
+            config.device("/dev/ttyS0")
             .baud(Baud._9600)
             .dataBits(DataBits._8)
             .parity(Parity.NONE)
