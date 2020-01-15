@@ -18,6 +18,7 @@ import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
+import com.pi4j.system.SystemInfo.BoardType;
 
 import net.sf.marineapi.nmea.parser.DataNotAvailableException;
 import net.sf.marineapi.nmea.parser.SentenceFactory;
@@ -96,9 +97,21 @@ public class GPS implements Connector {
          // open the default serial device/port with the configuration settings
          serial.open(config);
 
-      } catch (InterruptedException e) {
-         // Rethrow as IOE
-         throw new IOException(e);
+      } catch (Throwable e) {
+         // Try  3B+
+         try {
+            config.device(SerialPort.getDefaultPort(BoardType.RaspberryPi_3B_Plus))
+            .baud(Baud._9600)
+            .dataBits(DataBits._8)
+            .parity(Parity.NONE)
+            .stopBits(StopBits._1)
+            .flowControl(FlowControl.NONE);
+            serial.open(config);
+         } catch(Throwable ex) {
+             // Rethrow as IOE
+             throw new IOException(e);
+         }
+      
       }
 
    }
