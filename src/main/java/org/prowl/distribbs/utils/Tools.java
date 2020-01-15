@@ -1,12 +1,20 @@
 package org.prowl.distribbs.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public class Tools {
+   
+   private static final Log    LOG          = LogFactory.getLog("Tools");
+
 
    /**
     * Convert a hex string (AABBCCDEFF030201) to a byte array
@@ -107,4 +115,17 @@ public class Tools {
       }
    }
 
+   public static final byte[] longToByte(long l) {
+      try ( ByteArrayOutputStream bos = new ByteArrayOutputStream();
+         DataOutputStream dos = new DataOutputStream(bos);)
+      {  
+         dos.writeLong(l);
+         dos.flush();
+         return bos.toByteArray();
+      } catch(IOException e) {
+         LOG.error(e.getMessage(), e);
+      }
+      return null;
+   }
+   
 }

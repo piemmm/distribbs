@@ -201,7 +201,7 @@ public class Storage {
    /**
     * Get a list of news group messages going back as far as date X.
     */
-   private File[] listNewsMessages(String group, long earliestDate) throws IOException {
+   public File[] listNewsMessages(String group, long earliestDate) throws IOException {
       ArrayList<File> files = new ArrayList<>();
       File[] dates = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
       if (dates != null) {
@@ -232,14 +232,14 @@ public class Storage {
    /**
     * Get a list of all news group messages going back as far as date X.
     */
-   private File[] listNewsMessages(long earliestDate) throws IOException {
+   public File[] listNewsMessages(long earliestDate) throws IOException {
       return listNewsMessages(null, earliestDate);
    }
 
    /**
     * Get a mail messages for a callsign
     */
-   private File[] listMailMessages(String callsign, long earliestDate) throws IOException {
+   public File[] listMailMessages(String callsign, long earliestDate) throws IOException {
       ArrayList<File> files = new ArrayList<>();
       File[] dates = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
       if (dates != null) {
@@ -260,12 +260,40 @@ public class Storage {
    }
 
    /**
+    * Get a mail messages since a date
+    */
+   public File[] listMailMessages(long earliestDate) throws IOException {
+      ArrayList<File> files = new ArrayList<>();
+      File[] callsigns = new File(locationDir.getAbsolutePath() + File.separator + MAIL).listFiles();
+      if (callsigns != null) {
+         for (File callsign : callsigns) {
+            File[] dates = callsign.listFiles();
+            if (dates != null) {
+               for (File date : dates) {
+                  try {
+                     if (Long.parseLong(date.getName()) > earliestDate) {
+                        File[] messages = date.listFiles();
+                        if (messages != null) {
+                           files.addAll(Arrays.asList(messages));
+                        }
+                     }
+                  } catch (NumberFormatException e) {
+                     LOG.debug("Invalid file:" + e.getMessage() + "  " + date);
+                  }
+               }
+            }
+         }
+      }
+      return files.toArray(new File[files.size()]);
+   }
+
+   /**
     * Get a list of known chat groups
     * 
     * @return
     * @throws IOException
     */
-   private String[] listChatGroups() throws IOException {
+   public String[] listChatGroups() throws IOException {
       ArrayList<String> results = new ArrayList<>();
       File[] groups = new File(locationDir.getAbsolutePath() + File.separator + CHAT + File.separator).listFiles();
       if (groups != null) {
@@ -289,7 +317,7 @@ public class Storage {
     *         'earliestDate'
     * @throws IOException
     */
-   private File[] listChatMessages(String chatGroup, long earliestDate) throws IOException {
+   public File[] listChatMessages(String chatGroup, long earliestDate) throws IOException {
       ArrayList<File> files = new ArrayList<>();
       File[] dates = new File(locationDir.getAbsolutePath() + File.separator + CHAT + File.separator + chatGroup).listFiles();
       if (dates != null) {
@@ -310,6 +338,42 @@ public class Storage {
       return files.toArray(new File[files.size()]);
    }
 
+   
+   /**
+    * Get a list of chat messages going back as far as date X.  
+    * 
+    * @param earliestDate
+    * @return an unsorted list of files matching the group, going back as far as
+    *         'earliestDate'
+    * @throws IOException
+    */
+   public File[] listChatMessages(long earliestDate) throws IOException {
+      ArrayList<File> files = new ArrayList<>();
+      File[] groups = new File(locationDir.getAbsolutePath() + File.separator + CHAT).listFiles();
+      if (groups != null) {
+         for (File chatGroup: groups) {
+            File[] dates = chatGroup.listFiles();
+            if (dates != null) {
+               for (File file : dates) {
+                  try {
+                     if (Long.parseLong(file.getName()) > earliestDate) {
+                        File[] messages = file.listFiles();
+                        if (messages != null) {
+                           files.addAll(Arrays.asList(messages));
+                        }
+                     }
+                  } catch (Throwable e) {
+                     LOG.debug("Exception accessing chat file:" + file, e);
+                     // Not a file we can use, so ignore.
+                  }
+               }
+            }
+         }
+      }
+      return files.toArray(new File[files.size()]);
+   }
+
+   
    /**
     * Retrieve a chat message
     * 
@@ -389,45 +453,46 @@ public class Storage {
    private DataInputStream loadData(File file) throws IOException {
       return new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
    }
-   
-   
+
    /**
     * Get the node file given its callsign.
+    * 
     * @return
     */
    private File getNodePropertiesFile(String callsign) {
-      File file = new File(locationDir.getAbsolutePath() + File.separator +"syncstate"+File.separator+ callsign+".properties" );
+      File file = new File(locationDir.getAbsolutePath() + File.separator + "syncstate" + File.separator + callsign + ".properties");
       file.getParentFile().mkdirs();
       return file;
 
    }
+
    /**
-    * Retrieve a remote nodes sync properties file
-    * This keeps a list of things like the latest times we managed to sync to with this node
+    * Retrieve a remote nodes sync properties file This keeps a list of things like
+    * the latest times we managed to sync to with this node
     */
    public NodeProperties loadNodeProperties(String callsign) {
       Properties properties = new Properties();
       try (FileInputStream in = new FileInputStream(getNodePropertiesFile(callsign))) {
-      properties.load(in);
-      } catch(Throwable e) {
+         properties.load(in);
+      } catch (Throwable e) {
          LOG.debug("Unable to load properties file, or first connection:" + getNodePropertiesFile(callsign));
       }
       return new NodeProperties(properties);
    }
-   
-   
+
    /**
     * Save the node properties file which contains the current sync state
-    * @param callsign The callsign of the remote node
+    * 
+    * @param callsign   The callsign of the remote node
     * @param properties the properties file to save.
     */
-   public void saveNodeProperties(String callsign, NodeProperties nodeProperties) {
-     try (FileOutputStream fos = new FileOutputStream(getNodePropertiesFile(callsign))) {
-      nodeProperties.getProperties().store(fos, "DistriBBS node properties file");
-      fos.flush();
-     } catch(Throwable e) {
-        LOG.error("Unable to save properties file: " + getNodePropertiesFile(callsign));
-     }
+   public synchronized void saveNodeProperties(String callsign, NodeProperties nodeProperties) {
+      try (FileOutputStream fos = new FileOutputStream(getNodePropertiesFile(callsign))) {
+         nodeProperties.getProperties().store(fos, "DistriBBS node properties file");
+         fos.flush();
+      } catch (Throwable e) {
+         LOG.error("Unable to save properties file: " + getNodePropertiesFile(callsign));
+      }
    }
-   
+
 }

@@ -2,12 +2,16 @@ package org.prowl.distribbs.node.connectivity.ipv4;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
 
 import javax.crypto.Cipher;
@@ -24,6 +28,8 @@ import org.prowl.distribbs.eventbus.events.NewAPRSMessageEvent;
 import org.prowl.distribbs.eventbus.events.NewChatMessageEvent;
 import org.prowl.distribbs.eventbus.events.NewMailMessageEvent;
 import org.prowl.distribbs.eventbus.events.NewNewsMessageEvent;
+import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
+import org.prowl.distribbs.objectstorage.NodeProperties;
 import org.prowl.distribbs.objectstorage.Storage;
 import org.prowl.distribbs.services.InvalidMessageException;
 import org.prowl.distribbs.services.Packetable;
@@ -32,6 +38,7 @@ import org.prowl.distribbs.services.aprs.APRSMessage;
 import org.prowl.distribbs.services.chat.ChatMessage;
 import org.prowl.distribbs.services.messages.MailMessage;
 import org.prowl.distribbs.services.newsgroups.NewsMessage;
+import org.prowl.distribbs.utils.Tools;
 import org.prowl.distribbs.utils.compression.CompressedBlockInputStream;
 import org.prowl.distribbs.utils.compression.CompressedBlockOutputStream;
 
@@ -55,27 +62,63 @@ public class IPSyncThread extends Thread {
    private Storage             storage;
    private boolean             stop;
    private TxMachine           txMachine;
+   private NodeProperties      nodeProperties;
+   private String              remoteCallsign;
 
    /**
     * True if I initiated this connection, false if something connected to me.
     */
    private boolean             isInitiator  = false;
 
-   // comms words
+   // Start of conversation
    public static final String  HELLO        = "HELLO";
+
+   // Each message is prefixed with this over ip.
    public static final String  MAIL_MESSAGE = "MAIL_MESSAGE";
    public static final String  NEWS_MESSAGE = "NEWS_MESSAGE";
    public static final String  CHAT_MESSAGE = "CHAT_MESSAGE";
    public static final String  APRS_MESSAGE = "APRS_MESSAGE";
 
-   public IPSyncThread(Socket socket, IPv4 ipv4, boolean isInitiator) {
+   // Request a sync starts for the relevant group of messages
+   public static final String  MAIL_FROM    = "SEND_MAIL_FROM";                 // Request sync 'send mail from <time>'
+   public static final String  CHAT_FROM    = "SEND_CHAT_FROM";
+   public static final String  NEWS_FROM    = "SEND_NEWS_FROM";
+   public static final String  APRS_FROM    = "SEND_APRS_FROM";
+
+   // Send the latest time we are synced to so it can be stored
+   // ready for the next sync
+   public static final String  MAIL_LAST    = "SEND_MAIL_LAST";                 // latest mail message sent. 'end of sync <latest_message_time>'
+   public static final String  CHAT_LAST    = "SEND_CHAT_LAST";
+   public static final String  NEWS_LAST    = "SEND_NEWS_LAST";
+   public static final String  APRS_LAST    = "SEND_APRS_LAST";
+
+   public IPSyncThread(Socket socket, IPv4 ipv4, String remoteCallsign, boolean isInitiator) {
       this.socket = socket;
       this.ipv4 = ipv4;
       this.isInitiator = isInitiator;
+      this.remoteCallsign = remoteCallsign;
       semaphore = new Semaphore(1, true);
       storage = DistriBBS.INSTANCE.getStorage();
+      nodeProperties = storage.loadNodeProperties(remoteCallsign);
+      ServerBus.INSTANCE.register(this);
    }
 
+   /**
+    * We close this sync thread down if another one has connected for this callsign
+    * @param e
+    */
+   @Subscribe
+   public void clientConnected(IPNodeConnectedEvent e) {
+      if (e.getCallsign().equals(remoteCallsign)) {
+         if (e.getIpSyncThread() != this) {
+            stop = true;
+            try { socket.close(); } catch(Throwable ex) { }
+         }
+         
+      }
+      
+   }
+   
    public void run() {
 
       try {
@@ -116,6 +159,7 @@ public class IPSyncThread extends Thread {
                String hello = in.readUTF(); // Allowed to read timeout, if it does then it won't match our hello and we
                // will close the socket
                if (HELLO.equals(hello)) {
+                  ServerBus.INSTANCE.post(new IPNodeConnectedEvent(remoteCallsign, this));
                   socket.setSoTimeout(300000); // Now set timeouts to 5 minutes
                   out.writeUTF(HELLO);
                   out.flush();
@@ -129,16 +173,17 @@ public class IPSyncThread extends Thread {
 
       } catch (Throwable e) {
          LOG.error(e.getMessage(), e);
+      } finally {
+         inStream = null;
+         outStream = null;
+         stop = true;
       }
-
-      inStream = null;
-      outStream = null;
-
       // Close the socket - we're done.
       try {
          socket.close();
       } catch (Throwable e) {
       }
+      LOG.debug("Thread ending");
    }
 
    /**
@@ -155,8 +200,24 @@ public class IPSyncThread extends Thread {
       txMachine = new TxMachine();
       txMachine.start();
 
+      // Request a sync once connected, and every 12 hours after.
+      Timer timer = new Timer();
+      timer.schedule(new TimerTask() {
+         public void run() {
+            if (stop) {
+               timer.cancel();
+            } else {
+               // Enqueue a catchup of messages
+               requestMailMessages();
+               requestNewsMessages();
+               requestChatMessages();
+               requestAPRSMessages();
+            }
+         }
+      }, 5000l, (1000l * 60l * 60l * 12l));
+
       // Received requests are dealt with here.
-      while (true) {
+      while (!stop) {
          try {
             String type = in.readUTF();
             if (type.equals(MAIL_MESSAGE)) {
@@ -201,6 +262,35 @@ public class IPSyncThread extends Thread {
                   LOG.debug("Already have APRS message:" + message);
                }
 
+            } else if (type.equals(MAIL_FROM)) {
+               long messagesFrom = in.readLong();
+               sendMailFrom(messagesFrom);
+            } else if (type.equals(NEWS_FROM)) {
+               long newsFrom = in.readLong();
+               sendNewsFrom(newsFrom);
+            } else if (type.equals(CHAT_FROM)) {
+               long chatFrom = in.readLong();
+               sendChatFrom(chatFrom);
+            } else if (type.equals(APRS_FROM)) {
+               long aprsFrom = in.readLong();
+               sendAPRSFrom(aprsFrom);
+            } else if (type.equals(MAIL_LAST)) {
+               // Always sync the last 13 hours because we may have a 'late' message missed.
+               long latest = in.readLong() - (1000l * 60l * 60l * 13l);
+               nodeProperties.setLastSyncMail(latest);
+               storage.saveNodeProperties(remoteCallsign, nodeProperties);
+            } else if (type.equals(CHAT_LAST)) {
+               long latest = in.readLong() - (1000l * 60l * 60l * 13l);
+               ;
+               nodeProperties.setLastSyncChat(latest);
+               storage.saveNodeProperties(remoteCallsign, nodeProperties);
+            } else if (type.equals(NEWS_LAST)) {
+               long latest = in.readLong() - (1000l * 60l * 60l * 13l);
+               ;
+               nodeProperties.setLastSyncNews(latest);
+               storage.saveNodeProperties(remoteCallsign, nodeProperties);
+            } else if (type.equals(MAIL_LAST)) {
+               // ARPS ignored
             }
          } catch (InvalidMessageException e) {
             LOG.error(e.getMessage(), e);
@@ -237,7 +327,7 @@ public class IPSyncThread extends Thread {
    }
 
    /**
-    * Send a block of data
+    * Write a block of data to the remote node
     */
    public void write(String type, byte[] data) throws IOException {
       try {
@@ -319,4 +409,118 @@ public class IPSyncThread extends Thread {
 
    }
 
+   private void requestMailMessages() {
+      // Get the last sync. This can be up to(but no more than) a year ago for a first
+      // time sync
+      long lastSyncTime = nodeProperties.getLastSyncMail();
+      txMachine.addData(MAIL_FROM, Tools.longToByte(lastSyncTime));
+   }
+
+   private void requestNewsMessages() {
+      // Get the last sync. This can be up to(but no more than) a year ago for a first
+      // time sync
+      long lastSyncTime = nodeProperties.getLastSyncNews();
+      try {
+         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+         DataOutputStream dos = new DataOutputStream(bos);
+         dos.writeLong(lastSyncTime);
+         dos.flush();
+         dos.close();
+         txMachine.addData(NEWS_FROM, bos.toByteArray());
+      } catch (IOException e) {
+         // Report error, don't send message
+         LOG.error(e.getMessage(), e);
+      }
+   }
+
+   private void requestChatMessages() {
+      // Get the last sync. This can be up to(but no more than) a year ago for a first
+      // time sync
+      long lastSyncTime = nodeProperties.getLastSyncChat();
+      try {
+         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+         DataOutputStream dos = new DataOutputStream(bos);
+         dos.writeLong(lastSyncTime);
+         dos.flush();
+         dos.close();
+         txMachine.addData(CHAT_FROM, bos.toByteArray());
+      } catch (IOException e) {
+         // Report error, don't send message
+         LOG.error(e.getMessage(), e);
+      }
+   }
+
+   private void requestAPRSMessages() {
+      // Don't do anything here - we won't bother with an APRS 'backlog' we're only
+      // really interested in local 'realtime' messages
+   }
+
+   /**
+    * Send all messages after 'earliestDate' to the requesting node.
+    * 
+    * @param earliestDate
+    */
+   private void sendMailFrom(long earliestDate) {
+      try {
+         File[] messages = storage.listMailMessages(earliestDate);
+         long latestMessage = 0;
+         for (File messageFile : messages) {
+            MailMessage m = storage.loadMailMessage(messageFile);
+            if (latestMessage < m.getDate()) {
+               latestMessage = m.getDate();
+            }
+            txMachine.addData(MAIL_MESSAGE, m.toPacket());
+         }
+         txMachine.addData(MAIL_LAST, Tools.longToByte(latestMessage));
+      } catch (IOException e) {
+         // Display error and don't send any messages
+         LOG.error(e.getMessage(), e);
+      }
+   }
+
+   private void sendNewsFrom(long earliestDate) {
+      try {
+         File[] messages = storage.listNewsMessages(earliestDate);
+         long latestMessage = 0;
+         for (File messageFile : messages) {
+            NewsMessage m = storage.loadNewsMessage(messageFile);
+            if (latestMessage < m.getDate()) {
+               latestMessage = m.getDate();
+            }
+            txMachine.addData(NEWS_MESSAGE, m.toPacket());
+         }
+         txMachine.addData(NEWS_LAST, Tools.longToByte(latestMessage));
+
+      } catch (IOException e) {
+         // Display error and don't send any messages
+         LOG.error(e.getMessage(), e);
+      }
+   }
+
+   private void sendChatFrom(long earliestDate) {
+      try {
+         File[] messages = storage.listChatMessages(earliestDate);
+         long latestMessage = 0;
+         for (File messageFile : messages) {
+            ChatMessage m = storage.loadChatMessage(messageFile);
+            if (latestMessage < m.getDate()) {
+               latestMessage = m.getDate();
+            }
+            txMachine.addData(CHAT_MESSAGE, m.toPacket());
+         }
+         txMachine.addData(CHAT_LAST, Tools.longToByte(latestMessage));
+
+      } catch (IOException e) {
+         // Display error and don't send any messages
+         LOG.error(e.getMessage(), e);
+      }
+   }
+
+   private void sendAPRSFrom(long earliestDate) {
+      // We don't do anything here as we're only interested in 'realtime' aprs
+   }
+
+   public void stopNow() {
+      stop = true;
+   }
 }

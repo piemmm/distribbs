@@ -10,14 +10,9 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.eventbus.events.NewAPRSMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewChatMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewMailMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewNewsMessageEvent;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
 import org.prowl.distribbs.utils.Tools;
-
-import com.google.common.eventbus.Subscribe;
 
 public class IPv4 implements Connector {
 
@@ -96,7 +91,7 @@ public class IPv4 implements Connector {
                try {
                   while (!stop) {
                      Socket connectedClient = incoming.accept();
-                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this, false);
+                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this, remoteCallsign, false);
                      sync.start();
                   }
                } catch(Throwable e) {
@@ -112,7 +107,7 @@ public class IPv4 implements Connector {
       }
 
       public void stopNow() {
-
+         stop = true;
       }
    }
 

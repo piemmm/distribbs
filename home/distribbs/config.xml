@@ -44,7 +44,8 @@
 			<!-- Sends a UI announce packet every X minutes (minimum 15) -->
 			<announce>true</announce>
 			<announcePeriod>60</announcePeriod>
-			<bbsEnabled>false</bbsEnabled> <!-- Are we a BBS? If true then people can send/rx from you using a text only interface -->
+			<bbsEnabled>false</bbsEnabled> <!-- Are we a BBS? If true then people can send/rx from you using a text 
+				only interface -->
 		</connector>
 
 	</connectivity>
@@ -95,5 +96,15 @@
 
 	</filters>
 
+	<remote>
+		<!-- Allow remote radio TX closedowns of the radio ports? You can closedown your 
+			node by going to the 'REMOTE' chat group and typing: 'closedown [callsign] [secretphrase]' -->
+		<allowremoteClosedown>true</allowremoteClosedown>
+
+		<!-- The secret phrase used to remotely closedown your station if required. 
+			You should change this after using it as it should be treated as a one-time 
+			phrase -->
+		<remoteClosedownPhrase>MySecretPhrase</remoteClosedownPhrase>
+	</remote>
 
 </configuration>

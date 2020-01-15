@@ -22,9 +22,10 @@ public class NodeProperties {
    }
    
    public long getLastSyncMail() {
+      
       long time = 0;
       try { 
-         time = Long.parseLong(properties.getProperty(LAST_SYNC_MAIL, "0"));
+         time = Long.parseLong(properties.getProperty(LAST_SYNC_MAIL, getInitialSyncTime()));
       } catch(Throwable e) {
          LOG.error("Unable to retrieve "+LAST_SYNC_MAIL+" property, using defaults");
       }
@@ -34,7 +35,7 @@ public class NodeProperties {
    public long getLastSyncChat() {
       long time = 0;
       try { 
-         time = Long.parseLong(properties.getProperty(LAST_SYNC_CHAT, "0"));
+         time = Long.parseLong(properties.getProperty(LAST_SYNC_CHAT, getInitialSyncTime()));
       } catch(Throwable e) {
          LOG.error("Unable to retrieve "+LAST_SYNC_CHAT+" property, using defaults");
       }
@@ -44,7 +45,7 @@ public class NodeProperties {
    public long getLastSyncAPRS() {
       long time = 0;
       try { 
-         time = Long.parseLong(properties.getProperty(LAST_SYNC_APRS, "0"));
+         time = Long.parseLong(properties.getProperty(LAST_SYNC_APRS, getInitialSyncTime()));
       } catch(Throwable e) {
          LOG.error("Unable to retrieve "+LAST_SYNC_APRS+" property, using defaults");
       }
@@ -54,7 +55,7 @@ public class NodeProperties {
    public long getLastSyncNews() {
       long time = 0;
       try { 
-         time = Long.parseLong(properties.getProperty(LAST_SYNC_NEWS, "0"));
+         time = Long.parseLong(properties.getProperty(LAST_SYNC_NEWS, getInitialSyncTime()));
       } catch(Throwable e) {
          LOG.error("Unable to retrieve "+LAST_SYNC_NEWS+" property, using defaults");
       }
@@ -81,6 +82,12 @@ public class NodeProperties {
       return properties;
    }
    
-   
+   /**
+    * Convenience method to get our first sync 'time'
+    * @return a time to sync back to, in millis
+    */
+   public static final String getInitialSyncTime() {
+      return Long.toString(System.currentTimeMillis() - (1000l * 60l * 60l * 24l * 365l * 2l)); // 2 years ago.
+   }
    
 }
