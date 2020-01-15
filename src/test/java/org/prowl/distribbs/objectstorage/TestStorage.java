@@ -82,7 +82,7 @@ class TestStorage {
 
    
    @AfterAll
-   public void cleanUp() {
+   public static void cleanUp() {
       storage.getNewsMessageFile(testMessage).delete();
    }
 }
