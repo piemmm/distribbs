@@ -35,7 +35,8 @@
 			<remotePort>0</remotePort> <!-- The remote port to connect to -->
 			<announce>true</announce>
 			<remoteCallsign>N0CALL</remoteCallsign> <!-- The remote nodes callsign -->
-			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique</peerSecret> <!-- Shared between both nodes -->
+			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique
+			</peerSecret> <!-- Shared between both nodes -->
 		</connector>
 
 		<!-- AX25 uses the callsign defined in 'callsign' above. -->
@@ -50,6 +51,12 @@
 
 	</connectivity>
 
+	<ui>
+		<!-- Enable the ANSI terminal interface -->
+		<interface>
+			<type>org.prowl.distribbs.ui.ansi.ANSIServer</type>
+		</interface>
+	</ui>
 
 	<services>
 
@@ -74,7 +81,7 @@
 		</service>
 
 	</services>
-	
+
 	<storage></storage>
 
 	<!-- Filters are used to hide messages that you do not want to see from 
@@ -99,8 +106,9 @@
 	</filters>
 
 	<remote>
-		<!-- Allow remote radio TX closedowns of the radio ports? You can closedown your 
-			node by going to the 'REMOTE' chat group and typing: 'closedown [callsign] [secretphrase]' -->
+		<!-- Allow remote radio TX closedowns of the radio ports? You can closedown 
+			your node by going to the 'REMOTE' chat group and typing: 'closedown [callsign] 
+			[secretphrase]' -->
 		<allowremoteClosedown>true</allowremoteClosedown>
 
 		<!-- The secret phrase used to remotely closedown your station if required. 

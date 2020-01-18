@@ -12,5 +12,11 @@ public class Text implements UIService {
 
    }
  
-
+   public void stop() {
+      
+   }
+   
+   public String getName() {
+      return getClass().getName();
+   }
 }

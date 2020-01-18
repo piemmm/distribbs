@@ -1,8 +1,11 @@
 package org.prowl.distribbs;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.config.Config;
 import org.prowl.distribbs.node.connectivity.Connectivity;
 import org.prowl.distribbs.objectstorage.Storage;
+import org.prowl.distribbs.ui.UI;
 
 /**
  * DistriBBS starting class
@@ -13,9 +16,13 @@ public enum DistriBBS {
 
    INSTANCE;
 
+   private static final Log          LOG = LogFactory.getLog("DistriBBS");
+
    private Config       configuration;
    private Connectivity connectivity;
    private Storage      storage;
+   private UI ui;
+
 
    DistriBBS() {
    }
@@ -33,6 +40,12 @@ public enum DistriBBS {
 
       // Init node services
       connectivity.start();
+      
+      // Init User interfaces
+      ui = new UI(configuration.getConfig("ui"));
+
+      // Init node services
+      ui.start();
 
       // All done
       Thread t = new Thread() {
