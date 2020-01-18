@@ -17,10 +17,10 @@ public class AnnounceTest extends Thread {
       while (true) {
 
          LOG.info("Sending test message");
-         ld.sendMessage("STARThiiiuvuviugviuytczcoi0a9w8hindoq2 dcos;hvl8eifnaldwh9c;svoiweclknco;a8h3iwniyutciyciyciyuiuyviuyviuvuivguiviuviuviuvuyiviuyvguvjkhgviuygfuyvEND".getBytes());
+         ld.sendMessage("STARThiiihuihbiohboihbioubhiouboiuboiboiuboiuboiubiouboiuboiuboiuboiuboiubiuyvEND".getBytes());
 
          try {
-            Thread.sleep(1500);
+            Thread.sleep(1100);
          } catch (Throwable e) {
          }
       }

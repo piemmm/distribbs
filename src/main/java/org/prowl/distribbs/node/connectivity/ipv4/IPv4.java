@@ -121,7 +121,8 @@ public class IPv4 implements Connector {
 
       public void run() {
          while (!stop) {
-            
+            try { Thread.sleep(1000); } catch(Throwable e) { }
+
          }
       }
 
