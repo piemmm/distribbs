@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.gui2.BasicWindow;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
+import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 
@@ -34,8 +35,8 @@ public class ANSIClient extends Thread {
          screen.startScreen();
          gui = new MultiWindowTextGUI(screen);
 
-         desktop = new BasicWindow();
-         
+         buildDesktop();
+          
       
       } catch(Throwable e) {
          LOG.error(e.getMessage(), e);
@@ -44,5 +45,18 @@ public class ANSIClient extends Thread {
       try { screen.close(); } catch(Throwable e) { }
    }
    
+   public void buildDesktop() {
+      
+      Panel content = new Panel();
+      content.addComponent(component)
+      
+      
+      desktop = new BasicWindow();
+      desktop.setCo
+      
+      
+      gui.addWindow(desktop);
+      
+   }
    
 }
