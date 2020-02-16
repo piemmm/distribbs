@@ -11,7 +11,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Modulation;
 import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
+import org.prowl.distribbs.node.connectivity.sx127x.Device;
 import org.prowl.distribbs.utils.Tools;
 
 public class IPv4 implements Connector {
@@ -134,6 +136,30 @@ public class IPv4 implements Connector {
 
    String getPeerSecret() {
       return peerSecret;
+   }
+ 
+   public boolean isAnnounce() {
+      return false;
+   }
+
+   public int getAnnouncePeriod() {
+      return 0;
+   }
+
+   public Modulation getModulation() {
+      return Modulation.NONE;
+   }
+   
+   public boolean isRF() {
+      return false;
+   }
+
+   public boolean canSend() {
+      return true;
+   }
+
+   public boolean sendPacket(byte[] data) {
+      return false;
    }
 
    

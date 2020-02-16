@@ -8,6 +8,10 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.events.RxRFPacket;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
+import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
 import com.pi4j.io.gpio.GpioController;
@@ -66,7 +70,7 @@ public class MSKDevice implements Device {
    private static final double   FREQ_STEP           = 61.03515625d;
 //   private static final int      SX1276_DEFAULT_FREQ = 868100000;
 //   private static final int      SX1276_DEFAULT_FREQ = 434100000;
-   private static final int      SX1276_DEFAULT_FREQ = 145950000;
+   private static final int      SX1276_DEFAULT_FREQ = 144950000;
 
    private static final Log      LOG                 = LogFactory.getLog("MSKDevice");
 
@@ -82,7 +86,10 @@ public class MSKDevice implements Device {
 
    private ByteArrayOutputStream buffer              = new ByteArrayOutputStream();
 
-   public MSKDevice() {
+   private Connector             connector;
+
+   public MSKDevice(Connector connector) {
+      this.connector = connector;
       init();
 
    }
@@ -101,20 +108,33 @@ public class MSKDevice implements Device {
          gpioDio.addListener(new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-               LOG.info("State change: " + event.getEventType().toString() + "  " + event.getEdge().getName());
+               // LOG.info("State change: " + event.getEventType().toString() + " " +
+               // event.getEdge().getName());
 
                if (event.getEdge() == PinEdge.RISING) {
                   if (tx) {
                      // Clear RX and put back into RX mode (stops transmitting after packet is sent)
                      clearIRQ();
-                     writeRegister(REG_OP_MODE, MODE_RX_CONTINUOUS);
+                     writeRegister(REG_OP_MODE, 0x04);
+                     writeRegister(REG_OP_MODE, 0x05);
                      tx = false;
 
                   } else {
                      // RX mode - payloadReady
                      int tf = readRegister(0x3f);
+
+                     // check crc flag
+                     boolean crcOk = (tf & 0x2) == 0x2;
+                     if (!crcOk) {
+                        LOG.info("Ignoring packet with bad CRC");
+                     }
+
                      checkBuffer(true, tf);
-                     getMessage();
+                     if (crcOk) {
+                        getMessage();
+                     } else {
+                        resetPacket();
+                     }
                   }
                }
 
@@ -147,6 +167,14 @@ public class MSKDevice implements Device {
          // writeRegister(0x03, 0x83); // bitrate 7:0
          // writeRegister(0x02, 0x06); // bitrate 15:8
 
+         // Defaults to 12.5kbaud
+         writeRegister(0x03, 0x00); // bitrate 7:0
+         writeRegister(0x02, 0x0A); // bitrate 15:8
+
+         // 38.4
+         // writeRegister(0x03, 0x41); // bitrate 7:0
+         // writeRegister(0x02, 0x03); // bitrate 15:8
+
          // Defaults to 9k6kbaud
          // writeRegister(0x03, 0x0D); // bitrate 7:0
          // writeRegister(0x02, 0x05); // bitrate 15:8
@@ -156,8 +184,8 @@ public class MSKDevice implements Device {
          // writeRegister(0x02, 0x68); // bitrate 15:8
 
          // 2400
-         writeRegister(0x03, 0x34); // bitrate 7:0
-         writeRegister(0x02, 0x15); // bitrate 15:8
+         // writeRegister(0x03, 0x34); // bitrate 7:0
+         // writeRegister(0x02, 0x15); // bitrate 15:8
 
          // 4800
          // writeRegister(0x03, 0x1a); // bitrate 7:0
@@ -231,8 +259,8 @@ public class MSKDevice implements Device {
 
             if (!tx) {
                int tf = readRegister(0x3f);
-               // LOG.info("RSSI:" + readRegister(0x11)+" "+readRegister(0x3e)+" "+tf+"
-               // fifoempty:"+(tf & 0x40)+" thresh:"+(tf & 0x20));
+               // LOG.info("RSSI:" + readRegister(0x11)+" "+readRegister(0x3e)+"
+               // "+tf+"ifoempty:"+(tf & 0x40)+" thresh:"+(tf & 0x20));
 
                checkBuffer(false, tf);
             }
@@ -309,11 +337,13 @@ public class MSKDevice implements Device {
    private void getMessage() {
 
       if (buffer.size() > 0) {
-         // Full packet received
-         System.out.println("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()) + "  \"" + Tools.textOnly(buffer.toByteArray()) + "\"");
 
-         
-         
+         // Full packet received
+         LOG.info("MSK Rx payload(" + buffer.size() + "): \"" + Tools.textOnly(buffer.toByteArray()) + "\"");
+
+         // Post the event for all and sundry
+         ServerBus.INSTANCE.post(new RxRFPacket(connector, buffer.toByteArray(), System.currentTimeMillis()));
+
       }
 
       resetPacket();
@@ -323,9 +353,12 @@ public class MSKDevice implements Device {
    }
 
    /**
-    * Send a message packet via LoRa
+    * Send a message packet
     */
    public void sendMessage(byte[] data) {
+      ServerBus.INSTANCE.post(new TxRFPacket(connector, data));
+      LOG.info("MSK Tx payload(" + data.length + "): \"" + Tools.textOnly(data) + "\"");
+
       sendPacket(data);
    }
 
@@ -384,28 +417,6 @@ public class MSKDevice implements Device {
       // Now send
 
    }
-
-//   
-//   private void sendPacket(byte[] message) {
-//      tx = true;
-//
-//      // Standby mode to prevent any further rx or interrupts changing fifo
-//      writeRegister(REG_OP_MODE, MODE_STANDBY);
-//      clearIRQ();
-//      // writeRegister(REG_FIFO_ADDR_PTR, 0x00);
-//
-//      writeRegister(REG_FIFO, (int) message.length); // fill fifo
-//      for (byte b : message) {
-//         writeRegister(REG_FIFO, (int) b); // fill fifo
-//      }
-//      writeRegister(REG_PAYLOAD_LENGTH, message.length+1);
-//
-//      sleep(150);
-//      // Now send
-//      writeRegister(REG_OP_MODE, MODE_TX);
-//
-//   }
-//   
 
    private int     packetLength = 0;
    private boolean lengthRead   = false;

@@ -3,7 +3,7 @@
 <!-- DistriBBS configuration test file -->
 <configuration>
 	<!-- Station Details -->
-	<callsign>NOCALL</callsign>
+	<callsign>G0TAI-2</callsign>
 
 
 	<!-- Connectivity setup -->

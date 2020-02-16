@@ -1,13 +1,16 @@
 package org.prowl.distribbs.node.connectivity.sx127x;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.node.connectivity.Connector;
-
-import com.pi4j.io.gpio.GpioFactory;
+import org.prowl.distribbs.node.connectivity.Modulation;
 
 /**
  * Implements an interface using the SX127x sx1276, sx1278, etc) series of chips
@@ -50,19 +53,59 @@ public class SX127x implements Connector {
       modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
 
       if (Modulation.LoRa.equals(modulation)) {
-         device = new LoRaDevice();
+         device = new LoRaDevice(this);
       } else if (Modulation.MSK.equals(modulation)) {
-         device = new MSKDevice();
+         device = new MSKDevice(this);
       } else {
          // Not a known modulation.
          throw new IOException("Unknown modulation:" + config.getString("modulation"));
       }
+      
+      
+      long announceInterval = Math.max(1000l * 60l * 5l, announcePeriod); // minimum 5 minutes
+      Timer announceTimer = new Timer();
+      announceTimer.schedule(new TimerTask() { public void run() {
+         if (announce) {
+            device.sendMessage(PacketEngine.generateAnnouncePacket());      
+         }
+      }}, 3000, announceInterval);
+      
    }
 
    public void stop() {
       
    }  
+
+   public boolean isAnnounce() {
+      return announce;
+   }
+
+   public int getAnnouncePeriod() {
+      return announcePeriod;
+   }
+
+   public Modulation getModulation() {
+      return modulation;
+   }
    
+   public boolean isRF() {
+      return true;
+   }
+
+   @Override
+   public boolean canSend() {
+      return true;
+   }
+
+   @Override
+   public boolean sendPacket(byte[] data) {
+      if (device == null)
+         return false;
+      
+      device.sendMessage(data);
+      return true;
+   }
+
    public String getName() {
       return getClass().getName();
    }

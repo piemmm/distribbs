@@ -4,6 +4,10 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.events.RxRFPacket;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
+import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
 import com.pi4j.io.gpio.GpioController;
@@ -82,7 +86,10 @@ public class LoRaDevice implements Device {
    private Pin                  dio                        = RaspiPin.GPIO_07;
    private Pin                  ss                         = RaspiPin.GPIO_06;
 
-   public LoRaDevice() {
+   private Connector connector;
+   
+   public LoRaDevice(Connector connector) {
+      this.connector = connector;
       init();
    }
 
@@ -223,7 +230,9 @@ public class LoRaDevice implements Device {
       if (gpioDio.isHigh()) {
          byte[] message = getPacket();
          if (message != null) {
-            LOG.info("LoRa Rx payload: " + Tools.byteArrayToHexString(message) + "  \"" + Tools.textOnly(message) + "\"");
+            LOG.debug("LoRa Rx payload: " + Tools.byteArrayToHexString(message) + "  \"" + Tools.textOnly(message) + "\"");
+            // Post the event for all and sundry
+            ServerBus.INSTANCE.post(new RxRFPacket(connector, message, System.currentTimeMillis()));
          }
       }
 
@@ -233,6 +242,9 @@ public class LoRaDevice implements Device {
     * Send a message packet via LoRa
     */
    public void sendMessage(byte[] data) {
+      ServerBus.INSTANCE.post(new TxRFPacket(connector, data));
+      LOG.debug("LoRa Tx payload(" + data.length + "): " + Tools.byteArrayToHexString(data) + "  \"" + Tools.textOnly(data) + "\"");
+
       sendPacket(data);
    }
 

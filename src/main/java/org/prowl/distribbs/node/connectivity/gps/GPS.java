@@ -7,7 +7,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.ui.hardware.Status;
+import org.prowl.distribbs.node.connectivity.Modulation;
 
 import com.pi4j.io.serial.Baud;
 import com.pi4j.io.serial.DataBits;
@@ -20,7 +20,6 @@ import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
-import com.pi4j.system.SystemInfo.BoardType;
 
 import net.sf.marineapi.nmea.parser.DataNotAvailableException;
 import net.sf.marineapi.nmea.parser.SentenceFactory;
@@ -160,5 +159,28 @@ public class GPS implements Connector {
    public String getName() {
       return getClass().getName();
    }
+   
+   public boolean isAnnounce() {
+      return false;
+   }
 
+   public int getAnnouncePeriod() {
+      return 0;
+   }
+
+   public Modulation getModulation() {
+      return Modulation.NONE;
+   }
+   
+   public boolean isRF() {
+      return false;
+   }
+
+   public boolean canSend() {
+      return false;
+   }
+
+   public boolean sendPacket(byte[] data) {
+      return false;
+   }
 }

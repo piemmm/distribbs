@@ -6,6 +6,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Modulation;
 
 public class IPv6 implements Connector {
 
@@ -29,5 +30,29 @@ public class IPv6 implements Connector {
 
    public String getName() {
       return getClass().getName();
+   }
+   
+   public boolean isAnnounce() {
+      return false;
+   }
+
+   public int getAnnouncePeriod() {
+      return 0;
+   }
+
+   public Modulation getModulation() {
+      return Modulation.NONE;
+   }
+   
+   public boolean isRF() {
+      return false;
+   }
+   
+   public boolean canSend() {
+      return true;
+   }
+
+   public boolean sendPacket(byte[] data) {
+      return false;
    }
 }
