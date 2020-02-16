@@ -77,10 +77,8 @@ public class LoRaDevice implements Device {
 
    public static SpiDevice      spi                        = null;
    private GpioController       gpio;
-   private GpioPinDigitalOutput gpioRst;
    private GpioPinDigitalOutput gpioSS;
    private GpioPinDigitalInput  gpioDio;
-   private Pin                  reset                      = RaspiPin.GPIO_00;
    private Pin                  dio                        = RaspiPin.GPIO_07;
    private Pin                  ss                         = RaspiPin.GPIO_06;
 
@@ -96,11 +94,7 @@ public class LoRaDevice implements Device {
          spi = SpiFactory.getInstance(SpiChannel.CS0, SpiDevice.DEFAULT_SPI_SPEED, SpiMode.MODE_0);
          gpio = GpioFactory.getInstance();
 
-         // Reset (default being reset until we're ready)
-         gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
-         gpioRst.setShutdownOptions(true, PinState.LOW);
-         gpioRst.low();
-
+        
          // Interrupt setup
          gpioDio = gpio.provisionDigitalInputPin(dio, PinPullResistance.PULL_DOWN);
          gpioDio.setShutdownOptions(true);
@@ -123,10 +117,7 @@ public class LoRaDevice implements Device {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
-
-      // Reset the chip
-      resetLoRa();
-
+ 
       // Get the device version
       int version = readRegister(REG_VERSION);
       if (version == 0x12) {
@@ -186,24 +177,7 @@ public class LoRaDevice implements Device {
       writeRegister(REG_FRF_MID, (int) ((freq >> 8) & 0xFF));
       writeRegister(REG_FRF_LSB, (int) (freq & 0xFF));
    }
-
-   public void resetLoRa() {
-      LOG.debug("LoRa device reset");
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.low();
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.high();
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-   }
+ 
 
    private int readRegister(int addr) {
       byte spibuf[] = new byte[2];

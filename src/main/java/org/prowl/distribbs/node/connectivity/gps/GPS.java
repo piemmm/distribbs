@@ -5,7 +5,9 @@ import java.io.IOException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.ui.hardware.Status;
 
 import com.pi4j.io.serial.Baud;
 import com.pi4j.io.serial.DataBits;
@@ -130,9 +132,11 @@ public class GPS implements Connector {
          Sentence parsed = sf.createParser(sentence);
          if (parsed instanceof GLLSentence) {
             currentPosition = ((GLLSentence) parsed).getPosition();
+            DistriBBS.INSTANCE.getStatus().pulseGPS(2000);
          } else if (parsed instanceof GSASentence) {
             GpsFixStatus status = ((GSASentence) parsed).getFixStatus();
             if (status == GpsFixStatus.GPS_NA) {
+               DistriBBS.INSTANCE.getStatus().pulseGPS(150);
                currentPosition = null;
             }
          }
@@ -141,6 +145,7 @@ public class GPS implements Connector {
       } catch (Throwable e) {
          LOG.error(e);
       }
+      
    }
 
    /**

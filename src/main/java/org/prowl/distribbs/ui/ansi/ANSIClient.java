@@ -3,19 +3,18 @@ package org.prowl.distribbs.ui.ansi;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.bundle.LanternaThemes;
 import com.googlecode.lanterna.gui2.BasicWindow;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
+import com.googlecode.lanterna.gui2.dialogs.TextInputDialog;
+import com.googlecode.lanterna.gui2.dialogs.TextInputDialogBuilder;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 
 public class ANSIClient extends Thread {
    
    private static final Log          LOG = LogFactory.getLog("ANSIClient");
-
-   private TextColor background = new TextColor.RGB(0, 0, 64);
-   private TextColor foreground = new TextColor.RGB(192,192,192);
 
    private TelnetTerminal terminal;
    private TerminalScreen screen;
@@ -28,13 +27,16 @@ public class ANSIClient extends Thread {
    
    public void start() {
       try {
-         terminal.setBackgroundColor(background);
-         terminal.setForegroundColor(foreground);
-         terminal.clearScreen();
+
          screen = new TerminalScreen(terminal);
+         
          screen.startScreen();
+         terminal.clearScreen();
+         
+         
          gui = new MultiWindowTextGUI(screen);
 
+         gui.setTheme(LanternaThemes.getRegisteredTheme("blaster")); //blaster,businessmachine
          buildDesktop();
           
       
@@ -48,14 +50,18 @@ public class ANSIClient extends Thread {
    public void buildDesktop() {
       
       Panel content = new Panel();
-      content.addComponent(component)
-      
-      
+      TextInputDialog dialog = new TextInputDialogBuilder().setTitle("Login").setDescription("Descriptiopn").setInitialContent("InitialContent").build();
+      //content.addComponent();
+       
       desktop = new BasicWindow();
-      desktop.setCo
+      desktop.setComponent(content);
       
       
-      gui.addWindow(desktop);
+      //gui.addWindowAndWait(desktop);
+      
+      
+      dialog.showDialog(gui);
+
       
    }
    

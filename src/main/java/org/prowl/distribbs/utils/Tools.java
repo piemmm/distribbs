@@ -5,16 +5,19 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Tools {
-   
-   private static final Log    LOG          = LogFactory.getLog("Tools");
 
+   private static final Log LOG = LogFactory.getLog("Tools");
 
    /**
     * Convert a hex string (AABBCCDEFF030201) to a byte array
@@ -116,16 +119,51 @@ public class Tools {
    }
 
    public static final byte[] longToByte(long l) {
-      try ( ByteArrayOutputStream bos = new ByteArrayOutputStream();
-         DataOutputStream dos = new DataOutputStream(bos);)
-      {  
+      try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(bos);) {
          dos.writeLong(l);
          dos.flush();
          return bos.toByteArray();
-      } catch(IOException e) {
+      } catch (IOException e) {
          LOG.error(e.getMessage(), e);
       }
       return null;
    }
-   
+
+   public static final InetAddress getDefaultOutboundIP() {
+
+      InetAddress ip = null;
+      // Try to get the default IP for outbound data
+      try (final DatagramSocket socket = new DatagramSocket()) {
+         socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+         ip = socket.getLocalAddress();
+      } catch (Throwable e) {
+         // Ignore
+      }
+
+      // Try a more convoluted way.
+      try {
+         if (ip == null || ip.isLoopbackAddress()) {
+            Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
+            while (en.hasMoreElements()) {
+               NetworkInterface ni = en.nextElement();
+               if (ni.isUp()) {
+                  Enumeration<InetAddress> ee = ni.getInetAddresses();
+                  while (ee.hasMoreElements()) {
+                     InetAddress i = (InetAddress) ee.nextElement();
+                     if (!i.isLoopbackAddress()) {
+                        return ip;
+                     }
+                  }
+               }
+
+            }
+         }
+      } catch (Throwable e) {
+         // Ignore.
+      }
+
+      return ip;
+   }
+
 }

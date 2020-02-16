@@ -65,16 +65,15 @@ public class MSKDevice implements Device {
 
    private static final double   FREQ_STEP           = 61.03515625d;
 //   private static final int      SX1276_DEFAULT_FREQ = 868100000;
-   private static final int      SX1276_DEFAULT_FREQ = 434100000;
+//   private static final int      SX1276_DEFAULT_FREQ = 434100000;
+   private static final int      SX1276_DEFAULT_FREQ = 145950000;
 
    private static final Log      LOG                 = LogFactory.getLog("MSKDevice");
 
    public static SpiDevice       spi                 = null;
    private GpioController        gpio;
-   private GpioPinDigitalOutput  gpioRst;
    private GpioPinDigitalOutput  gpioSS;
    private GpioPinDigitalInput   gpioDio;
-   private Pin                   reset               = RaspiPin.GPIO_00;
    private Pin                   dio                 = RaspiPin.GPIO_07;
    private Pin                   ss                  = RaspiPin.GPIO_06;
 
@@ -96,18 +95,13 @@ public class MSKDevice implements Device {
          spi = SpiFactory.getInstance(SpiChannel.CS0, SpiDevice.DEFAULT_SPI_SPEED, SpiMode.MODE_0);
          gpio = GpioFactory.getInstance();
 
-         // Reset (default being reset until we're ready)
-         gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
-         gpioRst.setShutdownOptions(true, PinState.LOW);
-         gpioRst.low();
-
          // Interrupt setup
          gpioDio = gpio.provisionDigitalInputPin(dio, PinPullResistance.PULL_DOWN);
          gpioDio.setShutdownOptions(true);
          gpioDio.addListener(new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-                LOG.info("State change: " + event.getEventType().toString() + "  " + event.getEdge().getName());
+               LOG.info("State change: " + event.getEventType().toString() + "  " + event.getEdge().getName());
 
                if (event.getEdge() == PinEdge.RISING) {
                   if (tx) {
@@ -119,7 +113,7 @@ public class MSKDevice implements Device {
                   } else {
                      // RX mode - payloadReady
                      int tf = readRegister(0x3f);
-                      checkBuffer(true,tf);
+                     checkBuffer(true, tf);
                      getMessage();
                   }
                }
@@ -133,12 +127,8 @@ public class MSKDevice implements Device {
          gpioSS.high();
 
       } catch (IOException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         LOG.error(e.getMessage(), e);
       }
-
-      // Reset the chip
-      resetLoRa();
 
       // Get the device version
       int version = readRegister(REG_VERSION);
@@ -148,53 +138,49 @@ public class MSKDevice implements Device {
          writeRegister(REG_OP_MODE, MODE_SLEEP);
          setChannelSX1276(SX1276_DEFAULT_FREQ);
 
-         
          // Rx startup regrxcfg
-          writeRegister(0x0d,0b00011000); // set opts 
- 
+         writeRegister(0x0d, 0b00011000); // set opts
+
          // writeRegister(0x0f,0b)
-         
+
          // Defaults to 19.2kbaud
          // writeRegister(0x03, 0x83); // bitrate 7:0
          // writeRegister(0x02, 0x06); // bitrate 15:8
-          
-       // Defaults to 9k6kbaud
-        //  writeRegister(0x03, 0x0D); // bitrate 7:0
-        //  writeRegister(0x02, 0x05); // bitrate 15:8
+
+         // Defaults to 9k6kbaud
+         // writeRegister(0x03, 0x0D); // bitrate 7:0
+         // writeRegister(0x02, 0x05); // bitrate 15:8
 
          // 1200
          // writeRegister(0x03, 0x2b); // bitrate 7:0
          // writeRegister(0x02, 0x68); // bitrate 15:8
-          
-          
-          // 2400
-          writeRegister(0x03, 0x34); // bitrate 7:0
-          writeRegister(0x02, 0x15); // bitrate 15:8
-          
-          //4800
-          //writeRegister(0x03, 0x1a); // bitrate 7:0
-          //writeRegister(0x02, 0x0b); // bitrate 15:8
+
+         // 2400
+         writeRegister(0x03, 0x34); // bitrate 7:0
+         writeRegister(0x02, 0x15); // bitrate 15:8
+
+         // 4800
+         // writeRegister(0x03, 0x1a); // bitrate 7:0
+         // writeRegister(0x02, 0x0b); // bitrate 15:8
 
          // regfdev (default 5khz deviation)
-         //setFrequencyDeviation(10.4); // 10.4kHz
-           setFrequencyDeviation(10); // 10.4kHz
-           
+         // setFrequencyDeviation(10.4); // 10.4kHz
+         setFrequencyDeviation(10); // 10.4kHz
+
          // regpaRamp
          writeRegister(0x0A, 0b00001111);
-
-        
 
          writeRegister(REG_PAYLOAD_LENGTH, 0xff);
 
          // Gain
          writeRegister(REG_LNA, LNA_MAX_GAIN);
 
-         //    mant     exp    bw
-         // 10b / 24    5    10.4 
-         // 01b / 20    5    12.5
+         // mant exp bw
+         // 10b / 24 5 10.4
+         // 01b / 20 5 12.5
          writeRegister(0x12, 0b00001101); // settings for 10.4khz
          writeRegister(0x13, 0b00010101); // AFC settings. 12.5kHz
-          
+
          // preamble length
          writeRegister(0x26, 2);
 
@@ -215,7 +201,7 @@ public class MSKDevice implements Device {
          writeRegister(0x31, 0b01000000); // packet mode
          writeRegister(0x35, 0b10010000); // fifo threshold (32 bytes)
          writeRegister(0x27, 0b00010011); // sync word, preamble polarity, autorestartrxmode
-       
+
          // manual use.
          writeRegister(REG_OP_MODE, MODE_SLEEP);
          sleep(150);
@@ -223,12 +209,11 @@ public class MSKDevice implements Device {
          writeRegister(REG_OP_MODE, 0x04);
          sleep(350);
          writeRegister(REG_OP_MODE, 0x05);
-        sleep(150);
-        writeRegister(0x0d,0b00111000); // set opts 
+         sleep(150);
+         writeRegister(0x0d, 0b00111000); // set opts
 
-       // writeRegister(0x0d,0b000111110); // set opts and kick into receive mode
-       // sleep(150);
-
+         // writeRegister(0x0d,0b000111110); // set opts and kick into receive mode
+         // sleep(150);
 
          // sequencer use - transmit
 //         writeRegister(REG_OP_MODE, MODE_SLEEP);
@@ -246,9 +231,10 @@ public class MSKDevice implements Device {
 
             if (!tx) {
                int tf = readRegister(0x3f);
-              // LOG.info("RSSI:" + readRegister(0x11)+" "+readRegister(0x3e)+" "+tf+"   fifoempty:"+(tf & 0x40)+"    thresh:"+(tf & 0x20));
- 
-               checkBuffer(false,tf);
+               // LOG.info("RSSI:" + readRegister(0x11)+" "+readRegister(0x3e)+" "+tf+"
+               // fifoempty:"+(tf & 0x40)+" thresh:"+(tf & 0x20));
+
+               checkBuffer(false, tf);
             }
 
          }
@@ -268,24 +254,6 @@ public class MSKDevice implements Device {
       writeRegister(0x04, (dev & 0xFF00) >> 8);
       writeRegister(0x05, (dev & 0x00FF));
 
-   }
-
-   public void resetLoRa() {
-      LOG.debug("LoRa device reset");
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.low();
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.high();
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
    }
 
    private int readRegister(int addr) {
@@ -339,17 +307,19 @@ public class MSKDevice implements Device {
    }
 
    private void getMessage() {
- 
-         if (buffer.size() > 0) {
-            System.out.println("MSK Rx payload("+buffer.size()+"): " + Tools.byteArrayToHexString(buffer.toByteArray()) + "  \"" + Tools.textOnly(buffer.toByteArray()) + "\"");
-         }
 
-             
-            resetPacket();
+      if (buffer.size() > 0) {
+         // Full packet received
+         System.out.println("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()) + "  \"" + Tools.textOnly(buffer.toByteArray()) + "\"");
 
-            clearIRQ();
+         
+         
+      }
 
- 
+      resetPacket();
+
+      clearIRQ();
+
    }
 
    /**
@@ -387,8 +357,8 @@ public class MSKDevice implements Device {
 
    public void clearIRQ() {
 //  
- //     writeRegister(REG_IRQ_FLAGS, 0b11111111);
- //     writeRegister(REG_IRQ_FLAGS2, 0b11111111);
+      // writeRegister(REG_IRQ_FLAGS, 0b11111111);
+      // writeRegister(REG_IRQ_FLAGS2, 0b11111111);
    }
 
    private void sendPacket(byte[] message) {
@@ -398,7 +368,7 @@ public class MSKDevice implements Device {
       writeRegister(REG_OP_MODE, MODE_STANDBY);
       clearIRQ();
       // writeRegister(REG_FIFO_ADDR_PTR, 0x00);
-      //writeRegister(REG_PAYLOAD_LENGTH, message.length+1);
+      // writeRegister(REG_PAYLOAD_LENGTH, message.length+1);
 
       writeRegister(REG_OP_MODE, MODE_TX);
       writeRegister(REG_FIFO, (int) message.length); // fill fifo
@@ -407,14 +377,14 @@ public class MSKDevice implements Device {
             Thread.yield();
          }
          writeRegister(REG_FIFO, (int) b); // fill fifo
-         
+
       }
 
-     // sleep(150);
+      // sleep(150);
       // Now send
 
    }
-   
+
 //   
 //   private void sendPacket(byte[] message) {
 //      tx = true;
@@ -441,33 +411,31 @@ public class MSKDevice implements Device {
    private boolean lengthRead   = false;
 
    public synchronized void checkBuffer(boolean completed, int x) {
-      //int x = readRegister(0x3f);
+      // int x = readRegister(0x3f);
       if ((x & 0x20) != 0 || completed) {
-         //LOG.info("ReadRegister:" + x + "   " + (x & 0x20));
+         // LOG.info("ReadRegister:" + x + " " + (x & 0x20));
          while ((x & 0x40) == 0) {
             int data = readRegister(REG_FIFO);
             if (!lengthRead) {
-             //  LOG.info("packetLength:" + data);
+               // LOG.info("packetLength:" + data);
                packetLength = data;
                lengthRead = true;
             } else {
-             //  LOG.info("byte:" + data + "  = "+ ((char)data));
+               // LOG.info("byte:" + data + " = "+ ((char)data));
 
-               buffer.write((byte)data);
+               buffer.write((byte) data);
             }
             x = readRegister(0x3f);
          }
       }
    }
 
-   
-   
    public void resetPacket() {
-      
+
       buffer.reset();
       lengthRead = false;
       packetLength = 0;
-   } 
+   }
 
    public final void sleep(final long millis) {
       try {

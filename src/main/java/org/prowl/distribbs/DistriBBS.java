@@ -6,6 +6,7 @@ import org.prowl.distribbs.config.Config;
 import org.prowl.distribbs.node.connectivity.Connectivity;
 import org.prowl.distribbs.objectstorage.Storage;
 import org.prowl.distribbs.ui.UI;
+import org.prowl.distribbs.ui.hardware.Status;
 
 /**
  * DistriBBS starting class
@@ -16,11 +17,16 @@ public enum DistriBBS {
 
    INSTANCE;
 
+   public static final String VERSION = "0.02";
+   public static final long BUILD = 2020021401;
+   public static final String VERSION_STRING = "DistriBBS v"+VERSION;
+   public static final String INFO_TEXT = "   www.distribbs.net";
    private static final Log          LOG = LogFactory.getLog("DistriBBS");
 
    private Config       configuration;
    private Connectivity connectivity;
    private Storage      storage;
+   private Status       status;
    private UI ui;
 
 
@@ -31,6 +37,9 @@ public enum DistriBBS {
 
       // Load configuration and initialise everything needed.
       configuration = new Config();
+      
+      // Init status objects
+      status = new Status();
 
       // Init object storage
       storage = new Storage(configuration.getConfig("storage"));
@@ -63,7 +72,9 @@ public enum DistriBBS {
       t.start();
    }
 
-   
+   public Status getStatus() {
+      return status;
+   }
    
    public Storage getStorage() {
       return storage;

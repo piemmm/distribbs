@@ -60,9 +60,9 @@ public class SX127x implements Connector {
    }
 
    public void stop() {
-
-   }
-
+      
+   }  
+   
    public String getName() {
       return getClass().getName();
    }
