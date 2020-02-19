@@ -1,8 +1,10 @@
 package org.prowl.distribbs.eventbus;
 
+import java.util.concurrent.Executors;
+
 import org.prowl.distribbs.eventbus.events.BaseEvent;
 
-import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.AsyncEventBus;
 
 /**
  * Any customisations to event firing can go in here.
@@ -11,10 +13,10 @@ public enum ServerBus {
 
    INSTANCE;
 
-   private EventBus eventBus;
+   private AsyncEventBus eventBus;
 
    ServerBus() {
-      eventBus = new EventBus();
+      eventBus = new AsyncEventBus(Executors.newFixedThreadPool(5));
    }
 
    public void post(BaseEvent event) {

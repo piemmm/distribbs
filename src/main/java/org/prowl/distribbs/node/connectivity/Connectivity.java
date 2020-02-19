@@ -62,5 +62,26 @@ public class Connectivity {
          }
       }
    }
+   
+   
+   /**
+    * Get the connector that services the requested radio port (eg: 0=144MHz, 1=433MHZ, etc)
+    * @param port
+    * @return the port, or null if the port does not exist
+    */
+   public Connector getPort(int port) {
+      if (port < connectors.size()) {
+         return connectors.get(port);
+      } 
+      return null;
+   }
+   
+   /**
+    * Returns a list of connectors
+    * @return
+    */
+   public List<Connector> getPorts() {
+      return new ArrayList(connectors);
+   }
 
 }

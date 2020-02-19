@@ -39,8 +39,6 @@ import org.prowl.distribbs.services.chat.ChatMessage;
 import org.prowl.distribbs.services.messages.MailMessage;
 import org.prowl.distribbs.services.newsgroups.NewsMessage;
 import org.prowl.distribbs.utils.Tools;
-import org.prowl.distribbs.utils.compression.CompressedBlockInputStream;
-import org.prowl.distribbs.utils.compression.CompressedBlockOutputStream;
 
 import com.google.common.eventbus.Subscribe;
 
@@ -136,8 +134,8 @@ public class IPSyncThread extends Thread {
          encryptCipher.init(Cipher.ENCRYPT_MODE, encKey);
          decryptCipher.init(Cipher.DECRYPT_MODE, decKey);
 
-         try (DataInputStream in = new DataInputStream(new CompressedBlockInputStream(new CipherInputStream(new BufferedInputStream(socket.getInputStream()), decryptCipher)));
-               DataOutputStream out = new DataOutputStream(new CompressedBlockOutputStream(new CipherOutputStream(new BufferedOutputStream(socket.getOutputStream()), encryptCipher), 1024))) {
+         try (DataInputStream in = new DataInputStream(new CipherInputStream(new BufferedInputStream(socket.getInputStream()), decryptCipher));
+               DataOutputStream out = new DataOutputStream(new CipherOutputStream(new BufferedOutputStream(socket.getOutputStream()), encryptCipher))) {
 
             // Socket options
             socket.setKeepAlive(true); // Keep active connection

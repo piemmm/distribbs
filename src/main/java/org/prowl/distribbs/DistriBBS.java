@@ -1,5 +1,7 @@
 package org.prowl.distribbs;
 
+import java.util.Locale;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.config.Config;
@@ -30,6 +32,7 @@ public enum DistriBBS {
    private Status             status;
    private Statistics         statistics;
    private UI                 ui;
+   private String myCall;
 
    DistriBBS() {
    }
@@ -38,6 +41,9 @@ public enum DistriBBS {
 
       // Load configuration and initialise everything needed.
       configuration = new Config();
+      
+      // Set our callsign
+      myCall = DistriBBS.INSTANCE.getConfiguration().getConfig("callsign", "NOCALL").toUpperCase(Locale.ENGLISH);
       
       // Create statistics holder
       statistics = new Statistics();   
@@ -48,16 +54,16 @@ public enum DistriBBS {
       // Init object storage
       storage = new Storage(configuration.getConfig("storage"));
 
-      // Init node connectors
+      // Init connectors
       connectivity = new Connectivity(configuration.getConfig("connectivity"));
 
-      // Init node services
+      // Start connectors
       connectivity.start();
 
       // Init User interfaces
       ui = new UI(configuration.getConfig("ui"));
 
-      // Init node services
+      // Start node services
       ui.start();
 
       // All done
@@ -91,9 +97,17 @@ public enum DistriBBS {
    public Statistics getStatistics() {
       return statistics;
    }
+   
+   public Connectivity getConnectivity() {
+      return connectivity;
+   }
 
    public static void main(String[] args) {
       INSTANCE.startup();
+   }
+   
+   public String getMyCall() {
+      return myCall;
    }
    
   

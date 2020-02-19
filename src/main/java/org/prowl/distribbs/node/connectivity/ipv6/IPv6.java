@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 
@@ -55,4 +56,11 @@ public class IPv6 implements Connector {
    public boolean sendPacket(byte[] data) {
       return false;
    }
+
+   @Override
+   public PacketEngine getPacketEngine() {
+      return null;
+   }
+   
+   
 }

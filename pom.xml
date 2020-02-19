@@ -94,12 +94,15 @@
 			<version>3.0.2</version>
 		</dependency>
 
+		<!-- NMEA parsing utils -->
 		<dependency>
 			<groupId>net.sf.marineapi</groupId>
 			<artifactId>marineapi</artifactId>
 			<version>0.11.0</version>
 		</dependency>
 
+		 
+ 
 	</dependencies>
 
 	<build>

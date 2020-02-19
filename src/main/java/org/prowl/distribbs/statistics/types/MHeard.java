@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.prowl.distribbs.core.Node;
-import org.prowl.distribbs.core.PacketEngine;
+import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 
@@ -37,7 +37,7 @@ public class MHeard {
    @Subscribe
    public void heardNode(RxRFPacket packet) {
       // Get the packet and decode to a node
-      String callsign = PacketEngine.decodeFrom(packet.getPacket());
+      String callsign = PacketTools.decodeFrom(packet.getPacket());
       if (callsign != null) {
          Node node = new Node(callsign, packet.getRxTime());
          // Update the list

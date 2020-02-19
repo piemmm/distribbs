@@ -9,6 +9,7 @@ import java.net.Socket;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
@@ -162,6 +163,12 @@ public class IPv4 implements Connector {
       return false;
    }
 
+   @Override
+   public PacketEngine getPacketEngine() {
+      return null;
+   }
+
+   
    
    
 }

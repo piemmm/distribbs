@@ -2,7 +2,7 @@ package org.prowl.distribbs.node.connectivity;
 
 import java.io.IOException;
 
-import org.prowl.distribbs.node.connectivity.sx127x.Device;
+import org.prowl.distribbs.core.PacketEngine;
 
 public interface Connector {
 
@@ -17,6 +17,8 @@ public interface Connector {
    public int getAnnouncePeriod();
 
    public Modulation getModulation();
+   
+   public PacketEngine getPacketEngine();
 
    public boolean isRF();
    

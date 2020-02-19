@@ -32,11 +32,16 @@ public class Status {
 
    public void init() {
 
-      lcd = new US2066();
-      leds = new StatusLeds();
-      lcd.writeText(DistriBBS.VERSION_STRING, DistriBBS.INFO_TEXT);
-
-      start();
+      try {
+         lcd = new US2066();
+         leds = new StatusLeds();
+         lcd.writeText(DistriBBS.VERSION_STRING, DistriBBS.INFO_TEXT);
+   
+         start();
+      } catch(UnsatisfiedLinkError e) {
+        // Probably not running on pi
+        LOG.error(e.getMessage(),e);
+      }
 
    }
 
@@ -97,7 +102,7 @@ public class Status {
          bottomString = "";
          for (Node n : heardList) {
             String callsign = n.getCallsign();
-            if (b.length() < 20 - callsign.length()) {
+            if (topString.length() < 20 - (callsign.length())) {
                topString += callsign + " ";
             } else {
                bottomString += callsign + " ";

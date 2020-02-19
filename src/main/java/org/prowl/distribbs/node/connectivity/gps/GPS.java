@@ -6,6 +6,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 
@@ -131,6 +132,7 @@ public class GPS implements Connector {
          Sentence parsed = sf.createParser(sentence);
          if (parsed instanceof GLLSentence) {
             currentPosition = ((GLLSentence) parsed).getPosition();
+            
             DistriBBS.INSTANCE.getStatus().pulseGPS(2000);
          } else if (parsed instanceof GSASentence) {
             GpsFixStatus status = ((GSASentence) parsed).getFixStatus();
@@ -148,7 +150,7 @@ public class GPS implements Connector {
    }
 
    /**
-    * Returns the curent known position, or null if no fix
+    * Returns the current known position, or null if no fix
     * 
     * @return
     */
@@ -183,4 +185,11 @@ public class GPS implements Connector {
    public boolean sendPacket(byte[] data) {
       return false;
    }
+
+   @Override
+   public PacketEngine getPacketEngine() {
+      return null;
+   }
+   
+   
 }

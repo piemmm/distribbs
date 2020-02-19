@@ -1,8 +1,10 @@
 package org.prowl.distribbs.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.DatagramSocket;
@@ -14,6 +16,12 @@ import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.compression.huffman.AdaptiveHuffmanCompress;
+import org.prowl.distribbs.utils.compression.huffman.AdaptiveHuffmanDecompress;
+import org.prowl.distribbs.utils.compression.huffman.BitInputStream;
+import org.prowl.distribbs.utils.compression.huffman.BitOutputStream;
+
+import net.sf.marineapi.nmea.util.Position;
 
 public class Tools {
 
@@ -43,8 +51,10 @@ public class Tools {
     */
    public static String byteArrayToHexString(byte[] output) {
       StringBuffer hexString = new StringBuffer();
-      for (int i = 0; i < output.length; i++)
+      for (int i = 0; i < output.length; i++) {
          hexString.append(String.format("%02X", output[i]));
+         hexString.append(" ");
+      }
       return hexString.toString();
    }
 
@@ -166,4 +176,126 @@ public class Tools {
       return ip;
    }
 
+   /**
+    * Compress a packet
+    * 
+    * @param data
+    * @return
+    */
+   public static final byte[] compress(byte[] data) {
+      try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();) {
+         BitOutputStream bitOut = new BitOutputStream(bos);
+         AdaptiveHuffmanCompress.compress(new ByteArrayInputStream(data), bitOut);
+         bitOut.close();
+
+         // LOG.info("Compressed: " + data.length + " -> " + bos.size() + ": " +
+         // Tools.textOnly(bos.toByteArray()));
+
+         return bos.toByteArray();
+      } catch (Throwable e) {
+         LOG.error(e.getMessage(), e);
+         return null;
+      }
+   }
+
+   /**
+    * Decompress a packet
+    * 
+    * @param compressed
+    * @return
+    */
+   public static final byte[] decompress(byte[] compressed) throws EOFException {
+long start = System.currentTimeMillis();
+      try (
+            ByteArrayOutputStream dec = new ByteArrayOutputStream();
+            ByteArrayInputStream bin = new ByteArrayInputStream(compressed);) {
+
+         AdaptiveHuffmanDecompress.decompress(new BitInputStream(bin), dec);
+
+         // LOG.info("Decompress: " + compressed.length + " -> " + dec.size() + ": " +
+         // Tools.textOnly(dec.toByteArray()));
+         dec.close();
+         LOG.info("Decompress stats: " + (start - System.currentTimeMillis())+"ms");
+
+         return dec.toByteArray();
+         
+      } catch (EOFException e) {
+         throw e; // rethrow past ioe in this catch block
+      } catch (IOException e) {
+         LOG.error(e.getMessage(), e);
+         return null;
+      }
+   }
+
+   /**
+    * Convert from GPS to maidenhead locator
+    * 
+    * @param latitudeIn
+    * @param longitudeIn
+    * @return
+    */
+   public static final String convertToMaidenhead(Position position) {
+
+      double longitude = position.getLongitude() + 180;
+      longitude /= 2;
+      char lonFirst = (char) ('A' + (longitude / 10));
+      char lonSecond = (char) ('0' + longitude % 10);
+      char lonThird = (char) ('A' + (longitude % 1) * 24);
+
+      double latitude = position.getLatitude() + 90;
+      char latFirst = (char) ('A' + (latitude / 10));
+      char latSecond = (char) ('0' + latitude % 10);
+      char latThird = (char) ('A' + (latitude % 1) * 24);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append(lonFirst);
+      sb.append(latFirst);
+      sb.append(lonSecond);
+      sb.append(latSecond);
+      sb.append(("" + lonThird).toLowerCase());
+      sb.append(("" + latThird).toLowerCase());
+
+      return sb.toString();
+   }
+
+   /**
+    * Does a byte array contain char X?
+    * 
+    * @param needle
+    * @param haystack
+    * @return
+    */
+   public static final int indexOf(char needle, byte[] haystack, int start) {
+      for (int i = start; i < haystack.length; i++) {
+         if (haystack[i] == needle) {
+            return i;
+         }
+      }
+      return -1;
+   }
+
+   /**
+    * Compare 2 byte arrays, because Arrays.equal(b[],b[]) is badly documented.
+    * 
+    * @param a
+    * @param b
+    * @return
+    */
+   public static final boolean arraysEqual(byte[] a, byte[] b) {
+      if ((a == null && b != null) || (a != null && b == null)) {
+         return false;
+      }
+      if (a.length != b.length) {
+         return false;
+      }
+
+      for (int i = 0; i < a.length; i++) {
+         if (a[i] != b[i]) {
+            return false;
+         }
+      }
+
+      return true;
+   }
 }
