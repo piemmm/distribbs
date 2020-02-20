@@ -189,8 +189,7 @@ public class Tools {
          AdaptiveHuffmanCompress.compress(new ByteArrayInputStream(data), bitOut);
          bitOut.close();
 
-         // LOG.info("Compressed: " + data.length + " -> " + bos.size() + ": " +
-         // Tools.textOnly(bos.toByteArray()));
+         LOG.info("Compressed: " + data.length + " -> " + bos.size() + ": " + Tools.textOnly(bos.toByteArray()));
 
          return bos.toByteArray();
       } catch (Throwable e) {
@@ -206,20 +205,19 @@ public class Tools {
     * @return
     */
    public static final byte[] decompress(byte[] compressed) throws EOFException {
-long start = System.currentTimeMillis();
+      long start = System.currentTimeMillis();
       try (
             ByteArrayOutputStream dec = new ByteArrayOutputStream();
             ByteArrayInputStream bin = new ByteArrayInputStream(compressed);) {
 
          AdaptiveHuffmanDecompress.decompress(new BitInputStream(bin), dec);
 
-         // LOG.info("Decompress: " + compressed.length + " -> " + dec.size() + ": " +
-         // Tools.textOnly(dec.toByteArray()));
+         LOG.info("Decompress: " + compressed.length + " -> " + dec.size() + ": " + Tools.textOnly(dec.toByteArray()));
          dec.close();
-         LOG.info("Decompress stats: " + (start - System.currentTimeMillis())+"ms");
+         LOG.info("Decompress stats: " + (start - System.currentTimeMillis()) + "ms");
 
          return dec.toByteArray();
-         
+
       } catch (EOFException e) {
          throw e; // rethrow past ioe in this catch block
       } catch (IOException e) {

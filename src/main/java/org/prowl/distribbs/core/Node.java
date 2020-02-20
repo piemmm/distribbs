@@ -12,6 +12,7 @@ public class Node {
    
    public Node(String callsign, long lastHeard) {
       this.callsign = callsign;
+      this.lastHeard = lastHeard;
    }
    
    public String getCallsign() {

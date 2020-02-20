@@ -224,12 +224,12 @@ public final class FrequencyTable {
          }
       }
       FrequencyTable freqs = new FrequencyTable(initFreqs);
-//      byte[] testString = "This is a simple test string that can be used to setup a default frequency table initially favouring plain text:ANNOUNCE::>>".getBytes();
-//      for (byte b: testString) {
-//         freqs.increment(b);
-//      }
-//      freqs.buildCodeTree();
-//      
+      byte[] testString = "This is a simple test string that can be used to setup a default frequency table initially favouring plain text1234567890987654321:ANNOUNCE::>>".getBytes();
+      for (byte b: testString) {
+         freqs.increment(b);
+      }
+      freqs.buildCodeTree();
+      
       
       return freqs;
    }

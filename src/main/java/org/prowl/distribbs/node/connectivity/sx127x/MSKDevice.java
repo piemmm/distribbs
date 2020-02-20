@@ -194,8 +194,8 @@ public class MSKDevice implements Device {
          setFrequencyDeviation(2.6); // 3kHz
 
          // regpaRamp
-         //writeRegister(0x0A, 0b00001111);
-         writeRegister(0x0A, 0b00001111);
+         writeRegister(0x0A, 0b00001111); // FSK
+         //writeRegister(0x0A, 0b00101111); // GMFSK
 
          writeRegister(REG_PAYLOAD_LENGTH, 0xff);
 
@@ -253,6 +253,7 @@ public class MSKDevice implements Device {
 
          writeRegister(0x1a, 0b00000001);  
 
+         writeRegister(0x0e, 0b00000011); // RSSI samples used
          
          // manual use.
          writeRegister(REG_OP_MODE, MODE_SLEEP);
