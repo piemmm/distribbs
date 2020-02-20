@@ -217,7 +217,7 @@ public class CommandParser {
              }
              break;
           case NONE:
-             
+             // Nothing
        }
    }
    
