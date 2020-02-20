@@ -49,17 +49,17 @@ public final class AdaptiveHuffmanCompress {
 			
 			// Update the frequency table and possibly the code tree
 			freqs.increment(symbol);
-			if (count < 262144 && isPowerOf2(count) || count % 262144 == 0)  // Update code tree
+			if (count < 262144 && shouldUpdate(count))  // Update code tree
 				enc.codeTree = freqs.buildCodeTree();
-			if (count % 262144 == 0)  // Reset frequency table
+			if (count % 262144 == 262143)  // Reset frequency table
 				freqs = FrequencyTable.getDefault();//new FrequencyTable(initFreqs);
 		}
 		enc.write(256);  // EOF
 	}
 	
 	
-	private static boolean isPowerOf2(int x) {
-	     return x > 0;
+	private static boolean shouldUpdate(int x) {
+	     return x % 40 == 39;
 	}
 	
 }

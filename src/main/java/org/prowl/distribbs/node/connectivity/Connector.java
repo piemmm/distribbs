@@ -3,6 +3,7 @@ package org.prowl.distribbs.node.connectivity;
 import java.io.IOException;
 
 import org.prowl.distribbs.core.PacketEngine;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 
 public interface Connector {
 
@@ -24,6 +25,6 @@ public interface Connector {
    
    public boolean canSend();
    
-   public boolean sendPacket(byte[] data);
+   public boolean sendPacket(TxRFPacket packet);
    
 }

@@ -1,14 +1,16 @@
 package org.prowl.distribbs.core;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
@@ -23,6 +25,22 @@ public class PacketEngine {
    public PacketEngine(Connector connector) {
       this.connector = connector;
       triggerList = new LinkedList<>();
+      init();
+   }
+   
+   public void init() {
+      // This should go in the packetEngine
+      long announceInterval = Math.max(1000l * 60l * 5l, connector.getAnnouncePeriod()); // minimum 5 minutes
+      Timer announceTimer = new Timer();
+      announceTimer.schedule(new TimerTask() {
+         public void run() {
+            if (connector.isAnnounce()) {
+               TxRFPacket packet = PacketTools.generateAnnouncePacket();
+               packet.setConnector(connector);
+               connector.sendPacket(packet);
+            }
+         }
+      }, 3000, announceInterval);
    }
 
    /**
@@ -65,7 +83,8 @@ public class PacketEngine {
       trigger.setExpiresAt(System.currentTimeMillis() + 2000);
       triggerList.add(trigger);
 
-      sendPacket(DistriBBS.INSTANCE.getMyCall(), callsign, PacketTools.PING, time);
+      TxRFPacket packet = new TxRFPacket(PacketTools.getMyCall(), callsign, PacketTools.PING, time);
+      connector.sendPacket(packet);
    }
 
    /**
@@ -112,7 +131,7 @@ public class PacketEngine {
          switch (command) {
             // Ping reply
             case PacketTools.PING:
-               sendPacket(DistriBBS.INSTANCE.getMyCall(), source, PacketTools.PONG, payload);
+               connector.sendPacket(new TxRFPacket(PacketTools.getMyCall(), source, PacketTools.PONG, payload));
                break;
          }
       }
@@ -124,22 +143,22 @@ public class PacketEngine {
 
    }
 
-   public void sendPacket(String from, String to, String request, byte[] payload) {
-      if (connector.canSend()) {
-         try {
-            String header = from + ">" + to + ":" + request;
-            if (payload != null) {
-               header = header + ":";
-            }
-            byte[] toSend = new byte[header.getBytes().length + payload.length];
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bos.write(header.getBytes());
-            bos.write(payload);
-            bos.close();
-            connector.sendPacket(bos.toByteArray());
-         } catch (Throwable e) {
-            LOG.error(e.getMessage(), e);
-         }
-      }
-   }
+//   public void sendPacket(String from, String to, String request, byte[] payload) {
+//      if (connector.canSend()) {
+//         try {
+//            String header = from + ">" + to + ":" + request;
+//            if (payload != null) {
+//               header = header + ":";
+//            }
+//            byte[] toSend = new byte[header.getBytes().length + payload.length];
+//            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//            bos.write(header.getBytes());
+//            bos.write(payload);
+//            bos.close();
+//            connector.sendPacket(bos.toByteArray());
+//         } catch (Throwable e) {
+//            LOG.error(e.getMessage(), e);
+//         }
+//      }
+//   }
 }

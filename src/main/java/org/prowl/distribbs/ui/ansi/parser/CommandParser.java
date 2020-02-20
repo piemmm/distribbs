@@ -12,6 +12,7 @@ import org.prowl.distribbs.core.Response;
 import org.prowl.distribbs.core.ResponseListener;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.Tools;
@@ -91,15 +92,15 @@ public class CommandParser {
          write(INCORRECT_ARGS);
          return;
       }
-      
+
       MonitorLevel newLevel = MonitorLevel.findByName(arguments[1]);
 
       if (newLevel == null) {
          write(INVALID_ARGUMENT);
          return;
-      } 
+      }
 
-      write("Monitor level changed to: " +newLevel.name());
+      write("Monitor level changed to: " + newLevel.name());
       monitorLevel = newLevel;
    }
 
@@ -204,23 +205,40 @@ public class CommandParser {
    public void write(String s) {
       screen.write(s);
    }
-   
+
    @Subscribe
    public void listen(RxRFPacket packet) {
-       switch(monitorLevel) {
-          case ALL: 
-             write(Tools.textOnly(packet.getPacket()));
-             break;
-          case ANNOUNCE:
-             if (packet.getCommand() == PacketTools.ANNOUNCE) {
-                write(Tools.textOnly(packet.getPacket()));
-             }
-             break;
-          case NONE:
-             // Nothing
-       }
+      switch (monitorLevel) {
+         case ALL:
+            write(Tools.textOnly(packet.getPacket()));
+            break;
+         case ANNOUNCE:
+            if (packet.getCommand() == PacketTools.ANNOUNCE) {
+               write(Tools.textOnly(packet.getPacket()));
+            }
+            break;
+         case NONE:
+            // Nothing
+      }
    }
    
+   
+   @Subscribe
+   public void listen(TxRFPacket packet) {
+      switch (monitorLevel) {
+         case ALL:
+            write(Tools.textOnly(packet.getPacket()));
+            break;
+         case ANNOUNCE:
+            if (packet.getCommand() == PacketTools.ANNOUNCE) {
+               write(Tools.textOnly(packet.getPacket()));
+            }
+            break;
+         case NONE:
+            // Nothing
+      }
+   }
+
    public void stop() {
       ServerBus.INSTANCE.unregister(this);
    }

@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
@@ -159,7 +160,7 @@ public class IPv4 implements Connector {
       return true;
    }
 
-   public boolean sendPacket(byte[] data) {
+   public boolean sendPacket(TxRFPacket packet) {
       return false;
    }
 

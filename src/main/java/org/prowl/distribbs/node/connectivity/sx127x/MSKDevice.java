@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import org.apache.commons.logging.Log;
@@ -81,12 +83,13 @@ public class MSKDevice implements Device {
    private Pin                   dio                 = RaspiPin.GPIO_07;
    private Pin                   ss                  = RaspiPin.GPIO_06;
 
-   private boolean               tx                  = false;                         // True when in TX.
+   private boolean               tx                  = false;                          // True when in TX.
    private Semaphore             spiLock             = new Semaphore(1);
 
    private ByteArrayOutputStream buffer              = new ByteArrayOutputStream();
 
    private Connector             connector;
+   ExecutorService               pool                = Executors.newFixedThreadPool(2);
 
    public MSKDevice(Connector connector) {
       this.connector = connector;
@@ -108,12 +111,13 @@ public class MSKDevice implements Device {
          gpioDio.addListener(new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-                //LOG.info("State change: " + event.getEventType().toString() + " " +  event.getEdge().getName());
+               // LOG.info("State change: " + event.getEventType().toString() + " " +
+               // event.getEdge().getName());
 
                if (event.getEdge() == PinEdge.RISING) {
                   if (tx) {
                      // Clear RX and put back into RX mode (stops transmitting after packet is sent)
-                     //try { Thread.sleep(1); } catch(Throwable e) { }
+                     // try { Thread.sleep(1); } catch(Throwable e) { }
                      writeRegister(REG_OP_MODE, 0x04);
                      writeRegister(REG_OP_MODE, 0x05);
                      tx = false;
@@ -156,12 +160,11 @@ public class MSKDevice implements Device {
          // Setup a SX1276 into long range, always rx - we dont care about power usage
          LOG.info("MSK Device recognised as a SX1276");
          writeRegister(REG_OP_MODE, MODE_SLEEP);
-         
-       
-          setChannelSX1276(SX1276_DEFAULT_FREQ);
+
+         setChannelSX1276(SX1276_DEFAULT_FREQ);
 
          // Rx startup regrxcfg
-        // writeRegister(0x0d, 0b00011000); // set opts
+         // writeRegister(0x0d, 0b00011000); // set opts
          writeRegister(0x0d, 0b00011111); // set opts
 
          // Defaults to 19.2kbaud
@@ -169,21 +172,21 @@ public class MSKDevice implements Device {
          // writeRegister(0x02, 0x06); // bitrate 15:8
 
          // Defaults to 12.5kbaud
-        // writeRegister(0x03, 0x00); // bitrate 7:0
-        // writeRegister(0x02, 0x0A); // bitrate 15:8
+         // writeRegister(0x03, 0x00); // bitrate 7:0
+         // writeRegister(0x02, 0x0A); // bitrate 15:8
 
          // Defaults to 9k6kbaud
-        //  writeRegister(0x03, 0x05); // bitrate 7:0
-        //  writeRegister(0x02, 0x0D); // bitrate 15:8
+         // writeRegister(0x03, 0x05); // bitrate 7:0
+         // writeRegister(0x02, 0x0D); // bitrate 15:8
 
          // 1200
          // writeRegister(0x03, 0x2b); // bitrate 7:0
          // writeRegister(0x02, 0x68); // bitrate 15:8
-         
+
          // 2400
-         //writeRegister(0x03, 0x15); // bitrate 7:0
-         //writeRegister(0x02, 0x34); // bitrate 15:8
-         
+         // writeRegister(0x03, 0x15); // bitrate 7:0
+         // writeRegister(0x02, 0x34); // bitrate 15:8
+
          // 4800
          writeRegister(0x03, 0x0b); // bitrate 7:0
          writeRegister(0x02, 0x1a); // bitrate 15:8
@@ -194,7 +197,7 @@ public class MSKDevice implements Device {
 
          // regpaRamp
          writeRegister(0x0A, 0b00001111); // FSK
-         //writeRegister(0x0A, 0b00101111); // GMFSK
+         // writeRegister(0x0A, 0b00101111); // GMFSK
 
          writeRegister(REG_PAYLOAD_LENGTH, 0xff);
 
@@ -204,10 +207,10 @@ public class MSKDevice implements Device {
          // mant exp bw
          // 10b / 24 5 10.4
          //// 01b / 20 5 12.5
-         //writeRegister(0x12, 0b00010101); // settings for 10.4khz
-         //writeRegister(0x13, 0b00001101); // AFC settings. 12.5kHz
-         
-         // mant exp bw  2.5
+         // writeRegister(0x12, 0b00010101); // settings for 10.4khz
+         // writeRegister(0x13, 0b00001101); // AFC settings. 12.5kHz
+
+         // mant exp bw 2.5
          // 10b / 24 7 2.6
          // 01b / 20 7 3.1
          // 00b / 16 7 3.9
@@ -215,12 +218,11 @@ public class MSKDevice implements Device {
          writeRegister(0x13, 0b00010110); // AFC settings. 12.5kHz
 
          // old works at 2.6k
-         //writeRegister(0x12, 0b00001111); // settings for 10.4khz
-         //writeRegister(0x13, 0b00010111); // AFC settings. 12.5kHz
+         // writeRegister(0x12, 0b00001111); // settings for 10.4khz
+         // writeRegister(0x13, 0b00010111); // AFC settings. 12.5kHz
 
-         
-         writeRegister(0x26,24); // preamble length
-         //writeRegister(0x1f, 0b10101000);
+         writeRegister(0x26, 24); // preamble length
+         // writeRegister(0x1f, 0b10101000);
 
          writeRegister(0x0B, 0b00111011); // reduce overcurrent protection
 
@@ -239,8 +241,7 @@ public class MSKDevice implements Device {
          writeRegister(0x31, 0b01000000); // packet mode
          writeRegister(0x35, 0b10010000); // fifo threshold (32 bytes)
          writeRegister(0x27, 0b00110110); // sync word, preamble polarity, autorestartrxmode
-         
-         
+
          writeRegister(0x28, 0xff);
          writeRegister(0x29, 0x00);
          writeRegister(0x2a, 0x55);
@@ -248,26 +249,24 @@ public class MSKDevice implements Device {
          writeRegister(0x2c, 0x00);
          writeRegister(0x2d, 0xff);
 
-
-
-         writeRegister(0x1a, 0b00000001);  
+         writeRegister(0x1a, 0b00000001);
 
          writeRegister(0x0e, 0b00000011); // RSSI samples used
-         
+
          // manual use.
          writeRegister(REG_OP_MODE, MODE_SLEEP);
          sleep(150);
          writeRegister(REG_OP_MODE, MODE_STANDBY);
          sleep(150);
-         writeRegister(0x24,  0b00001000);
+         writeRegister(0x24, 0b00001000);
 
          sleep(500);
-         
+
          writeRegister(REG_OP_MODE, 0x04);
          sleep(350);
          writeRegister(REG_OP_MODE, 0x05);
          sleep(150);
-         //writeRegister(0x0d, 0b00111000); // set opts
+         // writeRegister(0x0d, 0b00111000); // set opts
          writeRegister(0x0d, 0b00111111); // set opts
 
          sleep(150);
@@ -279,17 +278,17 @@ public class MSKDevice implements Device {
       Timer test = new Timer();
       test.schedule(new TimerTask() {
 
-   public void run() {
+         public void run() {
 
-      if (!tx) {
-         int tf = readRegister(0x3f);
-         // LOG.info("Register 3F: " + Integer.toBinaryString(tf));
-         checkBuffer(false, tf);
-      }
+            if (!tx) {
+               int tf = readRegister(0x3f);
+               // LOG.info("Register 3F: " + Integer.toBinaryString(tf));
+               checkBuffer(false, tf);
+            }
 
-   }
+         }
 
-   },1000,3);
+      }, 1000, 3);
 
    }
 
@@ -358,20 +357,25 @@ public class MSKDevice implements Device {
    private void getMessage() {
 
       try {
+         // Full packet received
          if (buffer.size() > 0) {
 
-            // Full packet received
+            final byte[] array = buffer.toByteArray();
+            final long rxTime = System.currentTimeMillis();
+            pool.execute(new Runnable() {
+               public void run() {
 
-            // Send to our packet engine
-               LOG.info("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()));
-               RxRFPacket rxRfPacket = new RxRFPacket(connector, buffer.toByteArray(), System.currentTimeMillis());
-               if (!rxRfPacket.isCorrupt()) {
-                  connector.getPacketEngine().receivePacket(rxRfPacket); 
-                  
-                  // Post the event for all and sundry
-                  ServerBus.INSTANCE.post(rxRfPacket);
+                  // Send to our packet engine
+                  LOG.info("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()));
+                  RxRFPacket rxRfPacket = new RxRFPacket(connector, array, rxTime);
+                  if (!rxRfPacket.isCorrupt()) {
+                     connector.getPacketEngine().receivePacket(rxRfPacket);
+
+                     // Post the event for all and sundry
+                     ServerBus.INSTANCE.post(rxRfPacket);
+                  }
                }
-            
+            });
          }
       } finally {
 
@@ -382,9 +386,9 @@ public class MSKDevice implements Device {
    /**
     * Send a message packet
     */
-   public void sendMessage(byte[] compressedData) {
-      ServerBus.INSTANCE.post(new TxRFPacket(connector, compressedData));
-      sendPacket(compressedData);
+   public void sendMessage(TxRFPacket packet) {
+      ServerBus.INSTANCE.post(packet);
+      sendPacket(packet.getCompressedPacket());
    }
 
    private void sendPacket(byte[] message) {
@@ -417,14 +421,13 @@ public class MSKDevice implements Device {
             } else {
                buffer.write((byte) data);
             }
-            x = readRegister(0x3f);
+
             try {
-               Thread.sleep(1);
+               Thread.sleep(0, 400000);
             } catch (Throwable e) {
             }
-//            if ((x & 0x4) != 0 || (x & 0x2) != 0) {
-            // LOG.info("Packet flag as complete: "+Integer.toBinaryString(x));
-//            }
+
+            x = readRegister(0x3f);
 
          }
          if ((x & 0x4) != 0) {
@@ -439,6 +442,7 @@ public class MSKDevice implements Device {
       buffer.reset();
       lengthRead = false;
       packetLength = 0;
+      
    }
 
    public final void sleep(final long millis) {

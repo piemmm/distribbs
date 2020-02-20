@@ -241,11 +241,11 @@ public class LoRaDevice implements Device {
    /**
     * Send a message packet via LoRa
     */
-   public void sendMessage(byte[] data) {
-      ServerBus.INSTANCE.post(new TxRFPacket(connector, data));
-      LOG.debug("LoRa Tx payload(" + data.length + "): " + Tools.byteArrayToHexString(data) + "  \"" + Tools.textOnly(data) + "\"");
-
-      sendPacket(data);
+   public void sendMessage(TxRFPacket packet) {
+     
+      ServerBus.INSTANCE.post(packet);
+      LOG.debug("LoRa Tx payload(" + packet.getCompressedPacket().length+")");
+      sendPacket(packet.getCompressedPacket());
    }
 
    private byte[] getPacket() {

@@ -1,6 +1,7 @@
 package org.prowl.distribbs.core;
 
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.gps.GPS;
 import org.prowl.distribbs.utils.Tools;
 
@@ -24,18 +25,17 @@ public class PacketTools {
     * 
     * @return
     */
-   public static final byte[] generateAnnouncePacket() {
+   public static final TxRFPacket generateAnnouncePacket() {
       String maidenhead = "";
       Position position = GPS.getCurrentPosition();
       if (position != null) {
          maidenhead = Tools.convertToMaidenhead(position);
       }
-      
-      String announce = getCallsign()+">"+ANNOUNCE+":DistriBBS:"+maidenhead+":";
-      return announce.getBytes();
+      TxRFPacket packet = new TxRFPacket(getMyCall(), ANNOUNCE, "DistriBBS", maidenhead.getBytes());
+      return packet;
    }
    
-   public static final String getCallsign() {
+   public static final String getMyCall() {
       return DistriBBS.INSTANCE.getMyCall();
    }
    

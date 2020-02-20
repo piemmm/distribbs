@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.core.PacketTools;
+import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 import org.prowl.distribbs.utils.Tools;
@@ -72,15 +73,8 @@ public class SX127x implements Connector {
          throw new IOException("Unknown modulation:" + config.getString("modulation"));
       }
 
-      long announceInterval = Math.max(1000l * 60l * 5l, announcePeriod); // minimum 5 minutes
-      Timer announceTimer = new Timer();
-      announceTimer.schedule(new TimerTask() {
-         public void run() {
-            if (announce) {
-               device.sendMessage(Tools.compress(PacketTools.generateAnnouncePacket()));
-            }
-         }
-      }, 3000, announceInterval);
+      
+     
 
    }
 
@@ -114,11 +108,12 @@ public class SX127x implements Connector {
    }
 
    @Override
-   public boolean sendPacket(byte[] data) {
-      if (device == null || data == null)
+   public boolean sendPacket(TxRFPacket packet) {
+      packet.setConnector(this);
+      if (device == null || packet == null)
          return false;
 
-      device.sendMessage(Tools.compress(data));
+      device.sendMessage(packet);
       return true;
    }
 
