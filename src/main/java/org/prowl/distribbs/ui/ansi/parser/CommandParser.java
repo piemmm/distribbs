@@ -7,10 +7,16 @@ import java.util.Locale;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketEngine;
+import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.core.Response;
 import org.prowl.distribbs.core.ResponseListener;
+import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.statistics.types.MHeard;
+import org.prowl.distribbs.utils.Tools;
+
+import com.google.common.eventbus.Subscribe;
 
 public class CommandParser {
 
@@ -23,9 +29,11 @@ public class CommandParser {
 
    private Mode               mode             = Mode.CMD;                                    // Default to command mode.
    private int                port             = 0;                                           // Default radio port
+   private MonitorLevel       monitorLevel     = MonitorLevel.NONE;                           // Level of monitoring
 
    public CommandParser(ScreenWriter screen) {
       this.screen = screen;
+      ServerBus.INSTANCE.register(this);
    }
 
    public void parse(String c) {
@@ -69,9 +77,30 @@ public class CommandParser {
          case HEARD:
             showHeard();
             break;
+         case MON:
+         case MONITOR:
+            monitor(arguments);
+            break;
          default:
             unknownCommand();
       }
+   }
+
+   public void monitor(String[] arguments) {
+      if (arguments.length != 2) {
+         write(INCORRECT_ARGS);
+         return;
+      }
+      
+      MonitorLevel newLevel = MonitorLevel.findByName(arguments[1]);
+
+      if (newLevel == null) {
+         write(INVALID_ARGUMENT);
+         return;
+      } 
+
+      write("Monitor level changed to: " +newLevel.name());
+      monitorLevel = newLevel;
    }
 
    public void showHelp(String[] arguments) {
@@ -80,34 +109,34 @@ public class CommandParser {
    }
 
    public void showPorts() {
-      
+
       write("List of ports:");
-      
+
       List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
       int port = 0;
-      for (Connector connector: connectors) {
-         
-         write(port+": "+connector.getName()+"  "+connector.isRF());
+      for (Connector connector : connectors) {
+
+         write(port + ": " + connector.getName() + "  " + connector.isRF());
          port++;
       }
    }
-   
-   
+
    public void showHeard() {
 
-     MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
-     List<Node> nodes = heard.listHeard();
-     if (nodes.size() == 0) {
-        write("No nodes heard");
-     } else {
-        for (Node node: nodes) {
-           write(node.getCallsign()+"    "+new Date(node.getLastHeard()));
-        }
-     }
+      MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
+      List<Node> nodes = heard.listHeard();
+      if (nodes.size() == 0) {
+         write("No nodes heard");
+      } else {
+         for (Node node : nodes) {
+            write(node.getCallsign() + "    " + new Date(node.getLastHeard()));
+         }
+      }
    }
 
-   /** 
-    * Change the port number 
+   /**
+    * Change the port number
+    * 
     * @param arguments
     */
    public void changePort(String[] arguments) {
@@ -116,9 +145,9 @@ public class CommandParser {
             int p = Integer.parseInt(arguments[1]);
             if (DistriBBS.INSTANCE.getConnectivity().getPort(p) != null) {
                port = p;
-               write("Port changed to: "+port);
+               write("Port changed to: " + port);
             } else {
-               write("No such port: "+p);
+               write("No such port: " + p);
             }
          } catch (Throwable e) {
             write(INVALID_ARGUMENT);
@@ -138,33 +167,30 @@ public class CommandParser {
          write(INVALID_ARGUMENT);
          return;
       }
-      
-      
+
       String callsign = arguments[1].trim().toUpperCase(Locale.ENGLISH);
       Connector c = DistriBBS.INSTANCE.getConnectivity().getPort(port);
       PacketEngine p = c.getPacketEngine();
-      
+
       if (p == null) {
          write("Command not supported on this port");
          return;
       }
-      
-      write("Pinging '"+callsign+"'");
-      
-      p.ping(callsign,
-      new ResponseListener() {
 
-         @Override
-         public void response(Response r) {
-            
-            if (r.getResponseTime() != -1) {
-               write(r.getFrom()+" responded in "+r.getResponseTime()+"ms");
-            } else {
-               write("No ping response from "+r.getFrom());
-            }
-            
-         }
-      });
+      write("Pinging '" + callsign + "'");
+
+      p.ping(callsign,
+            new ResponseListener() {
+
+               @Override
+               public void response(Response r) {
+                  if (r.getResponseTime() != -1) {
+                     write(r.getFrom() + " responded in " + r.getResponseTime() + "ms");
+                  } else {
+                     write("No ping response from " + r.getFrom());
+                  }
+               }
+            });
    }
 
    public void unknownCommand() {
@@ -177,5 +203,25 @@ public class CommandParser {
 
    public void write(String s) {
       screen.write(s);
+   }
+   
+   @Subscribe
+   public void listen(RxRFPacket packet) {
+       switch(monitorLevel) {
+          case ALL: 
+             write(Tools.textOnly(packet.getPacket()));
+             break;
+          case ANNOUNCE:
+             if (packet.getCommand() == PacketTools.ANNOUNCE) {
+                write(Tools.textOnly(packet.getPacket()));
+             }
+             break;
+          case NONE:
+             
+       }
+   }
+   
+   public void stop() {
+      ServerBus.INSTANCE.unregister(this);
    }
 }

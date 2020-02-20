@@ -2,14 +2,13 @@ package org.prowl.distribbs.core;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
@@ -74,29 +73,13 @@ public class PacketEngine {
     * 
     * @param packet
     */
-   public void receivePacket(byte[] packet) {
-
-      // Packets should be in the form:
-      // source>destination:command:payload
-      int chev = Tools.indexOf('>', packet, 0);
-      int col = Tools.indexOf(':', packet, 0);
-      int colb = Tools.indexOf(':', packet, col + 1);
- 
-      if (chev == -1 || col == -1 || chev > col) {
-         return; // Invalid packet.
-      }
-
-      // Extract the bits from the packet we want
-      String source = new String(packet, 0, chev).toUpperCase(Locale.ENGLISH);
-      String destination = new String(packet, chev + 1, col-(chev+1)).toUpperCase(Locale.ENGLISH);
-      String command = null;
-      byte[] payload = null;
-      if (colb != -1) {
-         command = new String(packet, col + 1, colb-(col+1));
-         payload = new byte[packet.length - (colb+1)];
-         System.arraycopy(packet, colb+1, payload, 0, packet.length - (colb+1));
-      }
-  
+   public void receivePacket(RxRFPacket packet) {
+      
+      String source = packet.getSource();
+      String destination = packet.getDestination();
+      String command = packet.getCommand();
+      byte[] payload = packet.getPayload();
+      
       // Process any matching triggers
       ArrayList<TriggerRunnable> toRemove = new ArrayList<>();
       for (TriggerRunnable trigger : triggerList) {

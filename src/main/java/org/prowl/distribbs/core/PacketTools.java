@@ -8,8 +8,10 @@ import net.sf.marineapi.nmea.util.Position;
 
 public class PacketTools {
 
-   // Commands
+   // Reserved destinations
    public static final String ANNOUNCE = "ANNOUNCE"; // An announce packet (locator, callsign, etc)
+   
+   // Commands
    public static final String PING = "PING"; // Ping request
    
    // Responses
@@ -18,7 +20,7 @@ public class PacketTools {
    /**
     * Generate an announce packet - eg:
     * 
-    *  "G0TAI>ANNOUNCE:DistriBBS 0.02"
+    *  "G0TAI>ANNOUNCE:DistriBBS:locator:freetext"
     * 
     * @return
     */

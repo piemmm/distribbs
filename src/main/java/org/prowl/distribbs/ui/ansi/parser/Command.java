@@ -9,6 +9,7 @@ public enum Command {
    PORT, // Change Port: 'port 1'
    PORTS, // List ports
    HEARD, // List heard stations
+   MON,MONITOR, // Monitor a port
    PING; // Perform a ping
 
    public static Command findByName(final String name) {

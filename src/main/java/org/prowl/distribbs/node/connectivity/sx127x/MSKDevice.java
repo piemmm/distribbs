@@ -1,7 +1,6 @@
 package org.prowl.distribbs.node.connectivity.sx127x;
 
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -279,16 +278,18 @@ public class MSKDevice implements Device {
 
       Timer test = new Timer();
       test.schedule(new TimerTask() {
-         public void run() {
 
-            if (!tx) {
-               int tf = readRegister(0x3f);
-               //LOG.info("Register 3F:   " + Integer.toBinaryString(tf));
-               checkBuffer(false, tf);
-            }
+   public void run() {
 
-         }
-      }, 1000, 3);
+      if (!tx) {
+         int tf = readRegister(0x3f);
+         // LOG.info("Register 3F: " + Integer.toBinaryString(tf));
+         checkBuffer(false, tf);
+      }
+
+   }
+
+   },1000,3);
 
    }
 
@@ -362,16 +363,15 @@ public class MSKDevice implements Device {
             // Full packet received
 
             // Send to our packet engine
-            try {
-               byte[] decompressed = Tools.decompress(buffer.toByteArray());
                LOG.info("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()));
-               connector.getPacketEngine().receivePacket(decompressed);
-               
-               // Post the event for all and sundry
-               ServerBus.INSTANCE.post(new RxRFPacket(connector, buffer.toByteArray(), System.currentTimeMillis()));
-            } catch (EOFException e) {
-               LOG.info("MSK Rx corrupt payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()));
-            }
+               RxRFPacket rxRfPacket = new RxRFPacket(connector, buffer.toByteArray(), System.currentTimeMillis());
+               if (!rxRfPacket.isCorrupt()) {
+                  connector.getPacketEngine().receivePacket(rxRfPacket); 
+                  
+                  // Post the event for all and sundry
+                  ServerBus.INSTANCE.post(rxRfPacket);
+               }
+            
          }
       } finally {
 
@@ -389,7 +389,7 @@ public class MSKDevice implements Device {
 
    private void sendPacket(byte[] message) {
       tx = true;
-      LOG.info("MSK Tx payload(" + message.length + ")   "+ Tools.byteArrayToHexString(message));
+      LOG.info("MSK Tx payload(" + message.length + ")   " + Tools.byteArrayToHexString(message));
 
       // Standby mode to prevent any further rx or interrupts changing fifo
       writeRegister(REG_OP_MODE, MODE_STANDBY);
@@ -418,11 +418,14 @@ public class MSKDevice implements Device {
                buffer.write((byte) data);
             }
             x = readRegister(0x3f);
-            try { Thread.sleep(1); } catch(Throwable e) { }
+            try {
+               Thread.sleep(1);
+            } catch (Throwable e) {
+            }
 //            if ((x & 0x4) != 0 || (x & 0x2) != 0) {
-        //       LOG.info("Packet flag as complete: "+Integer.toBinaryString(x));
+            // LOG.info("Packet flag as complete: "+Integer.toBinaryString(x));
 //            }
- 
+
          }
          if ((x & 0x4) != 0) {
             getMessage();
