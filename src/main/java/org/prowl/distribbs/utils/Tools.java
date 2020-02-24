@@ -66,6 +66,9 @@ public class Tools {
     * @return the text only component of the binary content
     */
    public static String textOnly(byte[] binaryContent) {
+      if (binaryContent == null) {
+         return "";
+      }
       StringBuilder sb = new StringBuilder();
       for (int b : binaryContent) {
          if ((b > 31 && b < 127) || b == 9) {
@@ -188,9 +191,6 @@ public class Tools {
          BitOutputStream bitOut = new BitOutputStream(bos);
          AdaptiveHuffmanCompress.compress(new ByteArrayInputStream(data), bitOut);
          bitOut.close();
-
-         LOG.info("Compressed: " + data.length + " -> " + bos.size() + ": " + Tools.textOnly(bos.toByteArray()));
-
          return bos.toByteArray();
       } catch (Throwable e) {
          LOG.error(e.getMessage(), e);
@@ -211,11 +211,7 @@ public class Tools {
             ByteArrayInputStream bin = new ByteArrayInputStream(compressed);) {
 
          AdaptiveHuffmanDecompress.decompress(new BitInputStream(bin), dec);
-
-         LOG.info("Decompress: " + compressed.length + " -> " + dec.size() + ": " + Tools.textOnly(dec.toByteArray()));
-         dec.close();
-         LOG.info("Decompress stats: " + (start - System.currentTimeMillis()) + "ms");
-
+          dec.close();
          return dec.toByteArray();
 
       } catch (EOFException e) {

@@ -29,7 +29,6 @@ public class PacketEngine {
    }
    
    public void init() {
-      // This should go in the packetEngine
       long announceInterval = Math.max(1000l * 60l * 5l, connector.getAnnouncePeriod()); // minimum 5 minutes
       Timer announceTimer = new Timer();
       announceTimer.schedule(new TimerTask() {
@@ -37,10 +36,10 @@ public class PacketEngine {
             if (connector.isAnnounce()) {
                TxRFPacket packet = PacketTools.generateAnnouncePacket();
                packet.setConnector(connector);
-               connector.sendPacket(packet);
+              // connector.sendPacket(packet);
             }
          }
-      }, 3000, announceInterval);
+      }, 6000, announceInterval);
    }
 
    /**
@@ -80,7 +79,7 @@ public class PacketEngine {
       trigger.setTriggerTo(DistriBBS.INSTANCE.getMyCall());
       trigger.setTriggerPayload(time);
       trigger.setTriggerResponse(PacketTools.PONG);
-      trigger.setExpiresAt(System.currentTimeMillis() + 2000);
+      trigger.setExpiresAt(System.currentTimeMillis() + 6000);
       triggerList.add(trigger);
 
       TxRFPacket packet = new TxRFPacket(PacketTools.getMyCall(), callsign, PacketTools.PING, time);
@@ -94,6 +93,11 @@ public class PacketEngine {
     */
    public void receivePacket(RxRFPacket packet) {
       
+      // Ignore corrupt packets
+      if (packet.isCorrupt())
+         return;
+      
+      
       String source = packet.getSource();
       String destination = packet.getDestination();
       String command = packet.getCommand();
@@ -101,7 +105,7 @@ public class PacketEngine {
       
       // Process any matching triggers
       ArrayList<TriggerRunnable> toRemove = new ArrayList<>();
-      for (TriggerRunnable trigger : triggerList) {
+      for (TriggerRunnable trigger : new ArrayList<>(triggerList)) {
                 
          if (trigger.expired()) {
             toRemove.add(trigger);
@@ -127,7 +131,7 @@ public class PacketEngine {
       triggerList.removeAll(toRemove);
 
       // Process any non-state 'ui' style packets
-      if (destination.equals(DistriBBS.INSTANCE.getMyCall())) {
+      if (DistriBBS.INSTANCE.getMyCall().equals(destination)) {
          switch (command) {
             // Ping reply
             case PacketTools.PING:
@@ -137,28 +141,10 @@ public class PacketEngine {
       }
 
       // Process any state changes that are addressed to us
-      if (destination.equals(DistriBBS.INSTANCE.getMyCall())) {
+      if (DistriBBS.INSTANCE.getMyCall().equals(destination)) {
          // processStateChanges(source, destination, command, payload);
       }
 
    }
 
-//   public void sendPacket(String from, String to, String request, byte[] payload) {
-//      if (connector.canSend()) {
-//         try {
-//            String header = from + ">" + to + ":" + request;
-//            if (payload != null) {
-//               header = header + ":";
-//            }
-//            byte[] toSend = new byte[header.getBytes().length + payload.length];
-//            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//            bos.write(header.getBytes());
-//            bos.write(payload);
-//            bos.close();
-//            connector.sendPacket(bos.toByteArray());
-//         } catch (Throwable e) {
-//            LOG.error(e.getMessage(), e);
-//         }
-//      }
-//   }
 }

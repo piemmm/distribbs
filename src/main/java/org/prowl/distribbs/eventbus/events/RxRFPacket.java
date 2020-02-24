@@ -64,6 +64,10 @@ public class RxRFPacket extends BaseEvent {
       }
 
    }
+   
+   public void setCorrupt() {
+      this.corrupt = true;
+   }
 
    public synchronized byte[] getPacket() {
       return packet;

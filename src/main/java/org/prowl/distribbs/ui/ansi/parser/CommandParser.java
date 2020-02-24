@@ -208,13 +208,17 @@ public class CommandParser {
 
    @Subscribe
    public void listen(RxRFPacket packet) {
+      String extra = "";
+      if (packet.isCorrupt()) {
+         extra = "(CRC INCORRECT)";
+      }
       switch (monitorLevel) {
          case ALL:
-            write(Tools.textOnly(packet.getPacket()));
+            write("Rx>"+extra + Tools.textOnly(packet.getPacket()));
             break;
          case ANNOUNCE:
             if (packet.getCommand() == PacketTools.ANNOUNCE) {
-               write(Tools.textOnly(packet.getPacket()));
+               write("Rx>"+extra + Tools.textOnly(packet.getPacket()));
             }
             break;
          case NONE:
@@ -227,11 +231,11 @@ public class CommandParser {
    public void listen(TxRFPacket packet) {
       switch (monitorLevel) {
          case ALL:
-            write(Tools.textOnly(packet.getPacket()));
+            write("Tx>"+Tools.textOnly(packet.getPacket()));
             break;
          case ANNOUNCE:
             if (packet.getCommand() == PacketTools.ANNOUNCE) {
-               write(Tools.textOnly(packet.getPacket()));
+               write("Tx>"+Tools.textOnly(packet.getPacket()));
             }
             break;
          case NONE:

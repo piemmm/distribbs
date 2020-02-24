@@ -14,19 +14,15 @@ import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.utils.Tools;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.Pin;
-import com.pi4j.io.gpio.PinEdge;
 import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
-import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
@@ -83,13 +79,19 @@ public class MSKDevice implements Device {
    private Pin                   dio                 = RaspiPin.GPIO_07;
    private Pin                   ss                  = RaspiPin.GPIO_06;
 
-   private boolean               tx                  = false;                          // True when in TX.
+   private long                  lastSent            = 0;                              // Time when we last finished sending a packet
+   private long                  lastReceivedOrDCD   = 0;                              // Time when we last finished receiving a packet
+   private double                rssi                = 0;
    private Semaphore             spiLock             = new Semaphore(1);
+   private Semaphore             trxLock             = new Semaphore(1, true);
+
+   private double                rssiNoiseFloor      = 0;
+   private double                rssiThreshold       = 0;
 
    private ByteArrayOutputStream buffer              = new ByteArrayOutputStream();
 
    private Connector             connector;
-   ExecutorService               pool                = Executors.newFixedThreadPool(2);
+   ExecutorService               pool                = Executors.newFixedThreadPool(5);
 
    public MSKDevice(Connector connector) {
       this.connector = connector;
@@ -108,42 +110,46 @@ public class MSKDevice implements Device {
          // Interrupt setup
          gpioDio = gpio.provisionDigitalInputPin(dio, PinPullResistance.PULL_DOWN);
          gpioDio.setShutdownOptions(true);
-         gpioDio.addListener(new GpioPinListenerDigital() {
-            @Override
-            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-               // LOG.info("State change: " + event.getEventType().toString() + " " +
-               // event.getEdge().getName());
-
-               if (event.getEdge() == PinEdge.RISING) {
-                  if (tx) {
-                     // Clear RX and put back into RX mode (stops transmitting after packet is sent)
-                     // try { Thread.sleep(1); } catch(Throwable e) { }
-                     writeRegister(REG_OP_MODE, 0x04);
-                     writeRegister(REG_OP_MODE, 0x05);
-                     tx = false;
-
-                  } else {
-                     // RX mode - payloadReady
-                     int tf = readRegister(0x3f);
-//LOG.info("INT REG: " + Integer.toBinaryString(tf));
-                     // check crc flag
-                     boolean crcOk = (tf & 0x2) == 0x2;
-                     if (!crcOk) {
-                        LOG.info("Ignoring packet with bad CRC");
-                     }
-
-                     checkBuffer(true, tf);
-                     if (crcOk) {
-                        getMessage();
-                     } else {
-                        getMessage();
-                        resetPacket();
-                     }
-                  }
-               }
-
-            }
-         });
+//         gpioDio.addListener(new GpioPinListenerDigital() {
+//            @Override
+//            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
+//               // LOG.info("State change: " + event.getEventType().toString() + " " +
+//               // event.getEdge().getName());
+//
+//               if (event.getEdge() == PinEdge.RISING) {
+//                  if (tx) {
+////                     // writeRegister(REG_OP_MODE, MODE_STANDBY);
+////                     try { Thread.sleep(30); } catch(Throwable e) { }
+////                     writeRegister(REG_OP_MODE, 0x04);
+////                     try { Thread.sleep(10); } catch(Throwable e) { }
+////                     writeRegister(REG_OP_MODE, 0x05);
+////                     try {
+////                        Thread.sleep(110);
+////                     } catch (Throwable e) {
+////                     }
+////                     LOG.info("TX End");
+////                     trxLock.release();
+////                     tx = false;
+//
+//                     // txLock.release();
+//                  } else {
+////                     // RX mode - payloadReady
+////                     int tf = readRegister(0x3f);
+////
+////                     // check crc flag
+////                     boolean crcOk = (tf & 0x2) == 0x2;
+////                     if (!crcOk) {
+////                        LOG.info("Packet has bad CRC2");
+////                     }
+////
+////                     if (!checkBuffer(true, tf)) {
+////                        getMessage(crcOk);
+////                     }
+//                  }
+//               }
+//
+//            }
+//         });
 
          // Select pin
          gpioSS = gpio.provisionDigitalOutputPin(ss, PinState.HIGH);
@@ -171,7 +177,7 @@ public class MSKDevice implements Device {
          // writeRegister(0x03, 0x83); // bitrate 7:0
          // writeRegister(0x02, 0x06); // bitrate 15:8
 
-         // Defaults to 12.5kbaud
+         // Defaults to 12.5kbaud (10.5kHz deviation needed)
          // writeRegister(0x03, 0x00); // bitrate 7:0
          // writeRegister(0x02, 0x0A); // bitrate 15:8
 
@@ -239,7 +245,8 @@ public class MSKDevice implements Device {
          writeRegister(0x33, 0b00110101); // Node Address
          writeRegister(0x30, 0b11011000); // Setup for packet mode (not direct transmitter keying)
          writeRegister(0x31, 0b01000000); // packet mode
-         writeRegister(0x35, 0b10010000); // fifo threshold (32 bytes)
+         writeRegister(0x35, 0b10111111); // fifo threshold (64 bytes)
+
          writeRegister(0x27, 0b00110110); // sync word, preamble polarity, autorestartrxmode
 
          writeRegister(0x28, 0xff);
@@ -262,12 +269,14 @@ public class MSKDevice implements Device {
 
          sleep(500);
 
+         writeRegister(0x0d, 0b00111111); // set opts
+
          writeRegister(REG_OP_MODE, 0x04);
          sleep(350);
          writeRegister(REG_OP_MODE, 0x05);
          sleep(150);
          // writeRegister(0x0d, 0b00111000); // set opts
-         writeRegister(0x0d, 0b00111111); // set opts
+         sampleRSSI();
 
          sleep(150);
 
@@ -279,16 +288,26 @@ public class MSKDevice implements Device {
       test.schedule(new TimerTask() {
 
          public void run() {
+            while (true) {
+               trxLock.acquireUninterruptibly();
 
-            if (!tx) {
+               // Keep in RX until full packet received.
                int tf = readRegister(0x3f);
-               // LOG.info("Register 3F: " + Integer.toBinaryString(tf));
                checkBuffer(false, tf);
-            }
+               while (buffer.size() > 0 || readRegister(0x11) < rssiThreshold) {
+                  tf = readRegister(0x3f);
+                  checkBuffer(false, tf);
+               }
+               trxLock.release();
 
+               try {
+                  Thread.sleep(10);
+               } catch (Throwable e) {
+               }
+            }
          }
 
-      }, 1000, 3);
+      }, 1000);
 
    }
 
@@ -354,7 +373,7 @@ public class MSKDevice implements Device {
       gpioSS.low();
    }
 
-   private void getMessage() {
+   private void getMessage(boolean crcOk) {
 
       try {
          // Full packet received
@@ -366,14 +385,18 @@ public class MSKDevice implements Device {
                public void run() {
 
                   // Send to our packet engine
-                  LOG.info("MSK Rx payload(" + buffer.size() + "): " + Tools.byteArrayToHexString(buffer.toByteArray()));
+                  // LOG.info("MSK Rx payload(" + array.length + "): " +
+                  // Tools.byteArrayToHexString(array));
                   RxRFPacket rxRfPacket = new RxRFPacket(connector, array, rxTime);
-                  if (!rxRfPacket.isCorrupt()) {
-                     connector.getPacketEngine().receivePacket(rxRfPacket);
-
-                     // Post the event for all and sundry
-                     ServerBus.INSTANCE.post(rxRfPacket);
+                  if (!crcOk) {
+                     rxRfPacket.setCorrupt();
                   }
+
+                  // Process the packet
+                  connector.getPacketEngine().receivePacket(rxRfPacket);
+
+                  // Post the event for all and sundry
+                  ServerBus.INSTANCE.post(rxRfPacket);
                }
             });
          }
@@ -386,63 +409,131 @@ public class MSKDevice implements Device {
    /**
     * Send a message packet
     */
-   public void sendMessage(TxRFPacket packet) {
-      ServerBus.INSTANCE.post(packet);
-      sendPacket(packet.getCompressedPacket());
+   public void sendMessage(final TxRFPacket packet) {
+      pool.execute(new Runnable() {
+         public void run() {
+            ServerBus.INSTANCE.post(packet);
+            sendPacket(packet.getCompressedPacket());
+         }
+      });
    }
 
-   private void sendPacket(byte[] message) {
-      tx = true;
-      LOG.info("MSK Tx payload(" + message.length + ")   " + Tools.byteArrayToHexString(message));
+   private synchronized void sendPacket(byte[] message) {
 
-      // Standby mode to prevent any further rx or interrupts changing fifo
-      writeRegister(REG_OP_MODE, MODE_STANDBY);
-      writeRegister(REG_OP_MODE, MODE_TX);
-      writeRegister(REG_FIFO, (int) message.length); // fill fifo
-      for (byte b : message) {
-         while ((readRegister(0x3f) & 0x80) > 0) {
-            Thread.yield();
+      try {
+
+         txDelay();
+
+         while ((readRegister(0x11)) < rssiThreshold || buffer.size() > 0) {
+            rssi = readRegister(0x11);
+            // LOG.info("1WAIT RX DCD - rssi=-" + rssi);
+            try {
+               Thread.sleep(130);
+            } catch (Throwable e) {
+            }
          }
-         writeRegister(REG_FIFO, (int) b); // fill fifo
 
+         trxLock.acquireUninterruptibly();
+         // LOG.info("TX Start");
+
+         // Wait for non busy channel
+         while ((readRegister(0x11)) < rssiThreshold || buffer.size() > 0) {
+            rssi = readRegister(0x11);
+            // LOG.info("2WAIT RX DCD - rssi=-" + rssi);
+            try {
+               Thread.sleep(130);
+            } catch (Throwable e) {
+            }
+            checkBuffer(false, readRegister(0x3f));
+         }
+
+         // Standby mode to prevent any further rx or interrupts changing fifo
+         writeRegister(REG_OP_MODE, MODE_STANDBY);
+         writeRegister(REG_OP_MODE, MODE_TX);
+         try {
+            Thread.sleep(10);
+         } catch (Throwable e) {
+         }
+         writeRegister(REG_FIFO, (int) message.length); // fill fifo
+         for (byte b : message) {
+            while ((readRegister(0x3f) & 0x80) > 0) {
+            }
+            writeRegister(REG_FIFO, (int) b); // fill fifo
+         }
+
+         // Wait for packet to be sent
+         long timeout = System.currentTimeMillis() + 1500; // 1.5 Second max for badly behaving tx
+         while ((readRegister(0x3f) & 0x08) == 0 && System.currentTimeMillis() < timeout) {
+            try {
+               Thread.sleep(1);
+            } catch (Throwable e) {
+            }
+         }
+
+      } finally {
+         writeRegister(REG_OP_MODE, 0x04);
+         writeRegister(REG_OP_MODE, 0x05);
+         lastSent = System.currentTimeMillis();
+         trxLock.release();
+      }
+
+      // try { Thread.sleep(10); } catch(Throwable e) { }
+
+   }
+
+   public void txDelay() {
+      long delay = ((long) (Math.random() * 300d)) - (System.currentTimeMillis() - lastSent); // - Math.max(lastSent,lastReceivedOrDCD));
+      if (delay > 0) {
+         try {
+            Thread.sleep(delay);
+         } catch (Throwable e) {
+         }
       }
    }
 
    private int     packetLength = 0;
    private boolean lengthRead   = false;
 
-   public synchronized void checkBuffer(boolean completed, int x) {
-      if ((x & 0x20) != 0 || completed) {
-         while ((x & 0x40) == 0) {
-            int data = readRegister(REG_FIFO);
-            if (!lengthRead) {
-               packetLength = data;
-               lengthRead = true;
-            } else {
-               buffer.write((byte) data);
-            }
-
-            try {
-               Thread.sleep(0, 400000);
-            } catch (Throwable e) {
-            }
-
-            x = readRegister(0x3f);
-
+   public boolean checkBuffer(boolean completed, int x) {
+      // if ((x & 0x20) != 0 || completed) {
+      while ((x & 0x40) == 0) {
+         int data = readRegister(REG_FIFO);
+         if (!lengthRead) {
+            packetLength = data;
+            lengthRead = true;
+         } else {
+            buffer.write((byte) data);
          }
-         if ((x & 0x4) != 0) {
-            getMessage();
-            resetPacket();
+
+         // LOG.info("BS: " + buffer.size() + " " + packetLength);
+
+         if (buffer.size() == packetLength) {
+            boolean crcOk = (x & 0x2) == 0x2;
+            getMessage(true);// crcOk);
          }
+
+         x = readRegister(0x3f);
+
       }
+
+      lastReceivedOrDCD = System.currentTimeMillis();
+
+      if ((x & 0x4) != 0) {
+         boolean crcOk = (x & 0x2) == 0x2;
+         if (!crcOk) {
+            LOG.info("Packet has bad CRC1");
+         }
+         getMessage(crcOk);
+         return true;
+      }
+      // }
+      return false;
    }
 
    public void resetPacket() {
-
       buffer.reset();
       lengthRead = false;
-      packetLength = 0;
-      
+      packetLength = 9999;
    }
 
    public final void sleep(final long millis) {
@@ -450,6 +541,32 @@ public class MSKDevice implements Device {
          Thread.sleep(millis);
       } catch (InterruptedException e) {
       }
+   }
+
+   /**
+    * Sample the noise floor (performed at startup and periodically)
+    */
+   public void sampleRSSI() {
+      LOG.info("Sampling RSSI...");
+      double highest = 0;
+      double threshold = 0;
+
+      long end = System.currentTimeMillis() + 5000l; // 5 seconds sampling
+      while (System.currentTimeMillis() < end) {
+         double rssi = (readRegister(0x11) / 2d);
+
+         if (rssi > highest) {
+            highest = rssi; // Should end up being the noise floor in -dBm
+         }
+
+      }
+
+      // Compute the threshold for considering a signal present.
+      threshold = highest - 6d;
+
+      LOG.info("Noise floor: -" + highest + "dBm    Threshold set to: -" + threshold + "dBm");
+      rssiThreshold = threshold;
+      rssiNoiseFloor = highest;
    }
 
 }

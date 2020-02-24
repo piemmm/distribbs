@@ -36,6 +36,12 @@ public class MHeard {
    
    @Subscribe
    public void heardNode(RxRFPacket packet) {
+      
+      // Ignore corrupt packets in the heard list.
+      if (packet.isCorrupt()) {
+         return;
+      }
+      
       // Get the packet and decode to a node
       String callsign = PacketTools.decodeFrom(packet.getPacket());
       if (callsign != null) {

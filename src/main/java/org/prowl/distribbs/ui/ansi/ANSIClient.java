@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.ui.ansi.parser.Command;
 import org.prowl.distribbs.ui.ansi.parser.CommandParser;
 import org.prowl.distribbs.ui.ansi.parser.ScreenWriter;
 
@@ -103,6 +105,8 @@ public class ANSIClient extends Thread implements ScreenWriter {
 
       inputPanel.takeFocus();
 
+      showGreeting();
+      
       gui.addWindowAndWait(desktop);
 
    }
@@ -117,5 +121,14 @@ public class ANSIClient extends Thread implements ScreenWriter {
       outputPanel.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
    }
 
+   
+   /**
+    * Show a greeting about the system when a user connects
+    */
+   public void showGreeting() {
+      write("*** "+DistriBBS.VERSION_STRING + " build " + DistriBBS.BUILD);
+      commandParser.doCommand(Command.PORTS, new String[] { });
+ 
+   }
    
 }
