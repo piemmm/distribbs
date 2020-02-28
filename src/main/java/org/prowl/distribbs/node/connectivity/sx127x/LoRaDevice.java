@@ -85,9 +85,10 @@ public class LoRaDevice implements Device {
    private GpioPinDigitalInput  gpioDio;
    private Pin                  dio                        = RaspiPin.GPIO_07;
    private Pin                  ss                         = RaspiPin.GPIO_06;
+   private int                  frequency                  = SX1276_DEFAULT_FREQ;
 
-   private Connector connector;
-   
+   private Connector            connector;
+
    public LoRaDevice(Connector connector) {
       this.connector = connector;
       init();
@@ -101,7 +102,6 @@ public class LoRaDevice implements Device {
          spi = SpiFactory.getInstance(SpiChannel.CS0, SpiDevice.DEFAULT_SPI_SPEED, SpiMode.MODE_0);
          gpio = GpioFactory.getInstance();
 
-        
          // Interrupt setup
          gpioDio = gpio.provisionDigitalInputPin(dio, PinPullResistance.PULL_DOWN);
          gpioDio.setShutdownOptions(true);
@@ -124,7 +124,7 @@ public class LoRaDevice implements Device {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
- 
+
       // Get the device version
       int version = readRegister(REG_VERSION);
       if (version == 0x12) {
@@ -184,7 +184,6 @@ public class LoRaDevice implements Device {
       writeRegister(REG_FRF_MID, (int) ((freq >> 8) & 0xFF));
       writeRegister(REG_FRF_LSB, (int) (freq & 0xFF));
    }
- 
 
    private int readRegister(int addr) {
       byte spibuf[] = new byte[2];
@@ -232,7 +231,7 @@ public class LoRaDevice implements Device {
          if (message != null) {
             LOG.debug("LoRa Rx payload: " + Tools.byteArrayToHexString(message) + "  \"" + Tools.textOnly(message) + "\"");
             // Post the event for all and sundry
-            ServerBus.INSTANCE.post(new RxRFPacket(connector, message, System.currentTimeMillis()));
+            ServerBus.INSTANCE.post(new RxRFPacket(connector, message, System.currentTimeMillis(), 0));
          }
       }
 
@@ -242,9 +241,9 @@ public class LoRaDevice implements Device {
     * Send a message packet via LoRa
     */
    public void sendMessage(TxRFPacket packet) {
-     
+
       ServerBus.INSTANCE.post(packet);
-      LOG.debug("LoRa Tx payload(" + packet.getCompressedPacket().length+")");
+      LOG.debug("LoRa Tx payload(" + packet.getCompressedPacket().length + ")");
       sendPacket(packet.getCompressedPacket());
    }
 
@@ -313,5 +312,17 @@ public class LoRaDevice implements Device {
       } catch (InterruptedException e) {
       }
    }
+   
+   public int getFrequency() {
+      return frequency;
+   }
 
+   public double getNoiseFloor() {
+      return 0;
+   }
+
+   public double getRSSI() {
+      return 0;
+   }
+   
 }

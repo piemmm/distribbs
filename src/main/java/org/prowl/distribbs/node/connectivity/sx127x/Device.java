@@ -6,4 +6,9 @@ public interface Device {
 
    public void sendMessage(TxRFPacket packet);
 
+   public int getFrequency();
+   
+   public double getNoiseFloor();
+
+   public double getRSSI();
 }

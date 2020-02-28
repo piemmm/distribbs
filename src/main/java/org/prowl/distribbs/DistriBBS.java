@@ -1,6 +1,10 @@
 package org.prowl.distribbs;
 
 import java.util.Locale;
+import java.util.logging.Formatter;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,9 +24,15 @@ public enum DistriBBS {
 
    INSTANCE;
 
+   static {
+      // Set our default log format before any logger is created
+      System.setProperty("java.util.logging.SimpleFormatter.format", "%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
+   }
+
+   public static final String NAME           = "DistriBBS";
    public static final String VERSION        = "0.02";
    public static final long   BUILD          = 2020021401;
-   public static final String VERSION_STRING = "DistriBBS v" + VERSION;
+   public static final String VERSION_STRING = NAME + " v" + VERSION;
    public static final String INFO_TEXT      = "   www.distribbs.net";
    private static final Log   LOG            = LogFactory.getLog("DistriBBS");
 
@@ -32,22 +42,21 @@ public enum DistriBBS {
    private Status             status;
    private Statistics         statistics;
    private UI                 ui;
-   private String myCall;
+   private String             myCall;
 
    DistriBBS() {
    }
 
    public void startup() {
-
       // Load configuration and initialise everything needed.
       configuration = new Config();
-      
+
       // Set our callsign
       myCall = DistriBBS.INSTANCE.getConfiguration().getConfig("callsign", "NOCALL").toUpperCase(Locale.ENGLISH);
-      
+
       // Create statistics holder
-      statistics = new Statistics();   
-      
+      statistics = new Statistics();
+
       // Init status objects
       status = new Status();
 
@@ -93,11 +102,11 @@ public enum DistriBBS {
    public Storage getStorage() {
       return storage;
    }
-   
+
    public Statistics getStatistics() {
       return statistics;
    }
-   
+
    public Connectivity getConnectivity() {
       return connectivity;
    }
@@ -105,10 +114,9 @@ public enum DistriBBS {
    public static void main(String[] args) {
       INSTANCE.startup();
    }
-   
+
    public String getMyCall() {
       return myCall;
    }
-   
-  
+
 }

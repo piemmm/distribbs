@@ -1,9 +1,12 @@
 package org.prowl.distribbs.ui.ansi.parser;
 
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.commons.lang.StringUtils;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketEngine;
@@ -112,25 +115,44 @@ public class CommandParser {
    public void showPorts() {
 
       write("List of ports:");
+      
+      NumberFormat nf = NumberFormat.getInstance();
+      nf.setMaximumFractionDigits(4);
+      nf.setMinimumFractionDigits(3);
 
       List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
       int port = 0;
+      write("Port  Driver       RF      Frequency    Noise Floor");
+      write("---------------------------------------------------");
       for (Connector connector : connectors) {
 
-         write(port + ": " + connector.getName() + "  " + connector.isRF());
+         String noiseFloor = "";
+         if (connector.isRF()) {
+            noiseFloor = "-" + connector.getNoiseFloor() + " dBm";
+         }
+         
+         String freq = "";
+         if (connector.isRF()) {
+            freq = nf.format(connector.getFrequency() / 1000000d); 
+         }
+
+         write(port + ":    " + StringUtils.rightPad(connector.getName(), 13) + StringUtils.rightPad(connector.isRF() ? "yes" : "no", 8) +StringUtils.rightPad(freq,  13)+ noiseFloor);
          port++;
       }
    }
 
    public void showHeard() {
 
+      SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
       MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
       List<Node> nodes = heard.listHeard();
       if (nodes.size() == 0) {
          write("No nodes heard");
       } else {
+         write("Callsign       Last Heard               RSSI");
+         write("--------------------------------------------");
          for (Node node : nodes) {
-            write(node.getCallsign() + "    " + new Date(node.getLastHeard()));
+            write(StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 24) + StringUtils.rightPad("-" + node.getRSSI() + " dBm",10));
          }
       }
    }
@@ -214,28 +236,27 @@ public class CommandParser {
       }
       switch (monitorLevel) {
          case ALL:
-            write("Rx>"+extra + Tools.textOnly(packet.getPacket()));
+            write("Rx>" + extra + Tools.textOnly(packet.getPacket()));
             break;
          case ANNOUNCE:
             if (packet.getCommand() == PacketTools.ANNOUNCE) {
-               write("Rx>"+extra + Tools.textOnly(packet.getPacket()));
+               write("Rx>" + extra + Tools.textOnly(packet.getPacket()));
             }
             break;
          case NONE:
             // Nothing
       }
    }
-   
-   
+
    @Subscribe
    public void listen(TxRFPacket packet) {
       switch (monitorLevel) {
          case ALL:
-            write("Tx>"+Tools.textOnly(packet.getPacket()));
+            write("Tx>" + Tools.textOnly(packet.getPacket()));
             break;
          case ANNOUNCE:
             if (packet.getCommand() == PacketTools.ANNOUNCE) {
-               write("Tx>"+Tools.textOnly(packet.getPacket()));
+               write("Tx>" + Tools.textOnly(packet.getPacket()));
             }
             break;
          case NONE:

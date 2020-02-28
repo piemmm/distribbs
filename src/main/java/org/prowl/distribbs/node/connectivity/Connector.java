@@ -27,4 +27,9 @@ public interface Connector {
    
    public boolean sendPacket(TxRFPacket packet);
    
+   public int getFrequency();
+   
+   public double getNoiseFloor();
+   
+   public double getRSSI();
 }

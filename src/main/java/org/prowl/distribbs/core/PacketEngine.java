@@ -36,7 +36,7 @@ public class PacketEngine {
             if (connector.isAnnounce()) {
                TxRFPacket packet = PacketTools.generateAnnouncePacket();
                packet.setConnector(connector);
-              // connector.sendPacket(packet);
+               connector.sendPacket(packet);
             }
          }
       }, 6000, announceInterval);
@@ -139,12 +139,13 @@ public class PacketEngine {
                break;
          }
       }
-
+       
       // Process any state changes that are addressed to us
       if (DistriBBS.INSTANCE.getMyCall().equals(destination)) {
          // processStateChanges(source, destination, command, payload);
       }
 
    }
+
 
 }

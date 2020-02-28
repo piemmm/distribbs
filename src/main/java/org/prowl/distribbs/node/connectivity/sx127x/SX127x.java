@@ -106,6 +106,7 @@ public class SX127x implements Connector {
    public boolean canSend() {
       return true;
    }
+   
 
    @Override
    public boolean sendPacket(TxRFPacket packet) {
@@ -118,7 +119,28 @@ public class SX127x implements Connector {
    }
 
    public String getName() {
-      return getClass().getName();
+      return getClass().getSimpleName();
    }
 
+
+   public int getFrequency() {
+      if (device == null) {
+         return 0;
+      }
+      return device.getFrequency();
+   }
+   
+   public double getNoiseFloor() {
+      if (device == null) {
+         return 0;
+      }
+      return device.getNoiseFloor();
+   }
+
+   public double getRSSI() {
+      if (device == null) {
+         return 0;
+      }
+      return device.getRSSI();
+   }
 }

@@ -1,6 +1,7 @@
 package org.prowl.distribbs.node.connectivity.gps;
 
 import java.io.IOException;
+import java.io.Reader;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
@@ -17,19 +18,29 @@ import com.pi4j.io.serial.FlowControl;
 import com.pi4j.io.serial.Parity;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialConfig;
-import com.pi4j.io.serial.SerialDataEvent;
-import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
 
+import net.sf.marineapi.nmea.io.SentenceReader;
 import net.sf.marineapi.nmea.parser.DataNotAvailableException;
 import net.sf.marineapi.nmea.parser.SentenceFactory;
 import net.sf.marineapi.nmea.sentence.GLLSentence;
 import net.sf.marineapi.nmea.sentence.GSASentence;
 import net.sf.marineapi.nmea.sentence.Sentence;
+import net.sf.marineapi.nmea.util.Date;
 import net.sf.marineapi.nmea.util.GpsFixStatus;
 import net.sf.marineapi.nmea.util.Position;
+import net.sf.marineapi.nmea.util.Time;
+import net.sf.marineapi.provider.HeadingProvider;
+import net.sf.marineapi.provider.PositionProvider;
+import net.sf.marineapi.provider.SatelliteInfoProvider;
+import net.sf.marineapi.provider.event.HeadingEvent;
+import net.sf.marineapi.provider.event.HeadingListener;
+import net.sf.marineapi.provider.event.PositionEvent;
+import net.sf.marineapi.provider.event.ProviderListener;
+import net.sf.marineapi.provider.event.SatelliteInfoEvent;
+import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 public class GPS implements Connector {
 
@@ -39,6 +50,11 @@ public class GPS implements Connector {
    private Serial                    serial;
    private SentenceFactory           sf;
    private static Position           currentPosition;
+   private static Double             currentCourse;
+   private static Double             currentHeading;
+   private static Double             currentSpeed;
+   private static Time               currentTime;
+   private static Date               currentDate;
 
    public GPS(HierarchicalConfiguration config) {
       this.config = config;
@@ -48,42 +64,7 @@ public class GPS implements Connector {
    public void start() throws IOException {
 
       serial = SerialFactory.createInstance();
-      // create and register the serial data listener
-      serial.addListener(new SerialDataEventListener() {
-         StringBuilder sb = new StringBuilder();
-
-         @Override
-         public void dataReceived(SerialDataEvent event) {
-
-            /**
-             * Read the data from the serial port
-             */
-            try {
-
-               byte[] dat = event.getBytes();
-               // Parse the serial rx data into each GPS sentence
-               for (int b : dat) {
-                  if (b > 31) {
-                     sb.append((char) b);
-                  } else if (b == 10 || b == 13) {
-                     String sentence = sb.toString();
-                     sb.delete(0, sb.length());
-                     if (sentence.length() > 0) {
-                        parseSentence(sentence);
-                     }
-                  }
-                  // If for some reason we never get a return, then
-                  // discard the data rather than run out of ram.
-                  if (sb.length() > 100000) {
-                     sb.delete(0, sb.length());
-                  }
-               }
-            } catch (Throwable e) {
-               LOG.error(e);
-            }
-
-         }
-      });
+      
 
       // create serial config object
       SerialConfig config = new SerialConfig();
@@ -101,53 +82,71 @@ public class GPS implements Connector {
          serial.open(config);
 
       } catch (Throwable e) {
-         // Try  3B+
+         // Try 3B+
          try {
             config.device("/dev/ttyS0")
-            .baud(Baud._9600)
-            .dataBits(DataBits._8)
-            .parity(Parity.NONE)
-            .stopBits(StopBits._1)
-            .flowControl(FlowControl.NONE);
+                  .baud(Baud._9600)
+                  .dataBits(DataBits._8)
+                  .parity(Parity.NONE)
+                  .stopBits(StopBits._1)
+                  .flowControl(FlowControl.NONE);
             serial.open(config);
-         } catch(Throwable ex) {
-             // Rethrow as IOE
-             throw new IOException(e);
+         } catch (Throwable ex) {
+            // Rethrow as IOE
+            throw new IOException(e);
          }
-      
+
       }
+      
+      
+      SentenceReader reader = new SentenceReader(serial.getInputStream());
+
+      HeadingProvider provider = new HeadingProvider(reader);
+      provider.addListener(new HeadingListener() {
+
+         @Override
+         public void providerUpdate(HeadingEvent evt) {
+            currentHeading = evt.getHeading();
+         }
+      });
+
+      PositionProvider pprovider = new PositionProvider(reader);
+      pprovider.addListener(new ProviderListener<PositionEvent>() {
+
+         @Override
+         public void providerUpdate(PositionEvent evt) {
+            currentPosition = evt.getPosition();
+            currentTime = evt.getTime();
+            currentCourse = evt.getCourse();
+            currentSpeed = evt.getSpeed();
+            currentDate = evt.getDate();
+         }
+      });
+
+      SatelliteInfoProvider sprovider = new SatelliteInfoProvider(reader);
+      sprovider.addListener(new SatelliteInfoListener() {
+
+         @Override
+         public void providerUpdate(SatelliteInfoEvent evt) {
+            GpsFixStatus status = evt.getGpsFixStatus();
+            if (status == GpsFixStatus.GPS_NA || status == GpsFixStatus.GPS_2D) {
+               // Pulse GPS led until locked
+               DistriBBS.INSTANCE.getStatus().pulseGPS(150);
+               currentPosition = null;
+            } else if (status == GpsFixStatus.GPS_3D) {
+               // LED on all the time
+               DistriBBS.INSTANCE.getStatus().pulseGPS(1500);
+            }
+         }
+
+      });
+
+      reader.start();
 
    }
 
    public void stop() {
 
-   }
-
-   /**
-    * Parse the GPS sentence into easier to manage positional data.
-    * 
-    * @param sentence the raw NMEA GPS data (GPGLL, GPGSV, etc)
-    */
-   public void parseSentence(String sentence) {
-      try {
-         Sentence parsed = sf.createParser(sentence);
-         if (parsed instanceof GLLSentence) {
-            currentPosition = ((GLLSentence) parsed).getPosition();
-            
-            DistriBBS.INSTANCE.getStatus().pulseGPS(2000);
-         } else if (parsed instanceof GSASentence) {
-            GpsFixStatus status = ((GSASentence) parsed).getFixStatus();
-            if (status == GpsFixStatus.GPS_NA) {
-               DistriBBS.INSTANCE.getStatus().pulseGPS(150);
-               currentPosition = null;
-            }
-         }
-      } catch (DataNotAvailableException e) {
-         // GPS data not available
-      } catch (Throwable e) {
-         LOG.error(e);
-      }
-      
    }
 
    /**
@@ -159,10 +158,30 @@ public class GPS implements Connector {
       return currentPosition;
    }
 
-   public String getName() {
-      return getClass().getName();
+   public static Time getCurrentTime() {
+      return currentTime;
    }
    
+   public static Double getCurrentCourse() {
+      return currentCourse;
+   }
+
+   public static Double getCurrentHeading() {
+      return currentHeading;
+   }
+
+   public static Double getCurrentSpeed() {
+      return currentSpeed;
+   }
+
+   public static Date getCurrentDate() {
+      return currentDate;
+   }
+
+   public String getName() {
+      return getClass().getSimpleName();
+   }
+
    public boolean isAnnounce() {
       return false;
    }
@@ -174,7 +193,7 @@ public class GPS implements Connector {
    public Modulation getModulation() {
       return Modulation.NONE;
    }
-   
+
    public boolean isRF() {
       return false;
    }
@@ -191,6 +210,17 @@ public class GPS implements Connector {
    public PacketEngine getPacketEngine() {
       return null;
    }
-   
-   
+
+   public double getNoiseFloor() {
+      return 0;
+   }
+
+   public double getRSSI() {
+      return 0;
+   }
+
+   public int getFrequency() {
+      return 0;
+   }
+
 }

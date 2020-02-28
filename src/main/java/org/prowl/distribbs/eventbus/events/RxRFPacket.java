@@ -26,14 +26,16 @@ public class RxRFPacket extends BaseEvent {
    private String           destination;
    private String           command;
    private byte[]           payload;
+   private double           rssi;
    private boolean          corrupt = false;
 
-   public RxRFPacket(Connector connector, byte[] compressedPacket, long rxTime) {
+   public RxRFPacket(Connector connector, byte[] compressedPacket, long rxTime, double rssi) {
       super();
       this.rxTime = rxTime;
       this.connector = connector;
       this.packet = null;
       this.compressedPacket = compressedPacket;
+      this.rssi = rssi;
       try {
          this.packet = Tools.decompress(compressedPacket);
 
@@ -64,7 +66,7 @@ public class RxRFPacket extends BaseEvent {
       }
 
    }
-   
+
    public void setCorrupt() {
       this.corrupt = true;
    }
@@ -103,5 +105,9 @@ public class RxRFPacket extends BaseEvent {
 
    public boolean isCorrupt() {
       return corrupt;
+   }
+   
+   public double getRSSI() {
+      return rssi;
    }
 }

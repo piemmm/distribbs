@@ -11,6 +11,7 @@ public class PacketTools {
 
    // Reserved destinations
    public static final String ANNOUNCE = "ANNOUNCE"; // An announce packet (locator, callsign, etc)
+   public static final String APRS = "APRS"; // An APRS packet
    
    // Commands
    public static final String PING = "PING"; // Ping request

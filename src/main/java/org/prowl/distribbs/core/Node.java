@@ -9,10 +9,12 @@ public class Node {
 
    private String callsign;
    private long lastHeard;
+   private double rssi;
    
-   public Node(String callsign, long lastHeard) {
+   public Node(String callsign, long lastHeard, double rssi) {
       this.callsign = callsign;
       this.lastHeard = lastHeard;
+      this.rssi = rssi;
    }
    
    public String getCallsign() {
@@ -25,6 +27,10 @@ public class Node {
    
    public void setLastHeard(long lastHeard) {
       this.lastHeard = lastHeard;
+   }
+   
+   public double getRSSI() {
+      return rssi;
    }
 
    @Override

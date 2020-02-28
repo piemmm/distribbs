@@ -24,6 +24,19 @@
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.gps.GPS</type>
 		</connector>
+		
+		<!-- APRS-IS connector, callsign used is the node callsign-->
+		<connector>
+			<type>org.prowl.distribbs.node.connectivity.aprs.APRSIS</type>
+			<server></server>
+			<password></password>
+			<announcePeriod>10</announcePeriod>	
+			<aprsSymbols>/#</aprsSymbols> <!-- Aprs Symbol table:  /> is a car, /# a digi, etc -->
+			<!-- 
+			<comment>A comment about your station</comment>  
+			 -->
+		</connector>
+		
 
 		<!-- IPv4 connector. Have one of these sections for each node that you 
 			want to connect to -->

@@ -31,7 +31,7 @@ public class IPv6 implements Connector {
    }
 
    public String getName() {
-      return getClass().getName();
+      return getClass().getSimpleName();
    }
    
    public boolean isAnnounce() {
@@ -63,5 +63,16 @@ public class IPv6 implements Connector {
       return null;
    }
    
+   public double getNoiseFloor() {
+      return 0;
+   }
+
+   public double getRSSI() {
+      return 0;
+   }
+
+   public int getFrequency() {
+      return 0;
+   }
    
 }

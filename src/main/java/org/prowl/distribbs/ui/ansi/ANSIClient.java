@@ -43,7 +43,8 @@ public class ANSIClient extends Thread implements ScreenWriter {
       commandParser = new CommandParser(this);
    }
 
-   public void start() {
+   public void run() {
+      
       try {
 
          screen = new TerminalScreen(terminal);
@@ -127,6 +128,10 @@ public class ANSIClient extends Thread implements ScreenWriter {
     */
    public void showGreeting() {
       write("*** "+DistriBBS.VERSION_STRING + " build " + DistriBBS.BUILD);
+      write("");
+      write("Software CC-BY-SA ");
+      write("");
+      write("Type 'HELP' for a list of commands");
       commandParser.doCommand(Command.PORTS, new String[] { });
  
    }

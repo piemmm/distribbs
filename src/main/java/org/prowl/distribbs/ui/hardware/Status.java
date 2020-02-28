@@ -13,9 +13,9 @@ import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.lcd.US2066;
 import org.prowl.distribbs.leds.StatusLeds;
+import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.Tools;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 
 public class Status {
@@ -36,17 +36,17 @@ public class Status {
          lcd = new US2066();
          leds = new StatusLeds();
          lcd.writeText(DistriBBS.VERSION_STRING, DistriBBS.INFO_TEXT);
-   
+
          start();
-      } catch(UnsatisfiedLinkError e) {
-        // Probably not running on pi
-        LOG.error(e.getMessage(),e);
+      } catch (UnsatisfiedLinkError e) {
+         // Probably not running on pi
+         LOG.error(e.getMessage(), e);
       }
 
    }
 
    public void start() {
-       
+
       tickerTimer = new Timer();
       tickerTimer.schedule(new TimerTask() {
          private int screen = 0;
@@ -54,7 +54,7 @@ public class Status {
          public void run() {
 
             try {
-               switch (screen % 3) {
+               switch (screen % 4) {
                   case 0:
                      screen0();
                      break;
@@ -63,6 +63,9 @@ public class Status {
                      break;
                   case 2:
                      screen2();
+                     break;
+                  case 3:
+                     screen3();
                      break;
                }
             } catch (Throwable e) {
@@ -120,6 +123,30 @@ public class Status {
       bottomString = Tools.getDefaultOutboundIP().getHostAddress();
 
       setText(topString.toString(), bottomString.toString());
+   }
+
+   public void screen3() {
+      long finish = System.currentTimeMillis() + 5000;
+      while (System.currentTimeMillis() < finish) {
+         List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
+         String topString = "2m: Not configured";
+         String bottomString = "70cm: Not configured";
+         for (Connector c : connectors) {
+            int freq = c.getFrequency();
+            if (freq > 143000000 && freq < 147000000) {
+               topString = "2m RSSI: -" + (c.getRSSI()+" dBm");
+            } else if (freq > 430000000 && freq < 450000000) {
+               bottomString = "70cm RSSI: -" + (c.getRSSI()+" dBm");
+
+            }
+         }
+         setText(topString, bottomString);
+         try {
+            Thread.sleep(100);
+         } catch (InterruptedException e) {
+         }
+      }
+
    }
 
    public void setText(String line1, String line2) {

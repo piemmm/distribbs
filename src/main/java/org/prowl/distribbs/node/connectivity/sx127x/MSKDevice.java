@@ -14,6 +14,7 @@ import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.utils.EWMAFilter;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
@@ -34,64 +35,55 @@ import com.pi4j.io.spi.SpiMode;
  */
 public class MSKDevice implements Device {
 
-   private static final int      REG_FIFO            = 0x00;
-   private static final int      REG_OP_MODE         = 0x01;
-   private static final int      REG_OCP             = 0x0b;
-   private static final int      REG_LNA             = 0x0c;
-   // private static final int REG_FIFO_ADDR_PTR = 0x0D;
-   private static final int      REG_PA_CONFIG       = 0x09;
-   // private static final int REG_FIFO_RX_CURRENT_ADDR = 0x10;
-   private static final int      REG_IRQ_FLAGS       = 0x3e;
-   private static final int      REG_IRQ_FLAGS2      = 0x3f;
-//   private static final int     REG_RX_NB_BYTES          = 0x13;
+   private static final int      REG_FIFO             = 0x00;
+   private static final int      REG_OP_MODE          = 0x01;
+   private static final int      REG_LNA              = 0x0c;
+   private static final int      REG_PA_CONFIG        = 0x09;
 
-   private static final int      REG_PAYLOAD_LENGTH  = 0x32;
-   // private static final int REG_MAX_PAYLOAD_LENGTH = 0x23;
-   private static final int      REG_SYNC_WORD       = 0x39;
-   private static final int      REG_DIO_MAPPING_1   = 0x40;
-   private static final int      REG_DIO_MAPPING_2   = 0x41;
-   private static final int      REG_VERSION         = 0x42;
-   private static final int      REG_4D_PA_DAC       = 0x4d;
-   private static final int      MODE_SLEEP          = 0x00;
-   private static final int      MODE_STANDBY        = 0x01;
-   private static final int      MODE_TX             = 0x03;
-   private static final int      MODE_RX_CONTINUOUS  = 0x06;
-   private static final int      REG_FRF_MSB         = 0x06;
-   private static final int      REG_FRF_MID         = 0x07;
-   private static final int      REG_FRF_LSB         = 0x08;
-   private static final int      LNA_MAX_GAIN        = 0b00100011;
-   private static final int      LNA_MIN_GAIN        = 0b10100010;
+   private static final int      REG_PAYLOAD_LENGTH   = 0x32;
+   private static final int      REG_DIO_MAPPING_1    = 0x40;
+   private static final int      REG_VERSION          = 0x42;
+   private static final int      REG_4D_PA_DAC        = 0x4d;
+   private static final int      MODE_SLEEP           = 0x00;
+   private static final int      MODE_STANDBY         = 0x01;
+   private static final int      MODE_TX              = 0x03;
+   private static final int      REG_FRF_MSB          = 0x06;
+   private static final int      REG_FRF_MID          = 0x07;
+   private static final int      REG_FRF_LSB          = 0x08;
+   private static final int      LNA_MAX_GAIN         = 0b00100011;
 
-   private static final int      IRQ_TX_DONE_MASK    = 0x8;
-   private static final int      PA_BOOST            = 0x80;
+   private static final int      PA_BOOST             = 0x80;
 
-   private static final double   FREQ_STEP           = 61.03515625d;
-//   private static final int      SX1276_DEFAULT_FREQ = 868100000;
-//   private static final int      SX1276_DEFAULT_FREQ = 434100000;
-   private static final int      SX1276_DEFAULT_FREQ = 144950000;
+   private static final double   FREQ_STEP            = 61.03515625d;
+   private static final int      SX1276_DEFAULT_FREQ  = 144950000;
 
-   private static final Log      LOG                 = LogFactory.getLog("MSKDevice");
+   private static final Log      LOG                  = LogFactory.getLog("MSKDevice");
 
-   public static SpiDevice       spi                 = null;
+   public static SpiDevice       spi                  = null;
    private GpioController        gpio;
    private GpioPinDigitalOutput  gpioSS;
    private GpioPinDigitalInput   gpioDio;
-   private Pin                   dio                 = RaspiPin.GPIO_07;
-   private Pin                   ss                  = RaspiPin.GPIO_06;
+   private Pin                   dio                  = RaspiPin.GPIO_07;
+   private Pin                   ss                   = RaspiPin.GPIO_06;
 
-   private long                  lastSent            = 0;                              // Time when we last finished sending a packet
-   private long                  lastReceivedOrDCD   = 0;                              // Time when we last finished receiving a packet
-   private double                rssi                = 0;
-   private Semaphore             spiLock             = new Semaphore(1);
-   private Semaphore             trxLock             = new Semaphore(1, true);
+   private double                rssi                 = 0;
+   private double                bufferRssi           = 0;
+   private int                   frequency            = SX1276_DEFAULT_FREQ;            // Our tx/rx freq
+   public double                 nextHighestRSSIValue = 0;                              // quietest recorded rssi
+   public double                 nextRSSIUpdate       = 0;                              // When we next update our rssi
+   private long                  lastSent             = 0;                              // Time when we last finished sending a packet
+   private Semaphore             spiLock              = new Semaphore(1);
+   private Semaphore             trxLock              = new Semaphore(1, true);
+   private double                rssiNoiseFloor       = 0;
+   private double                rssiThreshold        = 0;
+   private long                  rxPacketTimeout      = 0;
+   private EWMAFilter            ewmaFilter           = new EWMAFilter(0.05f);
+   private long                  lastRSSISample       = 0;
 
-   private double                rssiNoiseFloor      = 0;
-   private double                rssiThreshold       = 0;
-
-   private ByteArrayOutputStream buffer              = new ByteArrayOutputStream();
+   private ByteArrayOutputStream buffer               = new ByteArrayOutputStream();
 
    private Connector             connector;
-   ExecutorService               pool                = Executors.newFixedThreadPool(5);
+   ExecutorService               pool                 = Executors.newFixedThreadPool(5);
 
    public MSKDevice(Connector connector) {
       this.connector = connector;
@@ -110,46 +102,6 @@ public class MSKDevice implements Device {
          // Interrupt setup
          gpioDio = gpio.provisionDigitalInputPin(dio, PinPullResistance.PULL_DOWN);
          gpioDio.setShutdownOptions(true);
-//         gpioDio.addListener(new GpioPinListenerDigital() {
-//            @Override
-//            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-//               // LOG.info("State change: " + event.getEventType().toString() + " " +
-//               // event.getEdge().getName());
-//
-//               if (event.getEdge() == PinEdge.RISING) {
-//                  if (tx) {
-////                     // writeRegister(REG_OP_MODE, MODE_STANDBY);
-////                     try { Thread.sleep(30); } catch(Throwable e) { }
-////                     writeRegister(REG_OP_MODE, 0x04);
-////                     try { Thread.sleep(10); } catch(Throwable e) { }
-////                     writeRegister(REG_OP_MODE, 0x05);
-////                     try {
-////                        Thread.sleep(110);
-////                     } catch (Throwable e) {
-////                     }
-////                     LOG.info("TX End");
-////                     trxLock.release();
-////                     tx = false;
-//
-//                     // txLock.release();
-//                  } else {
-////                     // RX mode - payloadReady
-////                     int tf = readRegister(0x3f);
-////
-////                     // check crc flag
-////                     boolean crcOk = (tf & 0x2) == 0x2;
-////                     if (!crcOk) {
-////                        LOG.info("Packet has bad CRC2");
-////                     }
-////
-////                     if (!checkBuffer(true, tf)) {
-////                        getMessage(crcOk);
-////                     }
-//                  }
-//               }
-//
-//            }
-//         });
 
          // Select pin
          gpioSS = gpio.provisionDigitalOutputPin(ss, PinState.HIGH);
@@ -210,45 +162,31 @@ public class MSKDevice implements Device {
          // Gain
          writeRegister(REG_LNA, LNA_MAX_GAIN);
 
-         // mant exp bw
-         // 10b / 24 5 10.4
-         //// 01b / 20 5 12.5
-         // writeRegister(0x12, 0b00010101); // settings for 10.4khz
-         // writeRegister(0x13, 0b00001101); // AFC settings. 12.5kHz
-
          // mant exp bw 2.5
          // 10b / 24 7 2.6
          // 01b / 20 7 3.1
          // 00b / 16 7 3.9
-         writeRegister(0x12, 0b00001111); // settings for 10.4khz
-         writeRegister(0x13, 0b00010110); // AFC settings. 12.5kHz
+         writeRegister(0x12, 0b00001111);
+         writeRegister(0x13, 0b00010110);
 
-         // old works at 2.6k
-         // writeRegister(0x12, 0b00001111); // settings for 10.4khz
-         // writeRegister(0x13, 0b00010111); // AFC settings. 12.5kHz
-
-         writeRegister(0x26, 24); // preamble length
-         // writeRegister(0x1f, 0b10101000);
-
+         writeRegister(0x26, 32); // preamble length
          writeRegister(0x0B, 0b00111011); // reduce overcurrent protection
-
          writeRegister(REG_DIO_MAPPING_1, 0x10);
-         // writeRegister(REG_MAX_PAYLOAD_LENGTH, 0xff);
-
-         writeRegister(REG_PA_CONFIG, PA_BOOST | (17 - 2)); // 10 = power level
-
-         // writeRegister(0x0A, 0b01001100); // PA Ramp
-
-         writeRegister(REG_4D_PA_DAC, 0x84);
-         // writeRegister(REG_LNA, readRegister(REG_LNA) | 0x03);
-
+         
+         
+        // writeRegister(REG_PA_CONFIG, PA_BOOST | (17 - 2)); // 10 = power level
+        // writeRegister(REG_4D_PA_DAC, 0x84);
+         
+         writeRegister(REG_PA_CONFIG, 0b11111111); // 10 = power level
+         writeRegister(REG_4D_PA_DAC, 0b10000111);
+         
          writeRegister(0x33, 0b00110101); // Node Address
          writeRegister(0x30, 0b11011000); // Setup for packet mode (not direct transmitter keying)
          writeRegister(0x31, 0b01000000); // packet mode
          writeRegister(0x35, 0b10111111); // fifo threshold (64 bytes)
-
          writeRegister(0x27, 0b00110110); // sync word, preamble polarity, autorestartrxmode
 
+         // Sync word
          writeRegister(0x28, 0xff);
          writeRegister(0x29, 0x00);
          writeRegister(0x2a, 0x55);
@@ -257,49 +195,54 @@ public class MSKDevice implements Device {
          writeRegister(0x2d, 0xff);
 
          writeRegister(0x1a, 0b00000001);
-
-         writeRegister(0x0e, 0b00000011); // RSSI samples used
+         writeRegister(0x0e, 0b00000010); // RSSI samples used
 
          // manual use.
          writeRegister(REG_OP_MODE, MODE_SLEEP);
          sleep(150);
          writeRegister(REG_OP_MODE, MODE_STANDBY);
          sleep(150);
+
+         writeRegister(0x3b, 0b11000000); // auto image calibration (and do it *now*)
+         sleep(150);
+
          writeRegister(0x24, 0b00001000);
-
          sleep(500);
-
          writeRegister(0x0d, 0b00111111); // set opts
-
          writeRegister(REG_OP_MODE, 0x04);
          sleep(350);
          writeRegister(REG_OP_MODE, 0x05);
-         sleep(150);
-         // writeRegister(0x0d, 0b00111000); // set opts
-         sampleRSSI();
-
          sleep(150);
 
       } else {
          LOG.error("Unknown device found! version: " + Integer.toString(version, 16));
       }
 
-      Timer test = new Timer();
-      test.schedule(new TimerTask() {
+      Timer rxBuilder = new Timer();
+      rxBuilder.schedule(new TimerTask() {
 
          public void run() {
             while (true) {
-               trxLock.acquireUninterruptibly();
+               try {
+                  trxLock.acquireUninterruptibly();
 
-               // Keep in RX until full packet received.
-               int tf = readRegister(0x3f);
-               checkBuffer(false, tf);
-               while (buffer.size() > 0 || readRegister(0x11) < rssiThreshold) {
-                  tf = readRegister(0x3f);
+                  // Keep in RX until full packet received.
+                  int tf = readRegister(0x3f);
                   checkBuffer(false, tf);
-               }
-               trxLock.release();
+                  rxPacketTimeout = System.currentTimeMillis() + 2000;
+                  while (((buffer.size() > 0 || (readRegister(0x11) / 2d) < rssiThreshold) && System.currentTimeMillis() < rxPacketTimeout)) {
+                     tf = readRegister(0x3f);
+                     checkBuffer(false, tf);
+                     updateRSSI();
+                     
 
+                  }
+                  updateRSSI();
+               } catch (Throwable e) {
+                  LOG.error(e.getMessage(), e);
+               } finally {
+                  trxLock.release();
+               }
                try {
                   Thread.sleep(10);
                } catch (Throwable e) {
@@ -387,7 +330,7 @@ public class MSKDevice implements Device {
                   // Send to our packet engine
                   // LOG.info("MSK Rx payload(" + array.length + "): " +
                   // Tools.byteArrayToHexString(array));
-                  RxRFPacket rxRfPacket = new RxRFPacket(connector, array, rxTime);
+                  RxRFPacket rxRfPacket = new RxRFPacket(connector, array, rxTime, bufferRssi);
                   if (!crcOk) {
                      rxRfPacket.setCorrupt();
                   }
@@ -424,9 +367,7 @@ public class MSKDevice implements Device {
 
          txDelay();
 
-         while ((readRegister(0x11)) < rssiThreshold || buffer.size() > 0) {
-            rssi = readRegister(0x11);
-            // LOG.info("1WAIT RX DCD - rssi=-" + rssi);
+         while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
             try {
                Thread.sleep(130);
             } catch (Throwable e) {
@@ -437,9 +378,7 @@ public class MSKDevice implements Device {
          // LOG.info("TX Start");
 
          // Wait for non busy channel
-         while ((readRegister(0x11)) < rssiThreshold || buffer.size() > 0) {
-            rssi = readRegister(0x11);
-            // LOG.info("2WAIT RX DCD - rssi=-" + rssi);
+         while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
             try {
                Thread.sleep(130);
             } catch (Throwable e) {
@@ -473,11 +412,10 @@ public class MSKDevice implements Device {
       } finally {
          writeRegister(REG_OP_MODE, 0x04);
          writeRegister(REG_OP_MODE, 0x05);
+
          lastSent = System.currentTimeMillis();
          trxLock.release();
       }
-
-      // try { Thread.sleep(10); } catch(Throwable e) { }
 
    }
 
@@ -498,10 +436,14 @@ public class MSKDevice implements Device {
       // if ((x & 0x20) != 0 || completed) {
       while ((x & 0x40) == 0) {
          int data = readRegister(REG_FIFO);
+         rxPacketTimeout = System.currentTimeMillis() + 1000;
          if (!lengthRead) {
             packetLength = data;
             lengthRead = true;
          } else {
+            if (buffer.size() == 0) {
+               bufferRssi = (readRegister(0x11) / 2d);
+            }
             buffer.write((byte) data);
          }
 
@@ -515,8 +457,6 @@ public class MSKDevice implements Device {
          x = readRegister(0x3f);
 
       }
-
-      lastReceivedOrDCD = System.currentTimeMillis();
 
       if ((x & 0x4) != 0) {
          boolean crcOk = (x & 0x2) == 0x2;
@@ -542,31 +482,41 @@ public class MSKDevice implements Device {
       } catch (InterruptedException e) {
       }
    }
+   
+//   public double updateDCDRSSI() {
+//      double myRSSI = (readRegister(0x11) / 2d);
+//      if (buffer.size() == 0) {
+//         bufferRssi = myRSSI;     
+//      }
+//      return myRSSI;
+//   }
 
    /**
-    * Sample the noise floor (performed at startup and periodically)
+    * Sample our RSSI used for setting DCD thresholds
     */
-   public void sampleRSSI() {
-      LOG.info("Sampling RSSI...");
-      double highest = 0;
-      double threshold = 0;
-
-      long end = System.currentTimeMillis() + 5000l; // 5 seconds sampling
-      while (System.currentTimeMillis() < end) {
-         double rssi = (readRegister(0x11) / 2d);
-
-         if (rssi > highest) {
-            highest = rssi; // Should end up being the noise floor in -dBm
+   public void updateRSSI() {
+      try {
+         if (System.currentTimeMillis() > lastRSSISample) {
+            lastRSSISample = System.currentTimeMillis() + 100;
+            rssi = (readRegister(0x11) / 2d);
+            rssiNoiseFloor = ewmaFilter.addPoint((float) rssi);
+            rssiThreshold = rssiNoiseFloor - 12d;
          }
-
+      } catch (Throwable e) {
+         LOG.error(e.getMessage(), e);
       }
+   }
 
-      // Compute the threshold for considering a signal present.
-      threshold = highest - 6d;
+   public double getNoiseFloor() {
+      return rssiNoiseFloor;
+   }
 
-      LOG.info("Noise floor: -" + highest + "dBm    Threshold set to: -" + threshold + "dBm");
-      rssiThreshold = threshold;
-      rssiNoiseFloor = highest;
+   public double getRSSI() {
+      return rssi;
+   }
+
+   public int getFrequency() {
+      return frequency;
    }
 
 }
