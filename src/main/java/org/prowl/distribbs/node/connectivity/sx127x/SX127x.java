@@ -63,6 +63,9 @@ public class SX127x implements Connector {
    public void start() throws IOException {
       slot = config.getInt("slot",0);
       int frequency = config.getInt("frequency",0);
+      int deviation = config.getInt("deviation",2600);
+      int baud = config.getInt("baud");
+      
       announce = config.getBoolean("announce");
       announcePeriod = config.getInt("announcePeriod");
       modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
@@ -71,9 +74,9 @@ public class SX127x implements Connector {
       
       packetEngine = new PacketEngine(this);
       if (Modulation.LoRa.equals(modulation)) {
-         device = new LoRaDevice(this, slot, frequency);
+         device = new LoRaDevice(this, slot, frequency, deviation, baud);
       } else if (Modulation.MSK.equals(modulation)) {
-         device = new MSKDevice(this, slot, frequency);
+         device = new MSKDevice(this, slot, frequency, deviation, baud);
       } else {
          // Not a known modulation.
          throw new IOException("Unknown modulation:" + config.getString("modulation"));

@@ -25,7 +25,7 @@
 			<modulation>MSK</modulation>
 			<!-- Should we announce (send our callsign) every X minutes? -->
 			<announce>true</announce>
-			<!-- Announces the node via LoRa every X minutes (minimum 5) -->
+			<!-- Announces the node every X minutes (minimum 5) -->
 			<announcePeriod>60</announcePeriod>
 		</connector>
 
@@ -45,7 +45,7 @@
 			<modulation>MSK</modulation>
 			<!-- Should we announce (send our callsign) every X minutes? -->
 			<announce>true</announce>
-			<!-- Announces the node via LoRa every X minutes (minimum 5) -->
+			<!-- Announces the node every X minutes (minimum 5) -->
 			<announcePeriod>60</announcePeriod>
 		</connector>
 

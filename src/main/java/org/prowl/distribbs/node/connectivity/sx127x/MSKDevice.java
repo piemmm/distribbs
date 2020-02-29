@@ -37,36 +37,17 @@ import com.pi4j.io.spi.SpiMode;
  */
 public class MSKDevice implements Device {
 
-   private static final int      REG_FIFO             = 0x00;
-   private static final int      REG_OP_MODE          = 0x01;
-   private static final int      REG_LNA              = 0x0c;
-   private static final int      REG_PA_CONFIG        = 0x09;
-
-   private static final int      REG_PAYLOAD_LENGTH   = 0x32;
-   private static final int      REG_DIO_MAPPING_1    = 0x40;
-   private static final int      REG_VERSION          = 0x42;
-   private static final int      REG_4D_PA_DAC        = 0x4d;
-   private static final int      MODE_SLEEP           = 0x00;
-   private static final int      MODE_STANDBY         = 0x01;
-   private static final int      MODE_TX              = 0x03;
-   private static final int      REG_FRF_MSB          = 0x06;
-   private static final int      REG_FRF_MID          = 0x07;
-   private static final int      REG_FRF_LSB          = 0x08;
-   private static final int      LNA_MAX_GAIN         = 0b00100011;
-
-   private static final int      PA_BOOST             = 0x80;
-
-   private static final double   FREQ_STEP            = 61.03515625d;
-   private static final int      SX1276_DEFAULT_FREQ  = 144950000;
-
    private Log                   LOG                  = LogFactory.getLog("MSKDevice");
 
    public SpiDevice              spi                  = Hardware.INSTANCE.getSPI();
    private GpioPinDigitalOutput  gpioSS;
 
    private double                rssi                 = 0;
+   private int                   frequency            = 0;                              // Our tx/rx freq
+   private int                   deviation            = 2600;                           // The deviation to use, in Hz
+   private int                   baud                 = 4800;                           // The baud rate we will transmit at. Faster speeds need more
+
    private double                bufferRssi           = 0;
-   private int                   frequency            = SX1276_DEFAULT_FREQ;            // Our tx/rx freq
    public double                 nextHighestRSSIValue = 0;                              // quietest recorded rssi
    public double                 nextRSSIUpdate       = 0;                              // When we next update our rssi
    private long                  lastSent             = 0;                              // Time when we last finished sending a packet
@@ -79,18 +60,19 @@ public class MSKDevice implements Device {
    private long                  lastRSSISample       = 0;
    private int                   slot;
 
-   private ByteArrayOutputStream buffer               = new ByteArrayOutputStream();
+   private ByteArrayOutputStream buffer               = new ByteArrayOutputStream(256);
 
    private Connector             connector;
    private ExecutorService       pool                 = Executors.newFixedThreadPool(5);
 
-   public MSKDevice(Connector connector, int slot, int frequency) {
+   public MSKDevice(Connector connector, int slot, int frequency, int deviation, int baud) {
       LOG = LogFactory.getLog("MSKDevice(" + slot + ")");
       this.connector = connector;
       this.slot = slot;
       this.frequency = frequency;
+      this.deviation = deviation;
+      this.baud = baud;
       init();
-
    }
 
    private void init() {
@@ -104,71 +86,43 @@ public class MSKDevice implements Device {
       }
 
       // Get the device version
-      int version = readRegister(REG_VERSION);
+      int version = readRegister(0x42);
       if (version == 0x12) {
          // Setup a SX1276, always rx - we dont care about power usage
          LOG.info("MSK Device recognised as a SX1276");
-         writeRegister(REG_OP_MODE, MODE_SLEEP);
+         writeRegister(0x01, 0x0); // Set mode to sleep
 
+         // Set the transmit frequency
          setChannelSX1276(frequency);
 
          // Rx startup regrxcfg
-         // writeRegister(0x0d, 0b00011000); // set opts
          writeRegister(0x0d, 0b00011111); // set opts
 
-         // Defaults to 19.2kbaud
-         // writeRegister(0x03, 0x83); // bitrate 7:0
-         // writeRegister(0x02, 0x06); // bitrate 15:8
-
-         // Defaults to 12.5kbaud (10.5kHz deviation needed)
-         // writeRegister(0x03, 0x00); // bitrate 7:0
-         // writeRegister(0x02, 0x0A); // bitrate 15:8
-
-         // Defaults to 9k6kbaud
-         // writeRegister(0x03, 0x05); // bitrate 7:0
-         // writeRegister(0x02, 0x0D); // bitrate 15:8
-
-         // 1200
-         // writeRegister(0x03, 0x2b); // bitrate 7:0
-         // writeRegister(0x02, 0x68); // bitrate 15:8
-
-         // 2400
-         // writeRegister(0x03, 0x15); // bitrate 7:0
-         // writeRegister(0x02, 0x34); // bitrate 15:8
-
-         // 4800
-         writeRegister(0x03, 0x0b); // bitrate 7:0
-         writeRegister(0x02, 0x1a); // bitrate 15:8
+         // Set the buad rate (1200 to 300kbit)
+         setBaud(baud);
 
          // regfdev (default 5khz deviation)
-         // setFrequencyDeviation(10.4); // 10.4kHz
-         setFrequencyDeviation(2.6); // 3kHz
+         setFrequencyDeviation(deviation / 1000d); // 3kHz
+
+         // Set the filter for the used deviation
+         setFilter(deviation);
 
          // regpaRamp
          writeRegister(0x0A, 0b00001111); // FSK
          // writeRegister(0x0A, 0b00101111); // GMFSK
 
-         writeRegister(REG_PAYLOAD_LENGTH, 0xff);
+         writeRegister(0x32, 0xff); // Payload length
 
          // Gain
-         writeRegister(REG_LNA, LNA_MAX_GAIN);
-
-         // mant exp bw 2.5
-         // 10b / 24 7 2.6
-         // 01b / 20 7 3.1
-         // 00b / 16 7 3.9
-         writeRegister(0x12, 0b00001111);
-         writeRegister(0x13, 0b00010110);
+         writeRegister(0x0c, 0x23); // max gain
 
          writeRegister(0x26, 32); // preamble length
          writeRegister(0x0B, 0b00111011); // reduce overcurrent protection
-         writeRegister(REG_DIO_MAPPING_1, 0x10);
+         writeRegister(0x40, 0x10); // DIO0 setup
 
-         // writeRegister(REG_PA_CONFIG, PA_BOOST | (17 - 2)); // 10 = power level
-         // writeRegister(REG_4D_PA_DAC, 0x84);
-
-         writeRegister(REG_PA_CONFIG, 0b11111111); // 10 = power level
-         writeRegister(REG_4D_PA_DAC, 0b10000111);
+         // Set power options
+         writeRegister(0x09, 0b11111111); // 10 = power level
+         writeRegister(0x4d, 0b10000111); // PA DAC
 
          writeRegister(0x33, 0b00110101); // Node Address
          writeRegister(0x30, 0b11011000); // Setup for packet mode (not direct transmitter keying)
@@ -184,13 +138,13 @@ public class MSKDevice implements Device {
          writeRegister(0x2c, 0x00);
          writeRegister(0x2d, 0xff);
 
-         writeRegister(0x1a, 0b00000001);
+         writeRegister(0x1a, 0b00000001); // AFC FEI
          writeRegister(0x0e, 0b00000010); // RSSI samples used
 
          // manual use.
-         writeRegister(REG_OP_MODE, MODE_SLEEP);
+         writeRegister(0x01, 0x0); // Sleep
          sleep(150);
-         writeRegister(REG_OP_MODE, MODE_STANDBY);
+         writeRegister(0x01, 0x01); // Standby
          sleep(150);
 
          writeRegister(0x3b, 0b11000000); // auto image calibration (and do it *now*)
@@ -199,9 +153,9 @@ public class MSKDevice implements Device {
          writeRegister(0x24, 0b00001000);
          sleep(500);
          writeRegister(0x0d, 0b00111111); // set opts
-         writeRegister(REG_OP_MODE, 0x04);
+         writeRegister(0x01, 0x04); // FSRx
          sleep(350);
-         writeRegister(REG_OP_MODE, 0x05);
+         writeRegister(0x01, 0x05); // RX mode
          sleep(150);
 
       } else {
@@ -251,13 +205,25 @@ public class MSKDevice implements Device {
 
    }
 
+   /**
+    * Set the transmit frequency
+    * @param freq in Hz
+    */
    public void setChannelSX1276(int freq) {
-      freq = (int) ((double) freq / (double) FREQ_STEP);
-      writeRegister(REG_FRF_MSB, (int) ((freq >> 16) & 0xFF));
-      writeRegister(REG_FRF_MID, (int) ((freq >> 8) & 0xFF));
-      writeRegister(REG_FRF_LSB, (int) (freq & 0xFF));
+      freq = (int) ((double) freq / (double) 61.03515625d);
+      writeRegister(0x06, (int) ((freq >> 16) & 0xFF));
+      writeRegister(0x07, (int) ((freq >> 8) & 0xFF));
+      writeRegister(0x08, (int) (freq & 0xFF));
    }
 
+   
+   /**
+    * Set the amout of deviation to use.
+    * 
+    * Higher bandwidths need more deviation
+    * 
+    * @param freq
+    */
    public void setFrequencyDeviation(double freq) {
       int dev = (int) ((freq * (1 << 19)) / 32000);
       writeRegister(0x04, (dev & 0xFF00) >> 8);
@@ -265,6 +231,11 @@ public class MSKDevice implements Device {
 
    }
 
+   /**
+    * Read a register from the device
+    * @param addr
+    * @return
+    */
    private int readRegister(int addr) {
       int res = 0x00;
       try {
@@ -286,6 +257,12 @@ public class MSKDevice implements Device {
       return res;
    }
 
+   
+   /**
+    * Write to a register on the device
+    * @param addr
+    * @param value
+    */
    private void writeRegister(int addr, int value) {
       try {
          spiLock.acquire();
@@ -305,14 +282,25 @@ public class MSKDevice implements Device {
 
    }
 
+   /**
+    * Enable the CS for the device
+    */
    private void enableSS() {
       gpioSS.high();
    }
 
+   /**
+    * Disable the CS for the device
+    */
    private void disableSS() {
       gpioSS.low();
    }
 
+   
+   /**
+    * Get a received complete message 
+    * @param crcOk
+    */
    private void getMessage(boolean crcOk) {
 
       try {
@@ -358,12 +346,14 @@ public class MSKDevice implements Device {
       });
    }
 
+   /**
+    * TX a packet
+    * @param message
+    */
    private synchronized void sendPacket(byte[] message) {
-
       try {
-
+         // Wait until non-busy (so other slots can tx/rx over spi), plus collission managment is here too.
          txDelay();
-
          while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
             try {
                Thread.sleep(130);
@@ -372,9 +362,8 @@ public class MSKDevice implements Device {
          }
 
          trxLock.acquireUninterruptibly();
-         // LOG.info("TX Start");
-
-         // Wait for non busy channel
+ 
+         // Wait for non busy channel as the lock may have taken a moment
          while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
             try {
                Thread.sleep(130);
@@ -384,20 +373,20 @@ public class MSKDevice implements Device {
          }
 
          // Standby mode to prevent any further rx or interrupts changing fifo
-         writeRegister(REG_OP_MODE, MODE_STANDBY);
-         writeRegister(REG_OP_MODE, MODE_TX);
+         writeRegister(0x01, 0x01); // standby
+         writeRegister(0x01, 0x03); // transmit
          try {
             Thread.sleep(10);
          } catch (Throwable e) {
          }
-         writeRegister(REG_FIFO, (int) message.length); // fill fifo
+         writeRegister(0x00, (int) message.length); // fill fifo
          for (byte b : message) {
             while ((readRegister(0x3f) & 0x80) > 0) {
             }
-            writeRegister(REG_FIFO, (int) b); // fill fifo
+            writeRegister(0x00, (int) b); // fill fifo
          }
 
-         // Wait for packet to be sent
+         // Wait for packet to be sent - we don't trust using a DIO0 interrupt for this. 
          long timeout = System.currentTimeMillis() + 1500; // 1.5 Second max for badly behaving tx
          while ((readRegister(0x3f) & 0x08) == 0 && System.currentTimeMillis() < timeout) {
             try {
@@ -407,8 +396,8 @@ public class MSKDevice implements Device {
          }
 
       } finally {
-         writeRegister(REG_OP_MODE, 0x04);
-         writeRegister(REG_OP_MODE, 0x05);
+         writeRegister(0x01, 0x04); // fsrx
+         writeRegister(0x01, 0x05); // rx
 
          lastSent = System.currentTimeMillis();
          trxLock.release();
@@ -428,11 +417,10 @@ public class MSKDevice implements Device {
 
    private int     packetLength = 0;
    private boolean lengthRead   = false;
-
    public boolean checkBuffer(boolean completed, int x) {
 
       while ((x & 0x40) == 0) {
-         int data = readRegister(REG_FIFO);
+         int data = readRegister(0x00);
          rxPacketTimeout = System.currentTimeMillis() + 1000;
          if (!lengthRead) {
             packetLength = data;
@@ -504,6 +492,102 @@ public class MSKDevice implements Device {
 
    public int getFrequency() {
       return frequency;
+   }
+
+   /**
+    * Set a baud rate - must be one of the rates specified in the sx1278 datasheet
+    */
+   public void setBaud(int baudRate) {
+
+      int[][] bauds = new int[][] {
+            // Baud, reg 2, reg 3
+            { 1200, 0x68, 0x2b },
+            { 2400, 0x34, 0x15 },
+            { 4800, 0x1a, 0x0b },
+            { 9600, 0x0d, 0x05 },
+            { 12500, 0xa, 0x00 },
+            { 19200, 0x06, 0x83 },
+            { 25000, 0x05, 0x00 },
+            { 32768, 0x03, 0xd1 },
+            { 38400, 0x03, 0x41 },
+            { 50000, 0x80, 0x00 },
+            { 57600, 0x02, 0x2c },
+            { 76800, 0x01, 0xa1 },
+            { 100000, 0x01, 0x40 },
+            { 115200, 0x01, 0x16 },
+            { 150000, 0x00, 0xd5 },
+            { 153600, 0x00, 0xd0 },
+            { 200000, 0x00, 0xa0 },
+            { 250000, 0x00, 0x80 },
+            { 300000, 0x00, 0x6b }
+      };
+
+      int[] selected = null;
+      for (int i = 0; i < bauds.length; i++) {
+         if (baudRate == bauds[i][0]) {
+            selected = bauds[i];
+            break;
+         }
+      }
+
+      if (selected == null) {
+         LOG.warn("Could not find baud rate:" + baudRate + ", defaulting to 1200");
+         selected = bauds[0];
+      }
+
+      // Apply the baud rate
+      writeRegister(0x03, selected[2]); // bitrate 7:0
+      writeRegister(0x02, selected[1]); // bitrate 15:8
+
+   }
+
+   /**
+    * Set a filter for demod and AFC depending on the deviation selected
+    */
+   public void setFilter(int bw) {
+
+      int[][] filters = new int[][] {
+            { 2600, 16, 7 },
+            { 3100, 8, 7 },
+            { 3900, 0, 7 },
+            { 5200, 16, 6 },
+            { 6300, 8, 6 },
+            { 7800, 0, 6 },
+            { 10400, 16, 5 },
+            { 12500, 8, 5 },
+            { 15600, 0, 5 },
+            { 20800, 16, 4 },
+            { 25000, 8, 4 },
+            { 31300, 0, 4 },
+            { 41700, 16, 3 },
+            { 50000, 8, 3 },
+            { 62500, 0, 3 },
+            { 83300, 16, 2 },
+            { 100000, 8, 2 },
+            { 125000, 0, 2 },
+            { 166700, 16, 1 },
+            { 200000, 8, 1 },
+            { 250000, 0, 1 }
+      };
+
+      int targetDemod = bw + 400;
+      int targetAFC = bw + 2000;
+
+      // Demod filter
+      for (int i = 0; i < filters.length; i++) {
+         if (filters[i][0] >= targetDemod) {
+            writeRegister(0x12, filters[i][1] + filters[i][2]);
+            break;
+         }
+      }
+
+      // AFC fiter
+      for (int i = 0; i < filters.length; i++) {
+         if (filters[i][0] >= targetAFC) {
+            writeRegister(0x13, filters[i][1] + filters[i][2]);
+            break;
+         }
+      }
    }
 
 }
