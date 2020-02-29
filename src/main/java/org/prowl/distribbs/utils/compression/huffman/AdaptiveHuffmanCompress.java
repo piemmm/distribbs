@@ -86,5 +86,8 @@ public final class AdaptiveHuffmanCompress {
    private static boolean shouldUpdate(int x) {
       return x % 40 == 39;
    }
+   
+ 
+   
 
 }

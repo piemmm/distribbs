@@ -86,8 +86,12 @@ public class ANSIClient extends Thread implements ScreenWriter {
                inputPanel.setText("");
             } else if (keyStroke.getKeyType() == KeyType.ArrowUp) {
                // History
+               outputPanel.handleKeyStroke(keyStroke);
+               return false;
             } else if (keyStroke.getKeyType() == KeyType.ArrowDown) {
                // History
+               outputPanel.handleKeyStroke(keyStroke);
+               return false;
             }
             return true;
          }
@@ -113,7 +117,7 @@ public class ANSIClient extends Thread implements ScreenWriter {
    }
 
    public void processInput(String input) {
-     commandParser.parse(input);
+     commandParser.parse(input.trim());
    }
 
    @Override

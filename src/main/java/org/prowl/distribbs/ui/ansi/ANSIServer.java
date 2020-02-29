@@ -40,7 +40,7 @@ public class ANSIServer implements UIService {
          
          
       } catch(IOException e) { 
-         
+         LOG.error(e.getMessage(),e);
       }
    }
    

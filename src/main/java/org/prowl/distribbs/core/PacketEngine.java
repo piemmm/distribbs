@@ -28,6 +28,9 @@ public class PacketEngine {
       init();
    }
    
+   /**
+    * Init the packet engine on a port and setup an announce for it if configured for one
+    */
    public void init() {
       long announceInterval = Math.max(1000l * 60l * 5l, connector.getAnnouncePeriod()); // minimum 5 minutes
       Timer announceTimer = new Timer();

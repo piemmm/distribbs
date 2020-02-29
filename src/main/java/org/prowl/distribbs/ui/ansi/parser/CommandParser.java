@@ -200,7 +200,7 @@ public class CommandParser {
          return;
       }
 
-      write("Pinging '" + callsign + "'");
+      write("Pinging '" + callsign + "' on port "+port+"("+c.getFrequency()+")");
 
       p.ping(callsign,
             new ResponseListener() {

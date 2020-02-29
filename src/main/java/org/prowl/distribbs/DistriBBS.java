@@ -1,5 +1,6 @@
 package org.prowl.distribbs;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -48,47 +49,54 @@ public enum DistriBBS {
    }
 
    public void startup() {
-      // Load configuration and initialise everything needed.
-      configuration = new Config();
-
-      // Set our callsign
-      myCall = DistriBBS.INSTANCE.getConfiguration().getConfig("callsign", "NOCALL").toUpperCase(Locale.ENGLISH);
-
-      // Create statistics holder
-      statistics = new Statistics();
-
-      // Init status objects
-      status = new Status();
-
-      // Init object storage
-      storage = new Storage(configuration.getConfig("storage"));
-
-      // Init connectors
-      connectivity = new Connectivity(configuration.getConfig("connectivity"));
-
-      // Start connectors
-      connectivity.start();
-
-      // Init User interfaces
-      ui = new UI(configuration.getConfig("ui"));
-
-      // Start node services
-      ui.start();
-
-      // All done
-      Thread t = new Thread() {
-         public void run() {
-            while (true) {
-               try {
-                  Thread.sleep(1000);
-
-               } catch (InterruptedException e) {
-                  e.printStackTrace();
+      
+      try {
+         // Load configuration and initialise everything needed.
+         configuration = new Config();
+   
+         // Set our callsign
+         myCall = DistriBBS.INSTANCE.getConfiguration().getConfig("callsign", "NOCALL").toUpperCase(Locale.ENGLISH);
+   
+         // Create statistics holder
+         statistics = new Statistics();
+   
+         // Init status objects
+         status = new Status();
+   
+         // Init object storage
+         storage = new Storage(configuration.getConfig("storage"));
+   
+         // Init connectors
+         connectivity = new Connectivity(configuration.getConfig("connectivity"));
+   
+         // Start connectors
+         connectivity.start();
+   
+         // Init User interfaces
+         ui = new UI(configuration.getConfig("ui"));
+   
+         // Start node services
+         ui.start();
+   
+         // All done
+         Thread t = new Thread() {
+            public void run() {
+               while (true) {
+                  try {
+                     Thread.sleep(1000);
+   
+                  } catch (InterruptedException e) {
+                     e.printStackTrace();
+                  }
                }
             }
-         }
-      };
-      t.start();
+         };
+         t.start();
+         
+      } catch(IOException e) {
+         LOG.error(e.getMessage(),e);
+         System.exit(1);
+      }
    }
 
    public Config getConfiguration() {

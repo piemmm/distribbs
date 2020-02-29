@@ -1,22 +1,31 @@
 package org.prowl.distribbs.node.connectivity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.pi4j.io.spi.SpiChannel;
+import com.pi4j.io.spi.SpiDevice;
+import com.pi4j.io.spi.SpiFactory;
+import com.pi4j.io.spi.SpiMode;
+
 public class Connectivity {
 
-   private static final Log     LOG        = LogFactory.getLog("Connectivity");
+   private static final Log       LOG        = LogFactory.getLog("Connectivity");
 
-   private SubnodeConfiguration configuration;
+   private SubnodeConfiguration   configuration;
 
-   private List<Connector>      connectors = new ArrayList<>();
+   private List<Connector>        connectors = new ArrayList<>();
 
-   public Connectivity(SubnodeConfiguration configuration) {
+ 
+
+   public Connectivity(SubnodeConfiguration configuration) throws IOException {
       this.configuration = configuration;
       parseConfiguration();
    }
@@ -42,7 +51,8 @@ public class Connectivity {
 
       }
 
-      // If there are no connectors configured then exit as there's little point in continuing.
+      // If there are no connectors configured then exit as there's little point in
+      // continuing.
       if (connectors.size() == 0) {
          LOG.error("Not starting as no connectors have been configured");
          System.exit(1);
@@ -62,26 +72,29 @@ public class Connectivity {
          }
       }
    }
-   
-   
+
    /**
-    * Get the connector that services the requested radio port (eg: 0=144MHz, 1=433MHZ, etc)
+    * Get the connector that services the requested radio port (eg: 0=144MHz,
+    * 1=433MHZ, etc)
+    * 
     * @param port
     * @return the port, or null if the port does not exist
     */
    public Connector getPort(int port) {
       if (port < connectors.size()) {
          return connectors.get(port);
-      } 
+      }
       return null;
    }
-   
+
    /**
     * Returns a list of connectors
+    * 
     * @return
     */
    public List<Connector> getPorts() {
       return new ArrayList(connectors);
    }
 
+  
 }

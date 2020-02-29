@@ -62,7 +62,7 @@ public class RxRFPacket extends BaseEvent {
 
       } catch (Throwable e) {
          corrupt = true;
-         LOG.info("Problem with packet:" + Tools.byteArrayToHexString(compressedPacket));
+         LOG.info("Problem with packet("+connector.getFrequency()+"):" + Tools.byteArrayToHexString(compressedPacket));
       }
 
    }

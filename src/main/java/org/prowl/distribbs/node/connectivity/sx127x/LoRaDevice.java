@@ -88,9 +88,12 @@ public class LoRaDevice implements Device {
    private int                  frequency                  = SX1276_DEFAULT_FREQ;
 
    private Connector            connector;
+   private int                  slot;
 
-   public LoRaDevice(Connector connector) {
+   public LoRaDevice(Connector connector, int slot, int frequency) {
       this.connector = connector;
+      this.slot = slot;
+      this.frequency = frequency;
       init();
    }
 
@@ -98,6 +101,11 @@ public class LoRaDevice implements Device {
       try {
          LOG.debug("GPIO setup for LoRa device");
 
+         // Slot 0 = 144,  Slot 1 = 433
+         if (slot == 1) {
+            dio = RaspiPin.GPIO_03;
+            ss  = RaspiPin.GPIO_02;
+         }
          // Default transfer modes for SPI
          spi = SpiFactory.getInstance(SpiChannel.CS0, SpiDevice.DEFAULT_SPI_SPEED, SpiMode.MODE_0);
          gpio = GpioFactory.getInstance();
@@ -312,7 +320,7 @@ public class LoRaDevice implements Device {
       } catch (InterruptedException e) {
       }
    }
-   
+
    public int getFrequency() {
       return frequency;
    }
@@ -324,5 +332,5 @@ public class LoRaDevice implements Device {
    public double getRSSI() {
       return 0;
    }
-   
+
 }

@@ -12,11 +12,40 @@
 		<!-- Connector types can be: S127x, IPv4, IPv6, AX25, GPS -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>
+			<!-- Slot 0 = 144MHz module slot -->
+			<slot>0</slot>
+			<!-- The frequency to transmit and receive, in Hz -->
+			<frequency>144700000</frequency>
+			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
+			<deviation>2600</deviation>
+			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
+				5, etc) -->
+			<baud>4800</baud>
 			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
 			<modulation>MSK</modulation>
 			<!-- Should we announce (send our callsign) every X minutes? -->
 			<announce>true</announce>
-			<!-- Announces the node via LoRa every X minutes (minimum 15) -->
+			<!-- Announces the node via LoRa every X minutes (minimum 5) -->
+			<announcePeriod>60</announcePeriod>
+		</connector>
+
+
+		<connector>
+			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>
+			<!-- Slot 1 = 433MHz module slot -->
+			<slot>1</slot>
+			<!-- The frequency to transmit and receive, in Hz -->
+			<frequency>433825000</frequency>
+			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
+			<deviation>5</deviation>
+			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
+				5, etc) -->
+			<baud>12500</baud>
+			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
+			<modulation>MSK</modulation>
+			<!-- Should we announce (send our callsign) every X minutes? -->
+			<announce>true</announce>
+			<!-- Announces the node via LoRa every X minutes (minimum 5) -->
 			<announcePeriod>60</announcePeriod>
 		</connector>
 
@@ -24,19 +53,17 @@
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.gps.GPS</type>
 		</connector>
-		
-		<!-- APRS-IS connector, callsign used is the node callsign-->
+
+		<!-- APRS-IS connector, the callsign used is the node callsign -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.aprs.APRSIS</type>
 			<server></server>
 			<password></password>
-			<announcePeriod>10</announcePeriod>	
-			<aprsSymbols>/#</aprsSymbols> <!-- Aprs Symbol table:  /> is a car, /# a digi, etc -->
-			<!-- 
-			<comment>A comment about your station</comment>  
-			 -->
+			<announcePeriod>10</announcePeriod>
+			<aprsSymbols>/#</aprsSymbols> <!-- Aprs Symbol table: /> is a car, /# a digi, etc -->
+			<!-- <comment>A comment about your station</comment> -->
 		</connector>
-		
+
 
 		<!-- IPv4 connector. Have one of these sections for each node that you 
 			want to connect to -->
@@ -58,8 +85,9 @@
 			<!-- Sends a UI announce packet every X minutes (minimum 15) -->
 			<announce>true</announce>
 			<announcePeriod>60</announcePeriod>
-			<bbsEnabled>false</bbsEnabled> <!-- Are we a BBS? If true then people can send/rx from you using a text 
+			<!-- Are we a BBS? If true then people can send/rx from you using a text 
 				only interface -->
+			<bbsEnabled>false</bbsEnabled>
 		</connector>
 
 	</connectivity>

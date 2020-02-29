@@ -1,18 +1,14 @@
 package org.prowl.distribbs.node.connectivity.sx127x;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
-import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
-import org.prowl.distribbs.utils.Tools;
 
 /**
  * Implements an interface using the SX127x sx1276, sx1278, etc) series of chips
@@ -48,6 +44,12 @@ public class SX127x implements Connector {
    private Modulation                modulation;
    
    /**
+    * The slot we are controlling
+    * Slot 0 = 144MHz,  Slot 1 = 433MHz
+    */
+   private int slot = 0;
+   
+   /**
     * Our state holder for connections
     * @param config
     */
@@ -56,18 +58,22 @@ public class SX127x implements Connector {
 
    public SX127x(HierarchicalConfiguration config) {
       this.config = config;
-
    }
 
    public void start() throws IOException {
+      slot = config.getInt("slot",0);
+      int frequency = config.getInt("frequency",0);
       announce = config.getBoolean("announce");
       announcePeriod = config.getInt("announcePeriod");
       modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
+      
+      // Perform validation of config
+      
       packetEngine = new PacketEngine(this);
       if (Modulation.LoRa.equals(modulation)) {
-         device = new LoRaDevice(this);
+         device = new LoRaDevice(this, slot, frequency);
       } else if (Modulation.MSK.equals(modulation)) {
-         device = new MSKDevice(this);
+         device = new MSKDevice(this, slot, frequency);
       } else {
          // Not a known modulation.
          throw new IOException("Unknown modulation:" + config.getString("modulation"));

@@ -319,7 +319,6 @@ public class APRS implements Connector {
             try {
                Position position = GPS.getCurrentPosition();
                Double currentHeading = GPS.getCurrentCourse();
-               LOG.info("APRS test:" + position+" "+currentHeading);
                if (position == null) {
                   return; // No GPS so do nothing.
                }
