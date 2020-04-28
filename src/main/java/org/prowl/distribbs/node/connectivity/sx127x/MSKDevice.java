@@ -13,23 +13,11 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connectivity;
-import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.utils.EWMAFilter;
 import org.prowl.distribbs.utils.Hardware;
 
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.Pin;
-import com.pi4j.io.gpio.PinPullResistance;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
-import com.pi4j.io.spi.SpiFactory;
-import com.pi4j.io.spi.SpiMode;
 
 /**
  * MSK modulation based on information and examples in the semtech datasheet
@@ -62,10 +50,11 @@ public class MSKDevice implements Device {
 
    private ByteArrayOutputStream buffer               = new ByteArrayOutputStream(256);
 
-   private Connector             connector;
+   private SX127x             connector;
    private ExecutorService       pool                 = Executors.newFixedThreadPool(5);
+   private ExecutorService       txpool                 = Executors.newFixedThreadPool(1);
 
-   public MSKDevice(Connector connector, int slot, int frequency, int deviation, int baud) {
+   public MSKDevice(SX127x connector, int slot, int frequency, int deviation, int baud) {
       LOG = LogFactory.getLog("MSKDevice(" + slot + ")");
       this.connector = connector;
       this.slot = slot;
@@ -107,16 +96,25 @@ public class MSKDevice implements Device {
          // Set the filter for the used deviation
          setFilter(deviation);
 
+         
+         
          // regpaRamp
-         writeRegister(0x0A, 0b00001111); // FSK
-         // writeRegister(0x0A, 0b00101111); // GMFSK
+         //writeRegister(0x0A, 0b00001111); // FSK
+         writeRegister(0x0A, 0b00101111); // GMFSK
 
          writeRegister(0x32, 0xff); // Payload length
 
          // Gain
          writeRegister(0x0c, 0x23); // max gain
 
-         writeRegister(0x26, 32); // preamble length
+         if (baud <= 9600) {
+            writeRegister(0x26, 16); // preamble length  
+         } else if (baud <= 32768) {
+            writeRegister(0x26, 32); // preamble length  
+         } else {
+            writeRegister(0x26, 64); // preamble length  
+         }
+         
          writeRegister(0x0B, 0b00111011); // reduce overcurrent protection
          writeRegister(0x40, 0x10); // DIO0 setup
 
@@ -176,17 +174,23 @@ public class MSKDevice implements Device {
          public void run() {
             while (true) {
                try {
+                  
                   trxLock.acquireUninterruptibly();
 
                   // Keep in RX until full packet received.
                   int tf = readRegister(0x3f);
+
                   checkBuffer(false, tf);
                   rxPacketTimeout = System.currentTimeMillis() + 2000;
-                  while (((buffer.size() > 0 || (readRegister(0x11) / 2d) < rssiThreshold) && System.currentTimeMillis() < rxPacketTimeout)) {
+                  while ((buffer.size() > 0 || (readRegister(0x11) / 2d) < rssiThreshold)) {
                      tf = readRegister(0x3f);
                      checkBuffer(false, tf);
                      updateRSSI();
 
+                     if (System.currentTimeMillis() > rxPacketTimeout) {
+                        rxPacketTimeout = System.currentTimeMillis() + 2000;
+                        resetPacket();
+                     }
                   }
                   updateRSSI();
                } catch (Throwable e) {
@@ -306,7 +310,9 @@ public class MSKDevice implements Device {
       try {
          // Full packet received
          if (buffer.size() > 0) {
-
+            //writeRegister(0x01, 0x01); // standby
+            //writeRegister(0x01, 0x04); // fsrx
+            //writeRegister(0x01, 0x05); // rx
             final byte[] array = buffer.toByteArray();
             final long rxTime = System.currentTimeMillis();
             pool.execute(new Runnable() {
@@ -323,6 +329,8 @@ public class MSKDevice implements Device {
                   // Process the packet
                   connector.getPacketEngine().receivePacket(rxRfPacket);
 
+                  connector.addRxStats(rxRfPacket.getCompressedByteCount(), rxRfPacket.getUncompressedByteCount());
+                  
                   // Post the event for all and sundry
                   ServerBus.INSTANCE.post(rxRfPacket);
                }
@@ -338,9 +346,10 @@ public class MSKDevice implements Device {
     * Send a message packet
     */
    public void sendMessage(final TxRFPacket packet) {
-      pool.execute(new Runnable() {
+      txpool.execute(new Runnable() {
          public void run() {
             ServerBus.INSTANCE.post(packet);
+            connector.addTxStats(packet.getCompressedByteCount(), packet.getUncompressedByteCount());
             sendPacket(packet.getCompressedPacket());
          }
       });
@@ -350,33 +359,39 @@ public class MSKDevice implements Device {
     * TX a packet
     * @param message
     */
-   private synchronized void sendPacket(byte[] message) {
+   private void sendPacket(byte[] message) {
       try {
          // Wait until non-busy (so other slots can tx/rx over spi), plus collission managment is here too.
          txDelay();
-         while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
+         while (rssi < rssiThreshold || buffer.size() > 0) {
             try {
                Thread.sleep(130);
+             //  LOG.info("WAIT1:"+ rssi+" < "+rssiThreshold +"  ||  "+buffer.size());
             } catch (Throwable e) {
             }
+            checkBuffer(false, readRegister(0x3f));
+            updateRSSI();
          }
 
          trxLock.acquireUninterruptibly();
  
          // Wait for non busy channel as the lock may have taken a moment
-         while ((readRegister(0x11) / 2d) < rssiThreshold || buffer.size() > 0) {
+         while (rssi < rssiThreshold) {
             try {
-               Thread.sleep(130);
+               Thread.sleep(135);
+             //  LOG.info("WAIT2:"+ rssi+" < "+rssiThreshold +"  ||  "+buffer.size());
+
             } catch (Throwable e) {
             }
             checkBuffer(false, readRegister(0x3f));
+            updateRSSI();
          }
 
          // Standby mode to prevent any further rx or interrupts changing fifo
          writeRegister(0x01, 0x01); // standby
          writeRegister(0x01, 0x03); // transmit
          try {
-            Thread.sleep(10);
+            Thread.sleep(5);
          } catch (Throwable e) {
          }
          writeRegister(0x00, (int) message.length); // fill fifo
@@ -417,11 +432,11 @@ public class MSKDevice implements Device {
 
    private int     packetLength = 0;
    private boolean lengthRead   = false;
-   public boolean checkBuffer(boolean completed, int x) {
+   public synchronized boolean checkBuffer(boolean completed, int x) {
 
       while ((x & 0x40) == 0) {
          int data = readRegister(0x00);
-         rxPacketTimeout = System.currentTimeMillis() + 1000;
+         //rxPacketTimeout = System.currentTimeMillis() + 1000;
          if (!lengthRead) {
             packetLength = data;
             lengthRead = true;
@@ -475,7 +490,16 @@ public class MSKDevice implements Device {
             lastRSSISample = System.currentTimeMillis() + 100;
             rssi = (readRegister(0x11) / 2d);
             rssiNoiseFloor = ewmaFilter.addPoint((float) rssi);
-            rssiThreshold = rssiNoiseFloor - 12d;
+            double target = rssiNoiseFloor - 12d;
+            if (rssiThreshold == 0) {
+               rssiThreshold = target;
+            }
+            if (target < rssiThreshold) {
+               rssiThreshold -= 0.05;
+            } else {
+               rssiThreshold += 0.05;
+            }
+            //LOG.info("Threshold:"+rssiThreshold+"  target:"+target+"    Actual:"+rssiNoiseFloor+"   "+buffer.size());
          }
       } catch (Throwable e) {
          LOG.error(e.getMessage(), e);
@@ -572,6 +596,7 @@ public class MSKDevice implements Device {
 
       int targetDemod = bw + 400;
       int targetAFC = bw + 2000;
+      
 
       // Demod filter
       for (int i = 0; i < filters.length; i++) {

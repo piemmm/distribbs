@@ -2,6 +2,7 @@ package org.prowl.distribbs.lcd;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.Hardware;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
@@ -22,10 +23,7 @@ public class US2066 {
 
    private static final Log     LOG   = LogFactory.getLog("US2066");
 
-   private GpioController       gpio;
    private I2CDevice            i2c;
-   private Pin                  reset = RaspiPin.GPIO_00;
-   private GpioPinDigitalOutput gpioRst;
 
    public US2066() {
       init();
@@ -35,14 +33,9 @@ public class US2066 {
 
       try {
 
-         // Reset (default being reset until we're ready). This also is commoned with the RF modules reset pin.
-         gpio = GpioFactory.getInstance();
-         gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
-         gpioRst.setShutdownOptions(true, PinState.LOW); // If the VM exits or something quits us, we make sure the SX modules can't transmit
-         gpioRst.low(); 
-         resetAll();
          
-         i2c = I2CFactory.getInstance(1).getDevice(0x3D);
+         
+         i2c = Hardware.INSTANCE.getI2CDevice(0x3D);
 
          delay(100);
          // Init the display
@@ -150,23 +143,5 @@ public class US2066 {
       } catch (InterruptedException e) {
       }
    }
-   
-   public void resetAll() {
-      LOG.debug("Reset issued to devices");
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.low();
-      try {
-         Thread.sleep(150);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.high();
-      try {
-         Thread.sleep(150);
-      } catch (InterruptedException e) {
-      }
-   }
-
+  
 }

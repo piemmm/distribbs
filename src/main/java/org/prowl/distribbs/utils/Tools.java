@@ -51,6 +51,9 @@ public class Tools {
     * @return a String
     */
    public static String byteArrayToHexString(byte[] output) {
+      if (output == null) {
+         return "null array";
+      }
       StringBuffer hexString = new StringBuffer();
       for (int i = 0; i < output.length; i++) {
          hexString.append(String.format("%02X", output[i]));

@@ -40,7 +40,7 @@ public class MailMessage extends Packetable {
    }
 
    public void setFrom(String from) {
-      this.from = from.toUpperCase(Locale.ENGLISH);;
+      this.from = from.toUpperCase(Locale.ENGLISH);
    }
 
    public String getTo() {
@@ -48,7 +48,7 @@ public class MailMessage extends Packetable {
    }
 
    public void setTo(String to) {
-      this.to = to.toUpperCase(Locale.ENGLISH);;
+      this.to = to.toUpperCase(Locale.ENGLISH);
    }
 
    public long getDate() {

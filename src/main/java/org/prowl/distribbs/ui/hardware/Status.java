@@ -1,5 +1,6 @@
 package org.prowl.distribbs.ui.hardware;
 
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,6 +15,7 @@ import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.lcd.US2066;
 import org.prowl.distribbs.leds.StatusLeds;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.utils.EWMAFilter;
 import org.prowl.distribbs.utils.Tools;
 
 import com.google.common.eventbus.Subscribe;
@@ -26,12 +28,21 @@ public class Status {
    private StatusLeds       leds;
    private Timer            tickerTimer;
 
+   private EWMAFilter       rssi2m;
+   private EWMAFilter       rssi70cm;
+
+   private NumberFormat     nf;
+
    public Status() {
       init();
    }
 
    public void init() {
 
+      rssi2m = new EWMAFilter(0.2f);
+      rssi70cm = new EWMAFilter(0.2f);
+      nf = NumberFormat.getInstance();
+      nf.setMaximumFractionDigits(1);
       try {
          lcd = new US2066();
          leds = new StatusLeds();
@@ -134,9 +145,11 @@ public class Status {
          for (Connector c : connectors) {
             int freq = c.getFrequency();
             if (freq > 143000000 && freq < 147000000) {
-               topString = "2m RSSI: -" + (c.getRSSI()+" dBm");
+               float current = rssi2m.addPoint((float) c.getRSSI());
+               topString = "2m RSSI: -" + (nf.format(current) + " dBm");
             } else if (freq > 430000000 && freq < 450000000) {
-               bottomString = "70cm RSSI: -" + (c.getRSSI()+" dBm");
+               float current = rssi70cm.addPoint((float) c.getRSSI());
+               bottomString = "70cm RSSI: -" + (nf.format(current) + " dBm");
 
             }
          }

@@ -119,24 +119,33 @@ public class CommandParser {
       NumberFormat nf = NumberFormat.getInstance();
       nf.setMaximumFractionDigits(4);
       nf.setMinimumFractionDigits(3);
+      
+      NumberFormat nfb = NumberFormat.getInstance();
+      nfb.setMaximumFractionDigits(1);
+      nfb.setMinimumFractionDigits(1);
 
       List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
       int port = 0;
-      write("Port  Driver       RF      Frequency    Noise Floor");
-      write("---------------------------------------------------");
+      write("Port  Driver       RF      Frequency    Noise Floor    Compress(tx/rx)");
+      write("----------------------------------------------------------------------");
       for (Connector connector : connectors) {
 
          String noiseFloor = "";
          if (connector.isRF()) {
-            noiseFloor = "-" + connector.getNoiseFloor() + " dBm";
+            noiseFloor = "-" + nfb.format(connector.getNoiseFloor()) + " dBm";
          }
          
          String freq = "";
          if (connector.isRF()) {
             freq = nf.format(connector.getFrequency() / 1000000d); 
          }
+         
+         String compressRatio = "-";
+         if (connector.getRxUncompressedByteCount()+connector.getTxCompressedByteCount() != 0) {
+            compressRatio = nf.format(((double)connector.getTxUncompressedByteCount()/(double)connector.getTxCompressedByteCount()))+"/"+nf.format(((double)connector.getRxUncompressedByteCount()/(double)connector.getRxCompressedByteCount()));
+         }
 
-         write(port + ":    " + StringUtils.rightPad(connector.getName(), 13) + StringUtils.rightPad(connector.isRF() ? "yes" : "no", 8) +StringUtils.rightPad(freq,  13)+ noiseFloor);
+         write(port + ":    " + StringUtils.rightPad(connector.getName(), 13) + StringUtils.rightPad(connector.isRF() ? "yes" : "no", 8) +StringUtils.rightPad(freq,  13)+ StringUtils.rightPad(noiseFloor, 11)+compressRatio);
          port++;
       }
    }
@@ -243,6 +252,11 @@ public class CommandParser {
                write("Rx>" + extra + Tools.textOnly(packet.getPacket()));
             }
             break;
+         case APRS:
+            if (packet.getDestination().equals(PacketTools.APRS)) {
+               write("Tx>" + Tools.textOnly(packet.getPacket()));
+            }
+            break;
          case NONE:
             // Nothing
       }
@@ -259,10 +273,17 @@ public class CommandParser {
                write("Tx>" + Tools.textOnly(packet.getPacket()));
             }
             break;
+         case APRS:
+            if (packet.getDestination().equals(PacketTools.APRS)) {
+               write("Tx>" + Tools.textOnly(packet.getPacket()));
+            }
+            break;
          case NONE:
             // Nothing
       }
    }
+   
+   
 
    public void stop() {
       ServerBus.INSTANCE.unregister(this);

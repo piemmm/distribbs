@@ -21,7 +21,7 @@ import org.prowl.distribbs.node.connectivity.Modulation;
  */
 public class SX127x implements Connector {
 
-   private static final Log          LOG = LogFactory.getLog("SX127x");
+   private static final Log          LOG  = LogFactory.getLog("SX127x");
 
    private HierarchicalConfiguration config;
 
@@ -42,36 +42,40 @@ public class SX127x implements Connector {
     * Our modulation mode
     */
    private Modulation                modulation;
-   
+
    /**
-    * The slot we are controlling
-    * Slot 0 = 144MHz,  Slot 1 = 433MHz
+    * The slot we are controlling Slot 0 = 144MHz, Slot 1 = 433MHz
     */
-   private int slot = 0;
-   
+   private int                       slot = 0;
+
    /**
     * Our state holder for connections
+    * 
     * @param config
     */
-   private PacketEngine packetEngine;
+   private PacketEngine              packetEngine;
    
+   private long txCompressedByteCount = 1;
+   private long txUncompressedByteCount = 1;
+   private long rxCompressedByteCount = 1;
+   private long rxUncompressedByteCount = 1;
 
    public SX127x(HierarchicalConfiguration config) {
       this.config = config;
    }
 
    public void start() throws IOException {
-      slot = config.getInt("slot",0);
-      int frequency = config.getInt("frequency",0);
-      int deviation = config.getInt("deviation",2600);
-      int baud = config.getInt("baud");
-      
+      slot = config.getInt("slot", 0);
+      int frequency = config.getInt("frequency", 0);
+      int deviation = config.getInt("deviation", 2600);
+      int baud = config.getInt("baud",4800);
+
       announce = config.getBoolean("announce");
       announcePeriod = config.getInt("announcePeriod");
       modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
-      
+
       // Perform validation of config
-      
+
       packetEngine = new PacketEngine(this);
       if (Modulation.LoRa.equals(modulation)) {
          device = new LoRaDevice(this, slot, frequency, deviation, baud);
@@ -81,9 +85,6 @@ public class SX127x implements Connector {
          // Not a known modulation.
          throw new IOException("Unknown modulation:" + config.getString("modulation"));
       }
-
-      
-     
 
    }
 
@@ -102,7 +103,7 @@ public class SX127x implements Connector {
    public Modulation getModulation() {
       return modulation;
    }
-   
+
    public PacketEngine getPacketEngine() {
       return packetEngine;
    }
@@ -115,7 +116,6 @@ public class SX127x implements Connector {
    public boolean canSend() {
       return true;
    }
-   
 
    @Override
    public boolean sendPacket(TxRFPacket packet) {
@@ -131,14 +131,13 @@ public class SX127x implements Connector {
       return getClass().getSimpleName();
    }
 
-
    public int getFrequency() {
       if (device == null) {
          return 0;
       }
       return device.getFrequency();
    }
-   
+
    public double getNoiseFloor() {
       if (device == null) {
          return 0;
@@ -152,4 +151,44 @@ public class SX127x implements Connector {
       }
       return device.getRSSI();
    }
+
+   @Override
+   public int getSlot() {
+      return slot;
+   }
+
+   @Override
+   public long getTxCompressedByteCount() {
+      return txCompressedByteCount;
+   }
+
+   @Override
+   public long getTxUncompressedByteCount() {
+      // TODO Auto-generated method stub
+      return txUncompressedByteCount;
+   }
+
+   @Override
+   public long getRxCompressedByteCount() {
+      // TODO Auto-generated method stub
+      return rxCompressedByteCount;
+   }
+
+   @Override
+   public long getRxUncompressedByteCount() {
+      // TODO Auto-generated method stub
+      return rxUncompressedByteCount;
+   }
+   
+   protected void addRxStats(long compressedByteCount, long uncompressedByteCount) {
+      rxCompressedByteCount+= compressedByteCount;
+      rxUncompressedByteCount = uncompressedByteCount;
+   }
+  
+   protected void addTxStats(long compressedByteCount, long uncompressedByteCount) {
+      txCompressedByteCount+= compressedByteCount;
+      txUncompressedByteCount = uncompressedByteCount;
+   }
+   
+
 }

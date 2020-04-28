@@ -32,4 +32,17 @@ public interface Connector {
    public double getNoiseFloor();
    
    public double getRSSI();
+   
+   /**
+    * Get the physical hardware 'slot' this RF interface occupies
+    * @return
+    */
+   public int getSlot();
+   
+   public long getTxCompressedByteCount();
+   public long getTxUncompressedByteCount();
+   public long getRxCompressedByteCount();
+   public long getRxUncompressedByteCount();
+
+   
 }

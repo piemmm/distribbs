@@ -180,6 +180,35 @@ public class IPv4 implements Connector {
    public int getFrequency() {
       return 0;
    }
+
+   @Override
+   public int getSlot() {
+      return -1;
+   }
    
-   
+
+   @Override
+   public long getTxCompressedByteCount() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public long getTxUncompressedByteCount() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public long getRxCompressedByteCount() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public long getRxUncompressedByteCount() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+ 
 }

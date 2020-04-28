@@ -9,7 +9,7 @@
 	<!-- Connectivity setup -->
 	<connectivity>
 
-		<!-- Connector types can be: S127x, IPv4, IPv6, AX25, GPS -->
+		<!-- Connector types can be: S127x, IPv4, IPv6, GPS -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>
 			<!-- Slot 0 = 144MHz module slot -->
@@ -19,7 +19,7 @@
 			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
 			<deviation>2600</deviation>
 			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
-				5, etc) -->
+				5000, etc) -->
 			<baud>4800</baud>
 			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
 			<modulation>MSK</modulation>
@@ -39,7 +39,7 @@
 			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
 			<deviation>5</deviation>
 			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
-				5, etc) -->
+				5000, etc) -->
 			<baud>12500</baud>
 			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
 			<modulation>MSK</modulation>
@@ -66,7 +66,8 @@
 
 
 		<!-- IPv4 connector. Have one of these sections for each node that you 
-			want to connect to -->
+			want to connect to, we can use a shared secret here because it's not RF and subject
+			to licensing conditions (usually preventing the use of encryption on RF) -->
 		<connector>
 			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>
 			<listenIp>0.0.0.0</listenIp> <!-- The IP to listen to requests on -->
@@ -79,15 +80,12 @@
 			</peerSecret> <!-- Shared between both nodes -->
 		</connector>
 
-		<!-- AX25 uses the callsign defined in 'callsign' above. -->
+		<!-- AX.25 KISS tnc socket (fifo) for the linux ax25 ports to interface 
+			to so we can have nice things like IP networking -->
 		<connector>
-			<type>org.prowl.distribbs.node.connectivity.ax25.AX25</type>
-			<!-- Sends a UI announce packet every X minutes (minimum 15) -->
-			<announce>true</announce>
-			<announcePeriod>60</announcePeriod>
-			<!-- Are we a BBS? If true then people can send/rx from you using a text 
-				only interface -->
-			<bbsEnabled>false</bbsEnabled>
+			<type>org.prowl.distribbs.node.connectivity.ax25.KISS</type>
+			<interfaceName>ax0</interfaceName>
+			<bindToSlot>0</bindToSlot>
 		</connector>
 
 	</connectivity>

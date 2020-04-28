@@ -42,12 +42,16 @@ public class MHeard {
          return;
       }
       
-      // Get the packet and decode to a node
-      String callsign = PacketTools.decodeFrom(packet.getPacket());
-      if (callsign != null) {
-         Node node = new Node(callsign, packet.getRxTime(), packet.getRSSI());
-         // Update the list
-         addToFront(node);
+      if (packet.isAX25()) {
+         // should probably decode header.
+      } else {
+         // Get the packet and decode to a node
+         String callsign = PacketTools.decodeFrom(packet.getPacket());
+         if (callsign != null) {
+            Node node = new Node(callsign, packet.getRxTime(), packet.getRSSI());
+            // Update the list
+            addToFront(node);
+         }
       }
    }
 }

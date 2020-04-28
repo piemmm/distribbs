@@ -163,7 +163,7 @@ public class APRS implements Connector {
          out.flush();
 
          LOG.info("Connected to APRS-IS");
-         
+
          /**
           * This controls the reporting of *our* station to APRS-IS
           */
@@ -184,7 +184,7 @@ public class APRS implements Connector {
 
                      APRSPacket packet = new APRSPacket(DistriBBS.INSTANCE.getMyCall(), "", digis, op);
                      LOG.info("Sending APRS-IS packet: " + packet.toString());
-                     aprsisWrite((packet.toString()+"\n").getBytes());
+                     aprsisWrite((packet.toString() + "\n").getBytes());
                   }
                } catch (Throwable e) {
                   LOG.error(e.getMessage(), e);
@@ -305,7 +305,7 @@ public class APRS implements Connector {
    }
 
    /**
-    * Periodically broadcasts an APRS paket out for this station
+    * Periodically broadcasts an APRS packet out for this station over RF
     */
    public void startRFSend() {
       Timer rfSendPositionTimer = new Timer();
@@ -342,7 +342,7 @@ public class APRS implements Connector {
                         shouldSend = true;
                      }
                   }
-   
+
                } else {
                   // Fixed delay between position reports (5 minute minimum)
                   if (System.currentTimeMillis() - lastSendTime > announcePeriod) {
@@ -359,7 +359,7 @@ public class APRS implements Connector {
                         List<Digipeater> digis = new ArrayList();
                         digis.add(Digipeater.get("APRS"));
                         digis.add(Digipeater.get("WIDE1-1"));
-   
+
                         APRSPacket packet = new APRSPacket(DistriBBS.INSTANCE.getMyCall(), "", digis, op);
                         TxRFPacket txPacket = new TxRFPacket(DistriBBS.INSTANCE.getMyCall(), packet.getDigiString(), "", packet.getAprsInformation().toString().getBytes());
                         DistriBBS.INSTANCE.getConnectivity().getPort(0).sendPacket(txPacket);
@@ -371,8 +371,8 @@ public class APRS implements Connector {
                      LOG.error(e.getMessage(), e);
                   }
                }
-            } catch(Throwable e) { 
-               LOG.error(e.getMessage(),e);
+            } catch (Throwable e) {
+               LOG.error(e.getMessage(), e);
             }
          }
       }, 5000, 3000);
@@ -430,6 +430,31 @@ public class APRS implements Connector {
 
    @Override
    public double getRSSI() {
+      return 0;
+   }
+
+   @Override
+   public int getSlot() {
+      return -1;
+   }
+
+   @Override
+   public long getTxCompressedByteCount() {
+      return 0;
+   }
+
+   @Override
+   public long getTxUncompressedByteCount() {
+      return 0;
+   }
+
+   @Override
+   public long getRxCompressedByteCount() {
+      return 0;
+   }
+
+   @Override
+   public long getRxUncompressedByteCount() {
       return 0;
    }
 

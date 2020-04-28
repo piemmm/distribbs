@@ -14,6 +14,8 @@ import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
+import com.pi4j.io.i2c.I2CDevice;
+import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
@@ -37,11 +39,21 @@ public enum Hardware {
    private Pin                  ss0     = RaspiPin.GPIO_06;
    private Pin                  ss1     = RaspiPin.GPIO_02;
 
+   private Pin                  reset   = RaspiPin.GPIO_00;
+
+   private Pin                  fan1    = RaspiPin.GPIO_27;
+   private Pin                  fan2    = RaspiPin.GPIO_24;
+
    private GpioController       gpio;
    private GpioPinDigitalInput  gpioDio0;
    private GpioPinDigitalInput  gpioDio1;
    private GpioPinDigitalOutput gpioSS0;
    private GpioPinDigitalOutput gpioSS1;
+   private GpioPinDigitalOutput gpioRst;
+   
+   private GpioPinDigitalOutput gpioFan1;
+   private GpioPinDigitalOutput gpioFan2;
+
 
    private Hardware() {
       try {
@@ -59,18 +71,40 @@ public enum Hardware {
 
          // Select pin 0
          gpioSS0 = gpio.provisionDigitalOutputPin(ss0, PinState.HIGH);
-         gpioSS0.setShutdownOptions(true, PinState.LOW);
+         gpioSS0.setShutdownOptions(true, PinState.HIGH);
          gpioSS0.high();
 
          // Select pin 1
          gpioSS1 = gpio.provisionDigitalOutputPin(ss1, PinState.HIGH);
-         gpioSS1.setShutdownOptions(true, PinState.LOW);
+         gpioSS1.setShutdownOptions(true, PinState.HIGH);
          gpioSS1.high();
+         
+         // Fan 1
+         gpioFan1 = gpio.provisionDigitalOutputPin(fan1, PinState.HIGH);
+         gpioFan1.setShutdownOptions(true, PinState.HIGH);
+         gpioFan1.high();
+         
+         // Fan 2
+         gpioFan2 = gpio.provisionDigitalOutputPin(fan2, PinState.HIGH);
+         gpioFan2.setShutdownOptions(true, PinState.HIGH);
+         gpioFan2.high();
+
+         // Reset (default being reset until we're ready). This also is commoned with the
+         // RF modules reset pin.
+         gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
+         gpioRst.setShutdownOptions(true, PinState.LOW); // If the VM exits or something quits us, we make sure the SX modules can't
+                                                         // transmit
+         gpioRst.low();
+         resetAll();
 
       } catch (IOException e) {
          LOG.error(e.getMessage(), e);
       }
 
+   }
+
+   public I2CDevice getI2CDevice(int addr) throws IOException, I2CFactory.UnsupportedBusNumberException {
+      return I2CFactory.getInstance(1).getDevice(addr);
    }
 
    public final Semaphore getSPILock() {
@@ -89,6 +123,22 @@ public enum Hardware {
       return gpioSS1;
    }
 
-   
-   
+   public void resetAll() {
+      LOG.debug("Reset issued to devices");
+      try {
+         Thread.sleep(50);
+      } catch (InterruptedException e) {
+      }
+      gpioRst.low();
+      try {
+         Thread.sleep(150);
+      } catch (InterruptedException e) {
+      }
+      gpioRst.high();
+      try {
+         Thread.sleep(150);
+      } catch (InterruptedException e) {
+      }
+   }
+
 }

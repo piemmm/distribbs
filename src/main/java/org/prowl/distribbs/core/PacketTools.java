@@ -19,6 +19,9 @@ public class PacketTools {
    // Responses
    public static final String PONG = "PONG"; // Ping reply
    
+   // KISS ax25 legacy passthrough
+   public static final String KISS = ""; // KISS passthrough
+   
    /**
     * Generate an announce packet - eg:
     * 
