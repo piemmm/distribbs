@@ -144,9 +144,9 @@ public class PacketEngine {
       }
        
       // Process any state changes that are addressed to us
-      if (DistriBBS.INSTANCE.getMyCall().equals(destination)) {
-         // processStateChanges(source, destination, command, payload);
-      }
+//      if (DistriBBS.INSTANCE.getMyCall().equals(destination)) {
+//         // processStateChanges(source, destination, command, payload);
+//      }
 
    }
 

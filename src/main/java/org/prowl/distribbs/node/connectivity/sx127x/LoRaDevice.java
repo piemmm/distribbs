@@ -337,4 +337,29 @@ public class LoRaDevice implements Device {
       return 0;
    }
 
+   @Override
+   public int setFrequency(int frequencyHz) {
+      return 0;
+   }
+
+   @Override
+   public double setDeviation(double deviationHz) {
+      return 0;
+   }
+
+   @Override
+   public int setAFCFilter(int afcHz) {
+      return 0;
+   }
+
+   @Override
+   public int setDemodFilter(int demodHz) {
+      return 0;
+   }
+
+   @Override
+   public int setBaud(int baud) {
+      return 0;
+   }
+
 }

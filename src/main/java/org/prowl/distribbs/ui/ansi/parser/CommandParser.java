@@ -2,7 +2,6 @@ package org.prowl.distribbs.ui.ansi.parser;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -17,6 +16,7 @@ import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.RFConnector;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.Tools;
 
@@ -28,6 +28,7 @@ public class CommandParser {
    public static final String UNKNOWN_COMMAND  = "Unknown command!";
    public static final String INCORRECT_ARGS   = "Incorrect number of arguments for command!";
    public static final String INVALID_ARGUMENT = "Invalid data supplied for command!";
+   public static final String PORT_UNSUPPORTED = "Operation unsupported on this port";
 
    private ScreenWriter       screen;
 
@@ -85,11 +86,134 @@ public class CommandParser {
          case MONITOR:
             monitor(arguments);
             break;
+         case BYE:
+         case END:
+         case LOGOFF:
+         case LOGOUT:
+         case EXIT:
+         case QUIT:
+            logout();
+            break;
+         case BAUD:
+            changeBaud(arguments);
+            break;
+         case DEVIATION:
+            changeDeviation(arguments);
+            break;
+         case DEMOD:
+            changeDemodFilter(arguments);
+            break;
+         case AFC:
+            changeAFCFilter(arguments);
+            break;
+            
          default:
             unknownCommand();
       }
    }
+   
+   public void changeBaud(String[] arguments) {
+      
+      if (arguments.length != 2) {
+         write(INCORRECT_ARGS);
+         return;
+      }
+      
+      int baud = 0;
+      try {
+         baud = Integer.parseInt(arguments[1]);
+      } catch(NumberFormatException e) {
+         write(INVALID_ARGUMENT);
+         return;
+      }
+      
+      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
+      if (connector instanceof RFConnector) {
+        int b = ((RFConnector) connector).setBaud(baud);
+        write("Baud set to: " +b);
+      } else {
+         write(PORT_UNSUPPORTED);
+         return;
+      }
+   }
+   
+   public void changeDeviation(String[] arguments) {
+      if (arguments.length != 2) {
+         write(INCORRECT_ARGS);
+         return;
+      }
+      
+      double dev = 0;
+      try {
+         dev = Double.parseDouble(arguments[1]);
+      } catch(NumberFormatException e) {
+         write(INVALID_ARGUMENT);
+         return;
+      }
+      
+      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
+      if (connector instanceof RFConnector) {
+         double d = ((RFConnector) connector).setDeviation(dev / 1000d);
+         write("Deviation set to: "+d);
+      } else {
+         write(PORT_UNSUPPORTED);
+         return;
+      }
+   }
+   
+   public void changeDemodFilter(String[] arguments) {
+      if (arguments.length != 2) {
+         write(INCORRECT_ARGS);
+         return;
+      }
+      
+      int dem = 0;
+      try {
+         dem = Integer.parseInt(arguments[1]);
+      } catch(NumberFormatException e) {
+         write(INVALID_ARGUMENT);
+         return;
+      }
+      
+      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
+      if (connector instanceof RFConnector) {
+        int d = ((RFConnector) connector).setDemodFilter(dem);
+        write("Demod filter set to: " +d);
+      } else {
+         write(PORT_UNSUPPORTED);
+         return;
+      }
+      
+   }
+   
+   public void changeAFCFilter(String[] arguments) {
+      if (arguments.length != 2) {
+         write(INCORRECT_ARGS);
+         return;
+      }
+      
+      int afc = 0;
+      try {
+         afc = Integer.parseInt(arguments[1]);
+      } catch(NumberFormatException e) {
+         write(INVALID_ARGUMENT);
+         return;
+      }
+      
+      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
+      if (connector instanceof RFConnector) {
+         int a = ((RFConnector) connector).setAFCFilter(afc);
+         write("AFC Filter set to: "+a);
+      } else {
+         write(PORT_UNSUPPORTED);
+         return;
+      }
+   }
 
+   public void logout() {
+      screen.terminate();
+   }
+   
    public void monitor(String[] arguments) {
       if (arguments.length != 2) {
          write(INCORRECT_ARGS);

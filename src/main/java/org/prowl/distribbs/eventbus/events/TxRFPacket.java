@@ -61,6 +61,8 @@ public class TxRFPacket extends BaseEvent {
          this.packet = bos.toByteArray();
          this.compressedPacket = Tools.compress(this.packet);
          
+         LOG.info("Compression:" + packet.length +"  to  "+compressedPacket.length);
+         
          compressedByteCount+=compressedPacket.length;
          uncompressedByteCount+=this.packet.length;
          

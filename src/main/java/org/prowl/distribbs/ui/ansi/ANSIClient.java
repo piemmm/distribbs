@@ -44,7 +44,7 @@ public class ANSIClient extends Thread implements ScreenWriter {
    }
 
    public void run() {
-      
+
       try {
 
          screen = new TerminalScreen(terminal);
@@ -55,15 +55,22 @@ public class ANSIClient extends Thread implements ScreenWriter {
          gui = new MultiWindowTextGUI(screen);
 
          gui.setTheme(LanternaThemes.getRegisteredTheme("blaster"));
-          
+
          buildDesktop();
-         
 
       } catch (Throwable e) {
          LOG.error(e.getMessage(), e);
       }
 
       try {
+         screen.close();
+      } catch (Throwable e) {
+      }
+   }
+
+   public void terminate() {
+      try {
+         screen.clear();
          screen.close();
       } catch (Throwable e) {
       }
@@ -111,13 +118,13 @@ public class ANSIClient extends Thread implements ScreenWriter {
       inputPanel.takeFocus();
 
       showGreeting();
-      
+
       gui.addWindowAndWait(desktop);
 
    }
 
    public void processInput(String input) {
-     commandParser.parse(input.trim());
+      commandParser.parse(input.trim());
    }
 
    @Override
@@ -126,18 +133,17 @@ public class ANSIClient extends Thread implements ScreenWriter {
       outputPanel.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
    }
 
-   
    /**
     * Show a greeting about the system when a user connects
     */
    public void showGreeting() {
-      write("*** "+DistriBBS.VERSION_STRING + " build " + DistriBBS.BUILD);
+      write("*** " + DistriBBS.VERSION_STRING + " build " + DistriBBS.BUILD);
       write("");
       write("Software CC-BY-SA ");
       write("");
       write("Type 'HELP' for a list of commands");
-      commandParser.doCommand(Command.PORTS, new String[] { });
- 
+      commandParser.doCommand(Command.PORTS, new String[] {});
+
    }
-   
+
 }

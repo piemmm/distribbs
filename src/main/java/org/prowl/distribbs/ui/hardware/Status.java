@@ -180,7 +180,7 @@ public class Status {
 
    @Subscribe
    public void pulseTRX(RxRFPacket packet) {
-      leds.pulseTRX(50);
+   //   leds.pulseTRX(50);
    }
 
    @Subscribe

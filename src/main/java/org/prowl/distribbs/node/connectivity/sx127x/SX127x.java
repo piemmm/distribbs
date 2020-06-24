@@ -7,8 +7,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
+import org.prowl.distribbs.node.connectivity.RFConnector;
 
 /**
  * Implements an interface using the SX127x sx1276, sx1278, etc) series of chips
@@ -19,7 +19,7 @@ import org.prowl.distribbs.node.connectivity.Modulation;
  * Data to send is compressed before it is sent, and decompressed in any rx
  * events when required.
  */
-public class SX127x implements Connector {
+public class SX127x implements RFConnector {
 
    private static final Log          LOG  = LogFactory.getLog("SX127x");
 
@@ -189,6 +189,32 @@ public class SX127x implements Connector {
       txCompressedByteCount+= compressedByteCount;
       txUncompressedByteCount = uncompressedByteCount;
    }
+
+   @Override
+   public int setFrequency(int frequencyHz) {
+       return device.setFrequency(frequencyHz);
+   }
+
+   @Override
+   public double setDeviation(double deviationHz) {
+       return device.setDeviation(deviationHz);
+   }
+
+   @Override
+   public int setAFCFilter(int afcHz) {
+       return device.setAFCFilter(afcHz);
+   }
+
+   @Override
+   public int setDemodFilter(int demodHz) {
+       return device.setDemodFilter(demodHz);
+   }
+
+   @Override
+   public int setBaud(int baud) {
+       return device.setBaud(baud);
+   }
+   
    
 
 }
