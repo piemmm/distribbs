@@ -5,6 +5,7 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.DistriBBS;
 
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
@@ -20,6 +21,7 @@ import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
 import com.pi4j.io.spi.SpiMode;
+import com.pi4j.system.SystemInfo;
 
 /**
  * Single class to access the hardware
@@ -28,21 +30,23 @@ public enum Hardware {
 
    INSTANCE;
 
-   private final Log            LOG     = LogFactory.getLog("RxRFPacket");
+   private final Log            LOG          = LogFactory.getLog("Hardware");
 
-   private final Semaphore      spiLock = new Semaphore(1, true);
+   private float                MAX_CPU_TEMP = 75f;
+
+   private final Semaphore      spiLock      = new Semaphore(1, true);
    private SpiDevice            spi;
 
-   private Pin                  dio0    = RaspiPin.GPIO_07;
-   private Pin                  dio1    = RaspiPin.GPIO_03;
+   private Pin                  dio0         = RaspiPin.GPIO_07;
+   private Pin                  dio1         = RaspiPin.GPIO_03;
 
-   private Pin                  ss0     = RaspiPin.GPIO_06;
-   private Pin                  ss1     = RaspiPin.GPIO_02;
+   private Pin                  ss0          = RaspiPin.GPIO_06;
+   private Pin                  ss1          = RaspiPin.GPIO_02;
 
-   private Pin                  reset   = RaspiPin.GPIO_00;
+   private Pin                  reset        = RaspiPin.GPIO_00;
 
-   private Pin                  fan1    = RaspiPin.GPIO_27;
-   private Pin                  fan2    = RaspiPin.GPIO_24;
+   private Pin                  fan1         = RaspiPin.GPIO_27;
+   private Pin                  fan2         = RaspiPin.GPIO_24;
 
    private GpioController       gpio;
    private GpioPinDigitalInput  gpioDio0;
@@ -50,10 +54,9 @@ public enum Hardware {
    private GpioPinDigitalOutput gpioSS0;
    private GpioPinDigitalOutput gpioSS1;
    private GpioPinDigitalOutput gpioRst;
-   
+
    private GpioPinDigitalOutput gpioFan1;
    private GpioPinDigitalOutput gpioFan2;
-
 
    private Hardware() {
       try {
@@ -78,13 +81,13 @@ public enum Hardware {
          gpioSS1 = gpio.provisionDigitalOutputPin(ss1, PinState.HIGH);
          gpioSS1.setShutdownOptions(true, PinState.HIGH);
          gpioSS1.high();
-         
-         // Fan 1
+
+         // Fan 1, default ON until temp code turns off
          gpioFan1 = gpio.provisionDigitalOutputPin(fan1, PinState.HIGH);
          gpioFan1.setShutdownOptions(true, PinState.HIGH);
          gpioFan1.high();
-         
-         // Fan 2
+
+         // Fan 2, default ON until temp code turns off
          gpioFan2 = gpio.provisionDigitalOutputPin(fan2, PinState.HIGH);
          gpioFan2.setShutdownOptions(true, PinState.HIGH);
          gpioFan2.high();
@@ -96,6 +99,8 @@ public enum Hardware {
                                                          // transmit
          gpioRst.low();
          resetAll();
+
+         makeThermalMonitor();
 
       } catch (IOException e) {
          LOG.error(e.getMessage(), e);
@@ -139,6 +144,46 @@ public enum Hardware {
          Thread.sleep(150);
       } catch (InterruptedException e) {
       }
+   }
+
+   /**
+    * Simple fan controller for making sure the pi cpu doesn't get too close to
+    * it's thermal limits.
+    */
+   public void makeThermalMonitor() {
+
+      Thread thread = new Thread() {
+         public void run() {
+            LOG.info("Thermal monitor starting");
+            while (true) {
+               try {
+                  Thread.sleep(10000);
+               } catch (InterruptedException e) {
+               }
+               try {
+                  float currentTemp = SystemInfo.getCpuTemperature();
+                  LOG.debug("CPU thermals:" +currentTemp);
+                  if (currentTemp > MAX_CPU_TEMP) {
+                     gpioFan1.high();
+                     gpioFan2.high();
+                  } else if (currentTemp < MAX_CPU_TEMP - 5) {
+                     gpioFan1.low();
+                     gpioFan2.low();
+                  }
+               } catch (UnsupportedOperationException e) {
+                  LOG.warn("CPU Does not support temperature measurement");
+                  break;
+               } catch (InterruptedException e) {
+               } catch (Throwable e) {
+                  e.printStackTrace();
+               }
+            }
+            LOG.info("Thermal monitor exiting");
+         }
+      };
+
+      thread.start();
+
    }
 
 }
