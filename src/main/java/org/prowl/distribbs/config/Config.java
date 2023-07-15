@@ -5,6 +5,8 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
+
 public class Config {
 
 
@@ -17,9 +19,10 @@ public class Config {
    public Config() {
       LOG.info("Loading configuration");
       try {
-         configuration = new XMLConfiguration(CONFIG_FILE);
+         configuration = new XMLConfiguration(new File(new File("").getAbsolutePath(), CONFIG_FILE));
       } catch(Throwable e) {
          e.printStackTrace();
+         System.err.println("Search path: " +new File("").getAbsolutePath().toString());
          System.err.println("Unable to load production config file, exiting:"+e.getMessage());
          System.exit(1);
       }

@@ -161,7 +161,7 @@ public enum Hardware {
                } catch (InterruptedException e) {
                }
                try {
-                  float currentTemp = SystemInfo.getCpuTemperature();
+                  float currentTemp = 0;// SystemInfo.getCpuTemperature();
                   LOG.debug("CPU thermals:" +currentTemp);
                   if (currentTemp > MAX_CPU_TEMP) {
                      gpioFan1.high();
@@ -173,7 +173,7 @@ public enum Hardware {
                } catch (UnsupportedOperationException e) {
                   LOG.warn("CPU Does not support temperature measurement");
                   break;
-               } catch (InterruptedException e) {
+              // } catch (InterruptedException e) {
                } catch (Throwable e) {
                   e.printStackTrace();
                }

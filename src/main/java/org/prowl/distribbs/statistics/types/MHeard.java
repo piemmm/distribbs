@@ -48,7 +48,7 @@ public class MHeard {
          // Get the packet and decode to a node
          String callsign = PacketTools.decodeFrom(packet.getPacket());
          if (callsign != null) {
-            Node node = new Node(callsign, packet.getRxTime(), packet.getRSSI());
+            Node node = new Node(packet.getConnector(), callsign, packet.getRxTime(), packet.getRSSI());
             // Update the list
             addToFront(node);
          }

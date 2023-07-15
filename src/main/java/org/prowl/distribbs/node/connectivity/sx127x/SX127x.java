@@ -81,6 +81,8 @@ public class SX127x implements RFConnector {
          device = new LoRaDevice(this, slot, frequency, deviation, baud);
       } else if (Modulation.MSK.equals(modulation)) {
          device = new MSKDevice(this, slot, frequency, deviation, baud);
+      } else if (Modulation.GFSK.equals(modulation)) {
+         device = new FSKDevice(this, slot, frequency, deviation, baud);
       } else {
          // Not a known modulation.
          throw new IOException("Unknown modulation:" + config.getString("modulation"));
