@@ -1,0 +1,218 @@
+package org.ka2ddo.ax25;
+/*
+* Copyright (C) 2011-2022 Andrew Pavlin, KA2DDO
+* This file is part of YAAC (Yet Another APRS Client).
+*
+*  YAAC is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  YAAC is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  and GNU Lesser General Public License along with YAAC.  If not,
+*  see <http://www.gnu.org/licenses/>.
+*/
+
+import org.ka2ddo.util.DebugCtl;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
+
+/**
+ * Converts a standard Java output stream of bytes into AX.25 connected-mode I-frames.
+ * @author Andrew Pavlin, KA2DDO
+ */
+class AX25OutputStream extends OutputStream {
+    private final byte[] buf = new byte[256]; // maximum body length of AX.25 frame
+    private int bufIdx = 0;
+    private final ConnState connState;
+
+    AX25OutputStream(ConnState connState) {
+        this.connState = connState;
+        connState.transmitWindow = new AX25Frame[connState.connType == ConnState.ConnType.MOD128 ? 128 : 8];
+    }
+
+    /**
+     * Writes the specified byte to this output stream. The general
+     * contract for <code>write</code> is that one byte is written
+     * to the output stream. The byte to be written is the eight
+     * low-order bits of the argument <code>b</code>. The 24
+     * high-order bits of <code>b</code> are ignored.
+     * <p>
+     * Subclasses of <code>OutputStream</code> must provide an
+     * implementation for this method.
+     *
+     * @param b the <code>byte</code>.
+     * @throws java.io.IOException if an I/O error occurs. In particular,
+     *                             an <code>IOException</code> may be thrown if the
+     *                             output stream has been closed.
+     */
+    public synchronized void write(int b) throws IOException {
+        buf[bufIdx++] = (byte)b;
+        if (bufIdx >= buf.length) {
+            flush();
+        }
+    }
+
+    /**
+     * Writes <code>len</code> bytes from the specified byte array
+     * starting at offset <code>off</code> to this output stream.
+     * The general contract for <code>write(b, off, len)</code> is that
+     * some of the bytes in the array <code>b</code> are written to the
+     * output stream in order; element <code>b[off]</code> is the first
+     * byte written and <code>b[off+len-1]</code> is the last byte written
+     * by this operation.
+     * <p>
+     * The <code>write</code> method of <code>OutputStream</code> calls
+     * the write method of one argument on each of the bytes to be
+     * written out. Subclasses are encouraged to override this method and
+     * provide a more efficient implementation.
+     * <p>
+     * If <code>b</code> is <code>null</code>, a
+     * <code>NullPointerException</code> is thrown.
+     * <p>
+     * If <code>off</code> is negative, or <code>len</code> is negative, or
+     * <code>off+len</code> is greater than the length of the array
+     * <code>b</code>, then an <tt>IndexOutOfBoundsException</tt> is thrown.
+     *
+     * @param b   the data.
+     * @param off the start offset in the data.
+     * @param len the number of bytes to write.
+     * @throws java.io.IOException if an I/O error occurs. In particular,
+     *                             an <code>IOException</code> is thrown if the output
+     *                             stream is closed.
+     */
+    public synchronized void write(byte[] b, int off, int len) throws IOException {
+        if (len == 0) {
+            return;
+        } else if (len < 0 || off < 0 || len + off > b.length) {
+            throw new IndexOutOfBoundsException();
+        }
+        do {
+            int sendableLen = Math.min(len, buf.length - bufIdx);
+            System.arraycopy(b, off, buf, bufIdx, sendableLen);
+            bufIdx += sendableLen;
+            if (bufIdx >= buf.length) {
+                flush();
+            }
+            len -= sendableLen;
+        } while (len > 0);
+    }
+
+    /**
+     * Flushes this output stream and forces any buffered output bytes
+     * to be written out. The general contract of <code>flush</code> is
+     * that calling it is an indication that, if any bytes previously
+     * written have been buffered by the implementation of the output
+     * stream, such bytes should immediately be written to their
+     * intended destination.
+     *
+     * @throws java.io.IOException if an I/O error occurs.
+     */
+    @Override
+    public synchronized void flush() throws IOException {
+        if (bufIdx > 0) {
+            if (!connState.isOpen()) {
+                throw new EOFException("AX.25 connection closed");
+            }
+            AX25Frame f = new AX25Frame();
+
+            // fill in header
+            if (connState.stack.isLocalDest(connState.src)) {
+                f.sender = connState.src.dup();
+                f.dest = connState.dst.dup();
+                if (connState.via != null) {
+                    AX25Callsign[] digis = new AX25Callsign[connState.via.length];
+                    for (int i = 0; i < connState.via.length; i++) {
+                        digis[i] = connState.via[i].dup();
+                        digis[i].h_c = false;
+                    }
+                    f.digipeaters = digis;
+                }
+            } else {
+                f.sender = connState.dst.dup();
+                f.dest = connState.src.dup();
+                f.digipeaters = connState.stack.reverseDigipeaters(connState.via);
+            }
+            f.ctl = AX25Frame.FRAMETYPE_I;
+            f.mod128 = (ConnState.ConnType.MOD128 == connState.connType);
+            f.pid = AX25Frame.PID_NOLVL3;
+            f.setCmd(true);
+            f.body = new byte[bufIdx];
+            System.arraycopy(buf, 0, f.body, 0, bufIdx);
+
+            // submit new frame to destination (blocking if window buffer is full)
+            int nextVS;
+            do {
+                nextVS = connState.vs;
+                if (connState.transmitWindow[nextVS] != null) {
+                    nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
+                    while (connState.transmitWindow[nextVS] != null && nextVS != connState.vs) {
+                        nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
+                    }
+                }
+                if (connState.transmitWindow[nextVS] == null) {
+                    break;
+                }
+                // window buffer is completely full, wait until there is room
+                synchronized (connState) {
+                    try {
+                        wait(10000L);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }
+                if (!connState.isOpen()) {
+                    throw new EOFException("AX.25 connection closed");
+                }
+            } while (true);
+            connState.transmitWindow[nextVS] = f;
+            if (nextVS == connState.vs) {
+                connState.vs = (connState.vs + 1) % (f.mod128 ? 128 : 8);
+            }
+            if (!connState.xmtToRemoteBlocked) {
+                if (connState.connector != null) {
+                    f.setNS(nextVS);
+                    f.setNR(connState.vr);
+                    if (DebugCtl.isDebug("ax25")) {
+                        System.out.println(new Date().toString() + " sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
+                    }
+                    connState.connector.sendFrame(f);
+                } else {
+                    throw new NullPointerException("no TransmittingConnector to send data through");
+                }
+            }
+
+            bufIdx = 0;
+        }
+    }
+
+    /**
+     * Closes this output stream and releases any system resources
+     * associated with this stream. The general contract of <code>close</code>
+     * is that it closes the output stream. A closed stream cannot perform
+     * output operations and cannot be reopened.
+     *
+     * @throws java.io.IOException if an I/O error occurs.
+     */
+    @Override
+    public void close() throws IOException {
+        flush();
+    }
+
+    /**
+     * Produce a String representation of the object.
+     * @return String describing the stream and its state
+     */
+    @Override
+    public String toString() {
+        return "AX25OutputStream[" + connState.paramString() + ']';
+    }
+}

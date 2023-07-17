@@ -15,7 +15,7 @@
 			<!-- Slot 0 = 144MHz module slot -->
 			<slot>0</slot>
 			<!-- The frequency to transmit and receive, in Hz -->
-			<frequency>144700000</frequency>
+			<frequency>144637500</frequency>
 			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
 			<deviation>2600</deviation>
 			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
@@ -35,10 +35,10 @@
 			<!-- Slot 1 = 433MHz module slot -->
 			<slot>1</slot>
 			<!-- The frequency to transmit and receive, in Hz -->
-			<frequency>433825000</frequency>
+			<frequency>432625000</frequency>
 			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
 			<deviation>5</deviation>
-			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
+			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with
 				5000, etc) -->
 			<baud>12500</baud>
 			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->

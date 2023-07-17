@@ -1,15 +1,6 @@
 package org.prowl.distribbs.node.connectivity.ax25;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.common.eventbus.Subscribe;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,7 +13,9 @@ import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 
-import com.google.common.eventbus.Subscribe;
+import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Implements a KISS type passthrough on a fifo file so that things like
