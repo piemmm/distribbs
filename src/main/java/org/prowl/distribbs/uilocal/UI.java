@@ -1,4 +1,4 @@
-package org.prowl.distribbs.ui;
+package org.prowl.distribbs.uilocal;
 
 import java.util.ArrayList;
 import java.util.List;

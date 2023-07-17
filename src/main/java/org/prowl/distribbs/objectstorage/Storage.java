@@ -19,6 +19,7 @@ import org.prowl.distribbs.services.aprs.APRSMessage;
 import org.prowl.distribbs.services.chat.ChatMessage;
 import org.prowl.distribbs.services.messages.MailMessage;
 import org.prowl.distribbs.services.newsgroups.NewsMessage;
+import org.prowl.distribbs.services.user.User;
 import org.prowl.distribbs.utils.Tools;
 
 /**
@@ -39,6 +40,7 @@ public class Storage {
    private static final String       CHAT        = "chat";
    private static final String       APRS        = "aprs";
    private static final String       MAIL        = "mail";
+   private static final String       USER        = "user";
    private static final String       QSL         = "qsl";
 
    public Storage(HierarchicalConfiguration config) {
@@ -55,6 +57,17 @@ public class Storage {
    public void storeMailMessage(MailMessage message) throws IOException {
       // Write it to disk
       storeData(getMailMessageFile(message), message.toPacket());
+   }
+
+   public File getUserMessageFile(String baseCallsign) {
+      // Get the location to save the file and make sure the directory structure
+      // exists
+      String filename = baseCallsign;
+      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + USER);
+      if (!itemDir.exists()) {
+         itemDir.mkdirs();
+      }
+      return new File(itemDir, filename);
    }
 
    public File getMailMessageFile(MailMessage message) {
@@ -119,6 +132,15 @@ public class Storage {
    public void storeNewsMessage(NewsMessage message) throws IOException {
       // Write it to disk
       storeData(getNewsMessageFile(message), message.toPacket());
+   }
+
+   /**
+    * Write a user to disk.
+    * @param user
+    * @throws IOException
+    */
+   public void storeUser(User user) throws IOException {
+      storeData(getUserMessageFile(user.getBaseCallsign()), user.toPacket());
    }
 
    public File getNewsMessageFile(NewsMessage message) {
@@ -445,6 +467,21 @@ public class Storage {
       return message;
    }
 
+   public User loadUser(String baseCallsign) throws IOException {
+      return loadUserMessage(getUserMessageFile(baseCallsign));
+   }
+
+   public User loadUserMessage(File f) throws IOException {
+      DataInputStream din = loadData(f);
+      User user = new User();
+      try {
+         user.fromPacket(din);
+      } catch (InvalidMessageException e) {
+         throw new IOException(e);
+      }
+      return user;
+   }
+
    /**
     * Load a data file
     * 
@@ -486,7 +523,6 @@ public class Storage {
     * Save the node properties file which contains the current sync state
     * 
     * @param callsign   The callsign of the remote node
-    * @param properties the properties file to save.
     */
    public synchronized void saveNodeProperties(String callsign, NodeProperties nodeProperties) {
       try (FileOutputStream fos = new FileOutputStream(getNodePropertiesFile(callsign))) {

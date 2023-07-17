@@ -1,13 +1,13 @@
-package org.prowl.distribbs.ui.ansi;
+package org.prowl.distribbs.uilocal.ansi;
 
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.ui.ansi.parser.Command;
-import org.prowl.distribbs.ui.ansi.parser.CommandParser;
-import org.prowl.distribbs.ui.ansi.parser.ScreenWriter;
+import org.prowl.distribbs.uilocal.ansi.parser.Command;
+import org.prowl.distribbs.uilocal.ansi.parser.CommandParser;
+import org.prowl.distribbs.uilocal.ansi.parser.ScreenWriter;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.bundle.LanternaThemes;

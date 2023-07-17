@@ -1,11 +1,11 @@
-package org.prowl.distribbs.ui.ansi;
+package org.prowl.distribbs.uilocal.ansi;
 
 import java.io.IOException;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.ui.UIService;
+import org.prowl.distribbs.uilocal.UIService;
 
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminal;
 import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;

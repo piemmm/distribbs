@@ -1,4 +1,4 @@
-package org.prowl.distribbs.ui.ansi.parser;
+package org.prowl.distribbs.uilocal.ansi.parser;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;

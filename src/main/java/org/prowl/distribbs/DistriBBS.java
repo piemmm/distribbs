@@ -2,10 +2,6 @@ package org.prowl.distribbs;
 
 import java.io.IOException;
 import java.util.Locale;
-import java.util.logging.Formatter;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,8 +9,8 @@ import org.prowl.distribbs.config.Config;
 import org.prowl.distribbs.node.connectivity.Connectivity;
 import org.prowl.distribbs.objectstorage.Storage;
 import org.prowl.distribbs.statistics.Statistics;
-import org.prowl.distribbs.ui.UI;
-import org.prowl.distribbs.ui.hardware.Status;
+import org.prowl.distribbs.uilocal.UI;
+import org.prowl.distribbs.uilocal.hardware.Status;
 
 /**
  * DistriBBS starting class

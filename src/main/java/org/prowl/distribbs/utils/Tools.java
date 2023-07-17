@@ -296,7 +296,12 @@ public class Tools {
 
       return true;
    }
-   
+
+
+   public static final void runOnThread(Runnable runme) {
+      Thread t = new Thread(runme);
+      t.start();
+   }
    
   
    

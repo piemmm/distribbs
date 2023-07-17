@@ -1,4 +1,4 @@
-package org.prowl.distribbs.ui.text;
+package org.prowl.distribbs.uilocal.text;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

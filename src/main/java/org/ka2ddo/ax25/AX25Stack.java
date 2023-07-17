@@ -61,7 +61,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
     private final FastBlockingQueue<AX25Frame> frameParserQueue = new FastBlockingQueue<>(4096);
     private transient ConnectionRequestListener connectionRequestListener = null;
     private final Thread parserThread;
-    private static boolean isDebug = true;
+    private static boolean isDebug = false;
     private  boolean allowInboundConnectedMode = true;
     private transient int maxBacklog = 0;
     private transient int numConsumedMsgs = 0;
@@ -314,9 +314,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
      */
     public void run() {
         final AX25Frame[] deqBuf = new AX25Frame[MAX_FRAMES_BEFORE_FREEZE_CHECK];
-        System.out.println("Thread:" + Thread.currentThread()+"   "+parserThread);
         while (Thread.currentThread() == parserThread) {
-            System.out.println("ProcessFrame");
             processQueuedFrames(deqBuf);
         }
     }

@@ -41,6 +41,7 @@ import net.sf.marineapi.provider.event.PositionEvent;
 import net.sf.marineapi.provider.event.ProviderListener;
 import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
+import org.prowl.distribbs.utils.Tools;
 
 public class GPS implements Connector {
 
@@ -56,6 +57,12 @@ public class GPS implements Connector {
    private static Time               currentTime;
    private static Date               currentDate;
 
+   /**
+    * Set to true to have threads exit
+    */
+   private boolean quit;
+   private SentenceReader reader;
+
    public GPS(HierarchicalConfiguration config) {
       this.config = config;
       sf = SentenceFactory.getInstance();
@@ -63,8 +70,16 @@ public class GPS implements Connector {
 
    public void start() throws IOException {
 
+
+      Tools.runOnThread(() -> {
+        setup();
+      });
+
+   }
+
+   public void setup() {
       serial = SerialFactory.createInstance();
-      
+
 
       // create serial config object
       SerialConfig config = new SerialConfig();
@@ -72,11 +87,11 @@ public class GPS implements Connector {
       try {
 
          config.device(SerialPort.getDefaultPort())
-               .baud(Baud._9600)
-               .dataBits(DataBits._8)
-               .parity(Parity.NONE)
-               .stopBits(StopBits._1)
-               .flowControl(FlowControl.NONE);
+                 .baud(Baud._9600)
+                 .dataBits(DataBits._8)
+                 .parity(Parity.NONE)
+                 .stopBits(StopBits._1)
+                 .flowControl(FlowControl.NONE);
 
          // open the default serial device/port with the configuration settings
          serial.open(config);
@@ -85,21 +100,21 @@ public class GPS implements Connector {
          // Try 3B+
          try {
             config.device("/dev/ttyS0")
-                  .baud(Baud._9600)
-                  .dataBits(DataBits._8)
-                  .parity(Parity.NONE)
-                  .stopBits(StopBits._1)
-                  .flowControl(FlowControl.NONE);
+                    .baud(Baud._9600)
+                    .dataBits(DataBits._8)
+                    .parity(Parity.NONE)
+                    .stopBits(StopBits._1)
+                    .flowControl(FlowControl.NONE);
             serial.open(config);
          } catch (Throwable ex) {
             // Rethrow as IOE
-            throw new IOException(e);
+            LOG.error(e.getMessage(), e);
          }
 
       }
-      
-      
-      SentenceReader reader = new SentenceReader(serial.getInputStream());
+
+
+      reader = new SentenceReader(serial.getInputStream());
 
       HeadingProvider provider = new HeadingProvider(reader);
       provider.addListener(new HeadingListener() {
@@ -143,10 +158,12 @@ public class GPS implements Connector {
 
       reader.start();
 
+
    }
 
    public void stop() {
-
+      quit = true;
+      reader.stop();
    }
 
    /**

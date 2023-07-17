@@ -1,4 +1,4 @@
-package org.prowl.distribbs.ui;
+package org.prowl.distribbs.uilocal;
 
 public interface UIService {
 

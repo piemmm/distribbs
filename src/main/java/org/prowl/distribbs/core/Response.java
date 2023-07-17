@@ -1,7 +1,5 @@
 package org.prowl.distribbs.core;
 
-import org.prowl.distribbs.ui.ansi.parser.Command;
-
 public class Response {
 
    private long   responseTime = 0;

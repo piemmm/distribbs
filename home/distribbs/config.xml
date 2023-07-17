@@ -3,51 +3,51 @@
 <!-- DistriBBS configuration test file -->
 <configuration>
 	<!-- Station Details -->
-	<callsign>G0TAI-2</callsign>
+	<callsign>GB7MNK-5</callsign>
 
 
 	<!-- Connectivity setup -->
 	<connectivity>
 
-		<!-- Connector types can be: S127x, IPv4, IPv6, GPS -->
-		<connector>
-			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>
-			<!-- Slot 0 = 144MHz module slot -->
-			<slot>0</slot>
-			<!-- The frequency to transmit and receive, in Hz -->
-			<frequency>144637500</frequency>
-			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
-			<deviation>2600</deviation>
-			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with 
-				5000, etc) -->
-			<baud>4800</baud>
-			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
-			<modulation>MSK</modulation>
-			<!-- Should we announce (send our callsign) every X minutes? -->
-			<announce>true</announce>
-			<!-- Announces the node every X minutes (minimum 5) -->
-			<announcePeriod>60</announcePeriod>
-		</connector>
+<!--		&lt;!&ndash; Connector types can be: S127x, IPv4, IPv6, GPS &ndash;&gt;-->
+<!--		<connector>-->
+<!--			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+<!--			&lt;!&ndash; Slot 0 = 144MHz module slot &ndash;&gt;-->
+<!--			<slot>0</slot>-->
+<!--			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+<!--			<frequency>144637500</frequency>-->
+<!--			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+<!--			<deviation>2600</deviation>-->
+<!--			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with -->
+<!--				5000, etc) &ndash;&gt;-->
+<!--			<baud>4800</baud>-->
+<!--			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+<!--			<modulation>MSK</modulation>-->
+<!--			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+<!--			<announce>true</announce>-->
+<!--			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+<!--			<announcePeriod>60</announcePeriod>-->
+<!--		</connector>-->
 
 
-		<connector>
-			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>
-			<!-- Slot 1 = 433MHz module slot -->
-			<slot>1</slot>
-			<!-- The frequency to transmit and receive, in Hz -->
-			<frequency>432625000</frequency>
-			<!-- The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) -->
-			<deviation>5</deviation>
-			<!-- The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with
-				5000, etc) -->
-			<baud>12500</baud>
-			<!-- MSK modulation. Others are LoRa, GMSK, GFSK -->
-			<modulation>MSK</modulation>
-			<!-- Should we announce (send our callsign) every X minutes? -->
-			<announce>true</announce>
-			<!-- Announces the node every X minutes (minimum 5) -->
-			<announcePeriod>60</announcePeriod>
-		</connector>
+<!--		<connector>-->
+<!--			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+<!--			&lt;!&ndash; Slot 1 = 433MHz module slot &ndash;&gt;-->
+<!--			<slot>1</slot>-->
+<!--			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+<!--			<frequency>432625000</frequency>-->
+<!--			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+<!--			<deviation>5</deviation>-->
+<!--			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with-->
+<!--				5000, etc) &ndash;&gt;-->
+<!--			<baud>12500</baud>-->
+<!--			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+<!--			<modulation>MSK</modulation>-->
+<!--			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+<!--			<announce>true</announce>-->
+<!--			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+<!--			<announcePeriod>60</announcePeriod>-->
+<!--		</connector>-->
 
 		<!-- Our internal GPS connector -->
 		<connector>
@@ -55,45 +55,54 @@
 		</connector>
 
 		<!-- APRS-IS connector, the callsign used is the node callsign -->
-		<connector>
-			<type>org.prowl.distribbs.node.connectivity.aprs.APRSIS</type>
-			<server></server>
-			<password></password>
-			<announcePeriod>10</announcePeriod>
-			<aprsSymbols>/#</aprsSymbols> <!-- Aprs Symbol table: /> is a car, /# a digi, etc -->
-			<!-- <comment>A comment about your station</comment> -->
-		</connector>
+<!--		<connector>-->
+<!--			<type>org.prowl.distribbs.node.connectivity.aprs.APRSIS</type>-->
+<!--			<server></server>-->
+<!--			<password></password>-->
+<!--			<announcePeriod>10</announcePeriod>-->
+<!--			<aprsSymbols>/#</aprsSymbols> &lt;!&ndash; Aprs Symbol table: /> is a car, /# a digi, etc &ndash;&gt;-->
+<!--			&lt;!&ndash; <comment>A comment about your station</comment> &ndash;&gt;-->
+<!--		</connector>-->
 
 
 		<!-- IPv4 connector. Have one of these sections for each node that you 
 			want to connect to, we can use a shared secret here because it's not RF and subject
 			to licensing conditions (usually preventing the use of encryption on RF) -->
-		<connector>
-			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>
-			<listenIp>0.0.0.0</listenIp> <!-- The IP to listen to requests on -->
-			<listenPort>0</listenPort> <!-- The port to listen on -->
-			<remoteIp>0.0.0.0</remoteIp> <!-- The remote ip we are connecting to -->
-			<remotePort>0</remotePort> <!-- The remote port to connect to -->
-			<announce>true</announce>
-			<remoteCallsign>N0CALL</remoteCallsign> <!-- The remote nodes callsign -->
-			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique
-			</peerSecret> <!-- Shared between both nodes -->
-		</connector>
+<!--		<connector>-->
+<!--			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>-->
+<!--			<listenIp>0.0.0.0</listenIp> &lt;!&ndash; The IP to listen to requests on &ndash;&gt;-->
+<!--			<listenPort>0</listenPort> &lt;!&ndash; The port to listen on &ndash;&gt;-->
+<!--			<remoteIp>0.0.0.0</remoteIp> &lt;!&ndash; The remote ip we are connecting to &ndash;&gt;-->
+<!--			<remotePort>0</remotePort> &lt;!&ndash; The remote port to connect to &ndash;&gt;-->
+<!--			<announce>true</announce>-->
+<!--			<remoteCallsign>N0CALL</remoteCallsign> &lt;!&ndash; The remote nodes callsign &ndash;&gt;-->
+<!--			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique-->
+<!--			</peerSecret> &lt;!&ndash; Shared between both nodes &ndash;&gt;-->
+<!--		</connector>-->
 
 		<!-- AX.25 KISS tnc socket (fifo) for the linux ax25 ports to interface 
 			to so we can have nice things like IP networking -->
+<!--		<connector>-->
+<!--			<type>org.prowl.distribbs.node.connectivity.ax25.KISS</type>-->
+<!--			<interfaceName>ax0</interfaceName>-->
+<!--			<bindToSlot>0</bindToSlot>-->
+<!--		</connector>-->
+
+		<!-- AX.25 KISS tnc socket to things like DireWolf's KISS TCP socket (8001, etc)  -->
 		<connector>
-			<type>org.prowl.distribbs.node.connectivity.ax25.KISS</type>
-			<interfaceName>ax0</interfaceName>
-			<bindToSlot>0</bindToSlot>
+			<type>org.prowl.distribbs.node.connectivity.ax25.KISSviaDirewolf</type>
+			<addresss>127.0.0.1</addresss>
+			<port>8001</port>
+			<callsign>GB7MNK-5</callsign>
 		</connector>
+
 
 	</connectivity>
 
 	<ui>
 		<!-- Enable the ANSI terminal interface -->
 		<interface>
-			<type>org.prowl.distribbs.ui.ansi.ANSIServer</type>
+			<type>org.prowl.distribbs.uilocal.ansi.ANSIServer</type>
 		</interface>
 	</ui>
 
