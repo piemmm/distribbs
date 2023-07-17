@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
  import org.prowl.distribbs.Messages;
  import org.prowl.distribbs.uiremote.RemoteClient;
 import org.prowl.distribbs.services.user.User;
+ import org.prowl.distribbs.utils.ANSI;
 
  import java.io.*;
  import java.util.ResourceBundle;
@@ -42,7 +43,7 @@ try {
             String inLine;
             while ((inLine = bin.readLine()) != null) {
 
-                out.write(("echo:"+inLine).getBytes());
+                out.write(("echo:"+ ANSI.BLUE+inLine+ANSI.NORMAL).getBytes());
                 out.flush();
             }
 
@@ -55,6 +56,7 @@ try {
     t.start();
 
 
+    send(Messages.get("usesColour"));
     send(Messages.get("welcomeNewUser"));
 
 
