@@ -19,4 +19,17 @@ public class ANSI {
     public static final String CYAN = new String(new byte[]{27, 91, 51, 54, 109});
     public static final String WHITE = new String(new byte[]{27, 91, 51, 55, 109});
 
+
+    public static String removeANSI(String s) {
+        return s.replace(NORMAL,"")
+                .replace(BOLD,"")
+                .replace(UNDERLINE,"")
+                .replace(RED,"")
+                .replace(MAGENTA,"")
+                .replace(YELLOW,"")
+                .replace(GREEN,"")
+                .replace(BLUE,"")
+                .replace(CYAN,"")
+                .replace(WHITE,"");
+    }
 }

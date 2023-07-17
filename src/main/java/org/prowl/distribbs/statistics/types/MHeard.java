@@ -7,6 +7,7 @@ import java.util.List;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.events.HeardNode;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 
 import com.google.common.eventbus.Subscribe;
@@ -32,6 +33,11 @@ public class MHeard {
       if (heardList.size() > 200) {
          heardList.removeLast();
       }
+   }
+
+   @Subscribe
+   public void heardNode(HeardNode heardNode) {
+      addToFront(heardNode.getNode());
    }
    
    @Subscribe

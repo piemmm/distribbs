@@ -61,6 +61,10 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
         stack.setConnectionRequestListener(connectionRequestListener);
     }
 
+    public void addFrameListener(AX25FrameListener l) {
+        stack.addAX25FrameListener(l);
+    }
+
     /**
      * Wrapper class for frames delay-queued for transmission.
      */

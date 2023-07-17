@@ -98,6 +98,10 @@ public enum DistriBBS {
       }
    }
 
+   public String getBBSServices() {
+      return "";
+   }
+
    public Config getConfiguration() {
       return configuration;
    }
