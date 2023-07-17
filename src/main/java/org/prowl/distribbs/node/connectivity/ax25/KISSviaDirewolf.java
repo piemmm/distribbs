@@ -106,7 +106,7 @@ public class KISSviaDirewolf implements Connector {
             @Override
             public boolean acceptInbound(ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
 
-               System.out.println("Incoming connection from: " + originator.toString());
+               LOG.info("Incoming connection request from "+originator+" to "+state.getDst());
 
                // If we're going to accept then add a listener so we can keep track of the connection
                state.listener = new ConnectionEstablishmentListener() {
@@ -124,36 +124,10 @@ public class KISSviaDirewolf implements Connector {
                            InputStream in = state.getInputStream();
                            OutputStream out = state.getOutputStream();
 
-                           RemoteUISwitch.newUser(user, in, out);
+                           RemoteUISwitch.newUserConnected(user, in, out);
 
 
 
-//                        // Get the input stream and handle incoming data in its own thread.
-//                        InputStream in = state.getInputStream();
-//                        Thread t = new Thread(() -> {
-//                           while (state.isOpen()) {
-//                              try {
-//                                 System.out.println("IN:" + in.read());
-//                              } catch (IOException e) {
-//                                 e.printStackTrace();
-//                              }
-//                           }
-//                           System.out.println("RX finished");
-//                        });
-//                        t.start();
-//
-//                        // Get the output stream and send something to the client (dont forget to call flush!)
-//                        // will auto-'flush' when paclen is reached (or max frame size is reached)
-//                        OutputStream out = state.getOutputStream();
-//                        out.write("You have connected1!\r".getBytes());
-//                        out.flush();
-//                        try {
-//                           Thread.sleep(1000);
-//                        } catch (InterruptedException e) {
-//                        }
-//
-//                        // This is how we disconnect the remote node!
-//                        state.close();
                         } catch (Exception e) {
                            e.printStackTrace();
                         }

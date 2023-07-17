@@ -12,12 +12,17 @@ import java.io.OutputStream;
  */
 public class RemoteUISwitch {
 
-    private static final void newUser(User user, InputStream in, OutputStream out) {
-
+    /**
+     * Take a newly connected user and decide what UI they are getting based on if they are new
+     * or if they have set something in their preferences.
+     *
+     * @param user The connecting user
+     * @param in
+     * @param out
+     */
+    public static void newUserConnected(User user, InputStream in, OutputStream out) {
         RemoteClient client = new TextClient(user,in,out);
         client.start();
-
-
     }
 
 }

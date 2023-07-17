@@ -128,8 +128,6 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     @Override
     public void sendFrame(AX25Frame frame) throws IOException {
-        System.out.println("Sending data to client:" + frame + "  data:" + frame.getAsciiFrame());
-
         queue(frame);
     }
 

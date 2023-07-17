@@ -472,8 +472,14 @@ public class Storage {
    }
 
    public User loadUserMessage(File f) throws IOException {
-      DataInputStream din = loadData(f);
       User user = new User();
+
+      // No user, just return this then
+      if (!f.exists()) {
+         return user;
+      }
+
+      DataInputStream din = loadData(f);
       try {
          user.fromPacket(din);
       } catch (InvalidMessageException e) {

@@ -28,7 +28,7 @@ public enum DistriBBS {
 
    public static final String NAME           = "DistriBBS";
    public static final String VERSION        = "0.02";
-   public static final long   BUILD          = 2020021401;
+   public static final long   BUILD          = 2023071701;
    public static final String VERSION_STRING = NAME + " v" + VERSION;
    public static final String INFO_TEXT      = "   www.distribbs.net";
    private static final Log   LOG            = LogFactory.getLog("DistriBBS");
@@ -47,6 +47,9 @@ public enum DistriBBS {
    public void startup() {
       
       try {
+         // Init resource bundles.
+         Messages.init();
+
          // Load configuration and initialise everything needed.
          configuration = new Config();
    

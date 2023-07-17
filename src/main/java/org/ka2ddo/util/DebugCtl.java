@@ -85,13 +85,9 @@ public class DebugCtl {
         return Boolean.TRUE.equals(debugCategories.get("all"));
     }
 
-    /**
-     * Indicate if a specific category of debug messages should be printed out.
-     * @param categoryName String name of category to enable debug logging for
-     * @return boolean true if the named category of debug messages should be printed
-     */
+
     public static boolean isDebug(String categoryName) {
-        return true;
+        return false;
     }
 
     /**

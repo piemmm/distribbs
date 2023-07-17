@@ -7,7 +7,7 @@ public final class Messages {
     private static ResourceBundle bundle;
 
     public static final void init() {
-        bundle = ResourceBundle.getBundle("messages.properties");
+        bundle = ResourceBundle.getBundle("messages");
     }
 
     public static final String get(String key) {
