@@ -37,28 +37,39 @@ public class MainTest {
             OutputStream out = s.getOutputStream();
             System.out.println("Connected to kiss port");
 
+            // Our default callsign. acceptInbound can determine if we actually want to accept any callsign requests,
+            // not just this one.
+            AX25Callsign defaultCallsign = new AX25Callsign("N0CALL-5");
 
+            connector = new BasicTransmittingConnector(defaultCallsign, in, out, new ConnectionRequestListener() {
 
-            connector = new BasicTransmittingConnector(in, out, new ConnectionRequestListener() {
+                /**
+                 * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept
+                 * if we are interested in the callsign being sent a connection request.
+                 *
+                 * @param state ConnState object describing the session being built
+                 * @param originator AX25Callsign of the originating station
+                 * @param port Connector through which the request was received
+                 * @return
+                 */
                 @Override
                 public boolean acceptInbound(ConnState state, AX25Callsign originator, Connector port) {
+
                     System.out.println("Incoming connection from: " + originator.toString());
 
                     // If we're going to accept then add a listener so we can keep track of the connection
                     state.listener = new ConnectionEstablishmentListener() {
                         @Override
                         public void connectionEstablished(Object sessionIdentifier, ConnState conn) {
-System.out.println("CON STATE:" + conn.toString());
 
                             Thread tx = new Thread(() -> {
 
                                 // Do inputty and outputty stream stuff here
                                 try {
 
+                                    // Get the input stream and handle incoming data in its own thread.
                                     InputStream in = state.getInputStream();
                                     Thread t = new Thread(() -> {
-                                        System.out.println("RX start");
-
                                         while(state.isOpen()) {
                                             try {
                                                 System.out.println("IN:"+in.read());
@@ -70,33 +81,15 @@ System.out.println("CON STATE:" + conn.toString());
                                     });
                                     t.start();
 
-
-
-//
+                                    // Get the output stream and send something to the client (dont forget to call flush!)
+                                    // will auto-'flush' when paclen is reached (or max frame size is reached)
                                     OutputStream out = state.getOutputStream();
                                     out.write("You have connected1!\r".getBytes());
                                     out.flush();
                                     try {Thread.sleep(1000); } catch(InterruptedException e) { }
-                                    System.out.println("CON STATE:" + conn.toString());
 
-
-//                                    out.write("You have connected2!\r".getBytes());
-//                                    out.flush();
-//
-//                                    try {Thread.sleep(1000); } catch(InterruptedException e) { }
-//
-//                                    out.write("You have connected3!\r".getBytes());
-//                                    out.flush();
-//
-//                                    try {Thread.sleep(1000); } catch(InterruptedException e) { }
-//
-//                                    out.write("You have connected4!\r".getBytes());
-//                                    out.flush();
-
-                                    // Disconnect!
-                                    //   try {Thread.sleep(1000); } catch(InterruptedException e) { }
-
-                                   //    state.close();
+                                    // This is how we disconnect the remote node!
+                                    state.close();
                                 } catch(Exception e) {
                                     e.printStackTrace();
                                 }

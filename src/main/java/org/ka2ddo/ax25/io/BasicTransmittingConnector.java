@@ -14,7 +14,7 @@ import java.util.List;
 public class BasicTransmittingConnector extends Connector implements TransmittingConnector, Transmitting {
     private final byte[] rcvBuf = new byte[4096];
     public static final int PROTOCOL_AX25 = 4;
-    private AX25Stack stack;
+    private final AX25Stack stack;
     private transient KissEscapeOutputStream.RcvState curState = KissEscapeOutputStream.RcvState.IDLE;
     private int wEnd = 0;
     private transient long frameStartTime = -1L;
@@ -37,11 +37,20 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
     public static final int FLAGS_SHIFT_KISSPORT = 8;
     private int retransmitCount;
 
+    /**
+     * This is the default callsign this connector will use for transmitting things like UI frames.
+     *
+     * It is seperate to the {@link ConnectionRequestListener}.acceptInbound() method which will allow you to
+     * listen and respond to other callsigns (or ssids)
+     */
+    public AX25Callsign defaultCallsign;
+
     private InputStream in;
     private OutputStream out;
     private KissEscapeOutputStream kos;
 
-    public BasicTransmittingConnector(InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
+    public BasicTransmittingConnector(AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
+        this.defaultCallsign = defaultCallsign;
         this.out = out;
         kos = new KissEscapeOutputStream(out);
         this.in = in;
@@ -124,9 +133,13 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
         queue(frame);
     }
 
+    /**
+     * Return base callsign or if an SSID is set, the callsign with the SSID
+     * @return the default callsign for this connector
+     */
     @Override
     public String getCallsign() {
-        return "GB7MNK-5";
+        return defaultCallsign.getSSID() == 0 ? defaultCallsign.getBaseCallsign() : defaultCallsign.getBaseCallsign()+"-"+defaultCallsign.getSSID();
     }
 
     @Override
