@@ -29,8 +29,8 @@ public class FBBProposal {
         st.nextToken();
         this.type = st.nextToken();
         this.sender = st.nextToken();
-        this.recipientBBS = st.nextToken();
-        this.recipient = st.nextToken();
+        this.recipientBBS = st.nextToken(); // if bulletin will be distribution or something like "WW"
+        this.recipient = st.nextToken(); // If bulletin will be 'group' "ASTRO", "PIC", etc, etc.
         this.BID_MID = st.nextToken();
         this.size = Long.parseLong(st.nextToken());
     }

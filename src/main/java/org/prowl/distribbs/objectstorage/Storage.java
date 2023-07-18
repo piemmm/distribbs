@@ -43,6 +43,8 @@ public class Storage {
    private static final String       USER        = "user";
    private static final String       QSL         = "qsl";
 
+   private static long highestMessageIdSeen = -1;
+
    public Storage(HierarchicalConfiguration config) {
       this.config = config;
    }
@@ -74,7 +76,7 @@ public class Storage {
       // Get the location to save the file and make sure the directory structure
       // exists
       String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
-      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + message.getTo() + File.separator + timeToSlot(message.getDate()));
+      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + message.getTo());
       if (!itemDir.exists()) {
          itemDir.mkdirs();
       }
@@ -90,8 +92,7 @@ public class Storage {
       return getMailMessageFile(message).exists();
    }
 
-   
-   
+
    /**
     * Store a chat message
     * 
@@ -156,7 +157,7 @@ public class Storage {
 
    public File getNewsMessageFile(NewsMessage message) {
       String filename = message.getBID_MID();
-      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + timeToSlot(message.getDate()) + File.pathSeparator + message.getGroup());
+      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + message.getGroup());
       if (!itemDir.exists()) {
          itemDir.mkdirs();
       }
@@ -174,21 +175,17 @@ public class Storage {
       return getNewsMessageFile(empty);
    }
 
-   /**
-    * Convenience method for if a message exists already
-    *
-    * Checks local storage to see if a news message already exists
-    */
-   public boolean doesNewsMessageExist(String BID_MID) {
-      return getNewsMessageFile(BID_MID).exists();
-   }
 
    /**
     * Convenience method for if a message exists already
     *
+    * MIDBID and Group must be populated.
+    *
     * Checks local storage to see if a news message already exists
     */
    public boolean doesNewsMessageExist(NewsMessage message) {
+
+
       return getNewsMessageFile(message).exists();
    }
 
@@ -226,7 +223,7 @@ public class Storage {
 
    /**
     * Convert a time in milliseconds to a directory slot.
-    * 
+    *
     * @param timeMillis
     * @return
     */
@@ -256,28 +253,21 @@ public class Storage {
    /**
     * Get a list of news group messages going back as far as date X.
     */
-   public File[] listNewsMessages(String group, long earliestDate) throws IOException {
+   public File[] listNewsMessages(String group) {
       ArrayList<File> files = new ArrayList<>();
-      File[] dates = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
-      if (dates != null) {
-         for (File date : dates) {
+      File[] groups = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
+      if (groups != null) {
+         for (File fgroup : groups) {
             try {
-               if (Long.parseLong(date.getName()) > earliestDate) {
-                  File[] groups = date.listFiles();
-                  if (groups != null) {
-                     for (File groupf : groups) {
-                        if (groupf.getName().equals(group) || group == null) {
-                           File[] messages = groupf.listFiles();
-                           if (messages != null) {
-                              files.addAll(Arrays.asList(messages));
-                           }
-                        }
-                     }
-                  }
-               }
-            } catch (NumberFormatException e) {
+                if (fgroup.getName().equals(group) || group == null) {
+                   File[] messages = fgroup.listFiles();
+                   if (messages != null) {
+                      files.addAll(Arrays.asList(messages));
+                   }
+                }
+             } catch (Throwable e) {
                // Ignore the 'not a date' file
-               LOG.debug("Ignoring file path:" + date, e);
+               LOG.debug("Ignoring file path:" + group, e);
             }
          }
       }
@@ -287,8 +277,8 @@ public class Storage {
    /**
     * Get a list of all news group messages going back as far as date X.
     */
-   public File[] listNewsMessages(long earliestDate) throws IOException {
-      return listNewsMessages(null, earliestDate);
+   public File[] listNewsMessages() {
+      return listNewsMessages(null);
    }
 
    /**
@@ -296,18 +286,16 @@ public class Storage {
     */
    public File[] listMailMessages(String callsign, long earliestDate) throws IOException {
       ArrayList<File> files = new ArrayList<>();
-      File[] dates = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
-      if (dates != null) {
-         for (File date : dates) {
+      File[] groups = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
+      if (groups != null) {
+         for (File group : groups) {
             try {
-               if (Long.parseLong(date.getName()) > earliestDate) {
-                  File[] messages = date.listFiles();
+               File[] messages = group.listFiles();
                   if (messages != null) {
                      files.addAll(Arrays.asList(messages));
                   }
-               }
             } catch (NumberFormatException e) {
-               LOG.debug("Invalid file:" + e.getMessage() + "  " + date);
+               LOG.debug("Invalid file:" + e.getMessage() + "  " + group);
             }
          }
       }
@@ -316,8 +304,10 @@ public class Storage {
 
    /**
     * Get a mail messages since a date
+    *
+    *
     */
-   public File[] listMailMessages(long earliestDate) throws IOException {
+   public File[] listMailMessages(long earliestDate)  {
       ArrayList<File> files = new ArrayList<>();
       File[] callsigns = new File(locationDir.getAbsolutePath() + File.separator + MAIL).listFiles();
       if (callsigns != null) {
@@ -569,5 +559,49 @@ public class Storage {
          LOG.error("Unable to save properties file: " + getNodePropertiesFile(callsign));
       }
    }
+
+
+   /**
+    * Scan the news AND mail folder looking for the highest message ID and store in memory and returns
+    * the next one.
+    */
+   public synchronized long getNextMessageID() {
+
+      if (highestMessageIdSeen != -1) {
+         return ++highestMessageIdSeen;
+      }
+      long highest = -1;
+      File[] files = listNewsMessages();
+      for (File f: files) {
+         try {
+            NewsMessage message = loadNewsMessage(f);
+            if (highest < message.getMessageNumber()) {
+               highest = message.getMessageNumber();
+            }
+         } catch(Throwable e) {
+            LOG.error(e.getMessage(), e);
+         }
+      }
+
+      files = listMailMessages(0);
+      for (File f: files) {
+         try {
+            NewsMessage message = loadNewsMessage(f);
+            if (highest < message.getMessageNumber()) {
+               highest = message.getMessageNumber();
+            }
+         } catch(Throwable e) {
+            LOG.error(e.getMessage(), e);
+         }
+      }
+
+      if (highest <= 0) {
+         highest = 10000; // Starting id
+      }
+
+      highestMessageIdSeen = ++highest;
+      return highest;
+   }
+
 
 }

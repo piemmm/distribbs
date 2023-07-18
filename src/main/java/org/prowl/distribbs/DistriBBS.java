@@ -40,6 +40,7 @@ public enum DistriBBS {
    private Statistics         statistics;
    private UI                 ui;
    private String             myCall;
+   private String             myBBSAddress;
 
    DistriBBS() {
    }
@@ -55,7 +56,10 @@ public enum DistriBBS {
    
          // Set our callsign
          myCall = DistriBBS.INSTANCE.getConfiguration().getConfig("callsign", "NOCALL").toUpperCase(Locale.ENGLISH);
-   
+
+         // Set out BBS address which helps with message routing
+         myBBSAddress = DistriBBS.INSTANCE.getConfiguration().getConfig("bbsAddress", "NOCALL.#00.XXX.XXX").toUpperCase(Locale.ENGLISH);
+
          // Create statistics holder
          statistics = new Statistics();
    
@@ -128,6 +132,21 @@ public enum DistriBBS {
 
    public String getMyCall() {
       return myCall;
+   }
+
+   public String getMyCallNoSSID() {
+      if (!myCall.contains("-")) {
+         return myCall;
+      }
+      return myCall.substring(0, myCall.indexOf('-'));
+   }
+
+   /**
+    * Address used to route messages if linking the BBS to the greater network
+    * @return
+    */
+   public String getBBSAddress() {
+      return myBBSAddress;
    }
 
 }

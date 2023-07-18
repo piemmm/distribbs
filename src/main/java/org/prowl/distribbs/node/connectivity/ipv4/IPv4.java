@@ -95,8 +95,8 @@ public class IPv4 implements Connector {
                try {
                   while (!stop) {
                      Socket connectedClient = incoming.accept();
-                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this, remoteCallsign, false);
-                     sync.start();
+//                     IPSyncThread sync = new IPSyncThread(connectedClient, IPv4.this, remoteCallsign, false);
+//                     sync.start();
                   }
                } catch(Throwable e) {
                   // incoming probably got canned.

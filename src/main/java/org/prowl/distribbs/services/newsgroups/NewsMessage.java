@@ -24,10 +24,10 @@ public class NewsMessage extends Packetable {
    private String           from;
    private String           group = "";
    private String           subject;
-   private String           body;
+   private byte[]           body;
    private String           BID_MID;
    private String           type;
-
+   private long             messageNumber; // Our internally assigned message number
 
    public NewsMessage() {
       // News messages are background work for nodes so are low priority.
@@ -74,11 +74,11 @@ public class NewsMessage extends Packetable {
       this.subject = subject;
    }
 
-   public String getBody() {
+   public byte[] getBody() {
       return body;
    }
 
-   public void setBody(String body) {
+   public void setBody(byte[] body) {
       this.body = body;
    }
 
@@ -90,6 +90,13 @@ public class NewsMessage extends Packetable {
       this.type = type;
    }
 
+   public long getMessageNumber() {
+      return messageNumber;
+   }
+
+   public void setMessageNumber(long messageNumber) {
+      this.messageNumber = messageNumber;
+   }
 
    /**
     * Serialise into a byte array. Keeping the size to a minimum is important.
@@ -99,7 +106,7 @@ public class NewsMessage extends Packetable {
     */
    public byte[] toPacket() {
 
-      try (ByteArrayOutputStream bos = new ByteArrayOutputStream(subject.length() + body.length() + group.length() + 30);
+      try (ByteArrayOutputStream bos = new ByteArrayOutputStream(subject.length() + body.length + group.length() + 30);
             DataOutputStream dout = new DataOutputStream(bos)) {
 
          // String.length measures UTF units, which is no good to use, so we will use the
@@ -107,9 +114,13 @@ public class NewsMessage extends Packetable {
          byte[] groupArray = group.getBytes();
          byte[] fromArray = from.getBytes();
          byte[] subjectArray = subject.getBytes();
-         byte[] bodyArray = body.getBytes();
+         byte[] bodyArray = body;
          byte[] bidmidArray = BID_MID.getBytes();
          byte[] typeArray = type.getBytes();
+
+         // Start off with the message number
+         dout.writeLong(messageNumber);
+
          // Start off with the date
          dout.writeLong(date);
 
@@ -126,14 +137,14 @@ public class NewsMessage extends Packetable {
          dout.writeInt(subjectArray.length);
          dout.write(subjectArray);
 
-         dout.writeInt(bodyArray.length);
-         dout.write(bodyArray);
-
          dout.writeInt(bidmidArray.length);
          dout.write(bidmidArray);
 
          dout.writeInt(typeArray.length);
          dout.write(typeArray);
+
+         dout.writeInt(bodyArray.length);
+         dout.write(bodyArray);
 
          dout.flush();
          dout.close();
@@ -147,13 +158,11 @@ public class NewsMessage extends Packetable {
 
    /**
     * Deserialise from a byte array
-    * 
-    * @param packet The serialised form of the news message
     */
    public NewsMessage fromPacket(DataInputStream din) throws InvalidMessageException {
 
       try {
-
+         long messageNumber = din.readLong();
          long date = din.readLong();
 
          fromPacketPaths(din);
@@ -161,10 +170,11 @@ public class NewsMessage extends Packetable {
          String group = Tools.readString(din, din.readInt());
          String from = Tools.readString(din, din.readInt());
          String subject = Tools.readString(din, din.readInt());
-         String body = Tools.readString(din, din.readInt());
          String bidmid = Tools.readString(din, din.readInt());
          String type = Tools.readString(din, din.readInt());
+         byte[] body = Tools.readBytes(din, din.readInt());
 
+         setMessageNumber(messageNumber);
          setDate(date);
          setGroup(group);
          setFrom(from);
