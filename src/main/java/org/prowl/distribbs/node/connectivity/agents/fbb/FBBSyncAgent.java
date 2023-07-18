@@ -10,9 +10,7 @@ import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
 import org.prowl.distribbs.objectstorage.Storage;
-import org.prowl.distribbs.services.messages.MailMessage;
 import org.prowl.distribbs.services.newsgroups.NewsMessage;
-import org.prowl.distribbs.utils.ANSI;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.*;
@@ -20,7 +18,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -181,6 +178,7 @@ public class FBBSyncAgent implements Connector {
                     searchMessage.setGroup(proposal.getRecipient());
                     if (storage.doesNewsMessageExist(searchMessage)) {
                         sb.append("-");
+                        proposal.setSkip(true);
                     } else {
                         sb.append("+");
                     }
@@ -191,8 +189,13 @@ public class FBBSyncAgent implements Connector {
 
                 // Remote end then dumps the messages to me, separated by CTRL-Z
                 for (FBBProposal proposal : proposals) {
+                    // Skip any messages we said we were not interested in
+                    if (proposal.isSkip()) {
+                        continue;
+                    }
                     NewsMessage message = new NewsMessage();
                     message.setSubject(reader.readLine());
+                    message.setRoute(proposal.getRoute());
                     message.setBID_MID(proposal.getBID_MID());
                     message.setFrom(proposal.getSender());
                     message.setType(proposal.getType());

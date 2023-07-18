@@ -27,6 +27,7 @@ public class NewsMessage extends Packetable {
    private byte[]           body;
    private String           BID_MID;
    private String           type;
+   private String           route;
    private long             messageNumber; // Our internally assigned message number
 
    public NewsMessage() {
@@ -98,6 +99,14 @@ public class NewsMessage extends Packetable {
       this.messageNumber = messageNumber;
    }
 
+   public String getRoute() {
+      return route;
+   }
+
+   public void setRoute(String route) {
+      this.route = route;
+   }
+
    /**
     * Serialise into a byte array. Keeping the size to a minimum is important.
     * Length, data, length, data format for all the fields.
@@ -117,6 +126,7 @@ public class NewsMessage extends Packetable {
          byte[] bodyArray = body;
          byte[] bidmidArray = BID_MID.getBytes();
          byte[] typeArray = type.getBytes();
+         byte[] routeArray = route.getBytes();
 
          // Start off with the message number
          dout.writeLong(messageNumber);
@@ -142,6 +152,9 @@ public class NewsMessage extends Packetable {
 
          dout.writeInt(typeArray.length);
          dout.write(typeArray);
+
+         dout.writeInt(routeArray.length);
+         dout.write(routeArray);
 
          dout.writeInt(bodyArray.length);
          dout.write(bodyArray);
@@ -172,6 +185,7 @@ public class NewsMessage extends Packetable {
          String subject = Tools.readString(din, din.readInt());
          String bidmid = Tools.readString(din, din.readInt());
          String type = Tools.readString(din, din.readInt());
+         String route = Tools.readString(din, din.readInt());
          byte[] body = Tools.readBytes(din, din.readInt());
 
          setMessageNumber(messageNumber);
@@ -179,6 +193,7 @@ public class NewsMessage extends Packetable {
          setGroup(group);
          setFrom(from);
          setSubject(subject);
+         setRoute(route);
          setBody(body);
          setBID_MID(bidmid);
          setType(type);

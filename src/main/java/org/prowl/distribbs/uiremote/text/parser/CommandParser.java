@@ -128,7 +128,7 @@ public class CommandParser {
       if (messages.size() == 0) {
          client.send("No messages in BBS yet"+CR);
       } else {
-         client.send("%BOLD%Msg#    TSLD   Size To    @Route   From    Date/Time Subject%NORMAL%"+CR);
+         client.send("%BOLD%Msg#   TSLD  Size To     @Route  From    Date/Time Subject%NORMAL%"+CR);
 
          NumberFormat nf = NumberFormat.getInstance();
          nf.setMaximumFractionDigits(0);
@@ -136,12 +136,13 @@ public class CommandParser {
          nf.setGroupingUsed(false);
          for (NewsMessage message: messages) {
 
-            client.send((StringUtils.rightPad(nf.format(message.getMessageNumber()),7) + // MessageId
-                      StringUtils.rightPad("", 7) +  // TSLD
-                    StringUtils.rightPad(nf.format(message.getBody().length), 7)+ // Size
-                    StringUtils.rightPad(message.getGroup(), 9)+
-                    StringUtils.rightPad(message.getFrom(), 9)+
-                    StringUtils.rightPad(sdf.format(message.getDate()), 10)+
+            client.send((StringUtils.rightPad(nf.format(message.getMessageNumber()),6) + // MessageId
+                      StringUtils.rightPad("", 6) +  // TSLD
+                    StringUtils.leftPad(nf.format(message.getBody().length), 5)+" "+ // Size
+                    StringUtils.rightPad(message.getGroup(), 7)+  // To
+                    StringUtils.rightPad(message.getRoute(), 9)+ // @route
+                    StringUtils.rightPad(message.getFrom(), 8)+ // from
+                    StringUtils.rightPad(sdf.format(message.getDate()), 10)+ // date/time
                     StringUtils.rightPad(message.getSubject(),50)).trim()+CR);
          }
       }

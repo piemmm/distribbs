@@ -17,11 +17,12 @@ import java.util.StringTokenizer;
 public class FBBProposal {
 
     private String sender;
-    private String recipientBBS;
+    private String route;
     private String recipient;
     private String BID_MID;
     private String type;
     private long size;
+    private boolean skip; // used in sync to skip messages not requested.
 
 
     public FBBProposal(String line) {
@@ -29,10 +30,18 @@ public class FBBProposal {
         st.nextToken();
         this.type = st.nextToken();
         this.sender = st.nextToken();
-        this.recipientBBS = st.nextToken(); // if bulletin will be distribution or something like "WW"
+        this.route = st.nextToken(); // if bulletin will be distribution or something like "WW"
         this.recipient = st.nextToken(); // If bulletin will be 'group' "ASTRO", "PIC", etc, etc.
         this.BID_MID = st.nextToken();
         this.size = Long.parseLong(st.nextToken());
+    }
+
+    public boolean isSkip() {
+        return skip;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
     }
 
     public String getType() {
@@ -51,12 +60,12 @@ public class FBBProposal {
         this.sender = sender;
     }
 
-    public String getRecipientBBS() {
-        return recipientBBS;
+    public String getRoute() {
+        return route;
     }
 
-    public void setRecipientBBS(String recipientBBS) {
-        this.recipientBBS = recipientBBS;
+    public void setRoute(String recipientBBS) {
+        this.route = recipientBBS;
     }
 
     public String getRecipient() {
