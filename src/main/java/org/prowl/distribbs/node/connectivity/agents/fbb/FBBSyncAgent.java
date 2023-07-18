@@ -1,23 +1,31 @@
 package org.prowl.distribbs.node.connectivity.agents.fbb;
 
+
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.Modulation;
+import org.prowl.distribbs.objectstorage.Storage;
+import org.prowl.distribbs.services.messages.MailMessage;
+import org.prowl.distribbs.services.newsgroups.NewsMessage;
+import org.prowl.distribbs.utils.ANSI;
 import org.prowl.distribbs.utils.Tools;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FBBSyncAgent implements Connector {
 
     private static final Log LOG = LogFactory.getLog("FBBSyncAgent");
+    private static final String CR = "\r";
 
     private HierarchicalConfiguration config;
 
@@ -28,6 +36,7 @@ public class FBBSyncAgent implements Connector {
     private int listenPort;
     private boolean quit;
     private long syncIntervalMinutes;
+    private Storage storage;
 
 
     public FBBSyncAgent(HierarchicalConfiguration config) {
@@ -41,13 +50,16 @@ public class FBBSyncAgent implements Connector {
         listenPort = config.getInt("listenPort", 6300);
 
         // syncIntervalMinutes = config.getInt("syncIntervalMinutes");
+
+        storage = DistriBBS.INSTANCE.getStorage();
+
     }
 
     @Override
     public void start() {
         startIncomingListener();
 
-        startSync();
+     //   startSync();
     }
 
     @Override
@@ -67,9 +79,14 @@ public class FBBSyncAgent implements Connector {
                     Socket connection = incomingSocket.accept();
 
                     Tools.runOnThread(() -> {
-                        newIncomingConnection(connection);
+                        try {
+                            newIncomingConnection(connection);
+                            connection.close();
+                        } catch(Throwable e) {
+                            LOG.error(e.getMessage(), e);
+                        }
                     });
-
+                    Tools.delay(1000); // Rate limit.
                 }
 
 
@@ -81,20 +98,108 @@ public class FBBSyncAgent implements Connector {
 
     public void newIncomingConnection(Socket connection) {
         try {
+            LOG.info("Incoming connection from:" +connection.getInetAddress().getHostAddress());
+
             InputStream in = connection.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             OutputStream out = connection.getOutputStream();
+            OutputStreamWriter writer = new OutputStreamWriter(out);
 
-            // Remote station connects to use, we vet the username and password
+            // Remote station connects to use, we vet the username and password, sends [FBB-xxx-somesuch]
+            writer.write(CR+DistriBBS.NAME+" BBS, TELNET Access"+CR);
+            writer.write("Callsign:");
+            writer.flush();
+            String callsign = reader.readLine();
 
-            // Remote station sends proposals, ends with 'F>'
+            writer.write("Password:");
+            writer.flush();
+            String password = reader.readLine();
 
+
+            // Rate limit here.
+            Tools.delay(2000);
+
+            // Check user/password are ok, if so, continue.
+            // TODO FIXME add validation here.
+            LOG.info("Remote station identified as:" + callsign);
+
+
+            // Send prompt.
+            writer.write(CR+"Logon Ok."+CR);
+            writer.write(CR+"[FBB-5.10-FMH$]"+CR);
+            writer.write(DistriBBS.INSTANCE+" Mailbox"+CR);
+            writer.write(DistriBBS.INSTANCE.getMyCall()+">"+CR);
+            writer.flush();
+
+            // Remote station should send [] at this point. If not then kick it off.
+            String modeChange = reader.readLine();
+            LOG.info("ModeLine:"+modeChange);
+            if (!modeChange.startsWith("[")) {
+                return;
+            }
+
+            // Send new prompt
+            writer.write(">"+CR);
+            writer.flush();
+
+            String line;
+            List<FBBProposal> proposals = new ArrayList<>();
+            while ((line = reader.readLine()) != null) {
+                LOG.info("Line:"+line);
+                // Remote station sends proposals, ends with 'F>'
+                if (line.toLowerCase().startsWith("f>")) {
+                    break;
+                } else if (line.toLowerCase().startsWith("fb")) {
+                    FBBProposal proposal = new FBBProposal(line);
+                    proposals.add(proposal);
+                    LOG.info("Receiving proposal: "+line);
+                } else {
+                    // Out of spec protocol.
+                    return;
+                }
+            }
 
             // I reply with a load of 'FS' and +,- or = for want, no want, or maybe later for each message in the proposal
+            if (proposals.size() > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (FBBProposal proposal : proposals) {
+                    // Do I want the BID_MID key? - lets check to see if I have it or not
+                    if (storage.doesNewsMessageExist(proposal.getBID_MID())) {
+                        sb.append("-");
+                    } else {
+                        sb.append("+");
+                    }
+                }
+                LOG.info("Sending FS:" + sb.toString());
+                writer.write("FS:" +sb.toString()+CR);
+                writer.flush();
 
-            // Remote end then dumps the messages to me, separated by CTRL-Z
+                // Remote end then dumps the messages to me, separated by CTRL-Z
+                for (FBBProposal proposal: proposals) {
+                    NewsMessage message = new NewsMessage();
+                    message.setSubject(reader.readLine());
+                    message.setBID_MID(proposal.getBID_MID());
+                    message.setFrom(proposal.getSender());
+                    message.setType(proposal.getType());
 
-            // Once all messages sent, then I can send my proposal(ets as above), or FF for nothing then FQ to quit.
+                    StringBuilder body = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        body.append(line+CR);
+                    }
+                    message.setBody(body.toString());
 
+                    // Store the news message
+                    storage.storeNewsMessage(message);
+
+                    LOG.info("Receiving bulletin: "+message.getFrom()+": "+message.getSubject()+" ("+body.length()+")");
+                }
+
+                    // Once all messages sent, then I can send my proposal(ets as above), or FF for nothing then FQ to quit.
+                writer.write("FF"+CR);
+                writer.write("FQ"+CR);
+                writer.flush();
+                LOG.info("All done - disconnecting");
+            }
 
         } catch(Throwable e) {
             LOG.error(e.getMessage(),e);

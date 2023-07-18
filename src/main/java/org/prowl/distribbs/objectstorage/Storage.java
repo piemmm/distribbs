@@ -143,8 +143,19 @@ public class Storage {
       storeData(getUserMessageFile(user.getBaseCallsign()), user.toPacket());
    }
 
+
+//
+//   public File getNewsMessageFile(NewsMessage message) {
+//      String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
+//      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + timeToSlot(message.getDate()) + File.pathSeparator + message.getGroup());
+//      if (!itemDir.exists()) {
+//         itemDir.mkdirs();
+//      }
+//      return new File(itemDir, filename);
+//   }
+
    public File getNewsMessageFile(NewsMessage message) {
-      String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
+      String filename = message.getBID_MID();
       File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + timeToSlot(message.getDate()) + File.pathSeparator + message.getGroup());
       if (!itemDir.exists()) {
          itemDir.mkdirs();
@@ -153,8 +164,28 @@ public class Storage {
    }
 
    /**
+    * Convenience method
+    * @param BID_MID
+    * @return
+    */
+   public File getNewsMessageFile(String BID_MID) {
+      NewsMessage empty = new NewsMessage();
+      empty.setBID_MID(BID_MID);
+      return getNewsMessageFile(empty);
+   }
+
+   /**
     * Convenience method for if a message exists already
-    * 
+    *
+    * Checks local storage to see if a news message already exists
+    */
+   public boolean doesNewsMessageExist(String BID_MID) {
+      return getNewsMessageFile(BID_MID).exists();
+   }
+
+   /**
+    * Convenience method for if a message exists already
+    *
     * Checks local storage to see if a news message already exists
     */
    public boolean doesNewsMessageExist(NewsMessage message) {
@@ -201,7 +232,7 @@ public class Storage {
     */
    private final String timeToSlot(long timeMillis) {
       // Split this down into directories about 1 day (86400000millis ish) apart
-      String dateStr = Long.toString((int) (timeMillis / 100000000d));
+      String dateStr = Long.toString((int) (timeMillis / 86400000d));
       return dateStr;
    }
 

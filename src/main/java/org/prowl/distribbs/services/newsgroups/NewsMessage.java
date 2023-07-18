@@ -22,13 +22,24 @@ public class NewsMessage extends Packetable {
 
    private long             date;
    private String           from;
-   private String           group;
+   private String           group = "";
    private String           subject;
    private String           body;
+   private String           BID_MID;
+   private String           type;
+
 
    public NewsMessage() {
       // News messages are background work for nodes so are low priority.
       priority = Priority.LOW;
+   }
+
+   public String getBID_MID() {
+      return BID_MID;
+   }
+
+   public void setBID_MID(String BID_MID) {
+      this.BID_MID = BID_MID;
    }
 
    public String getFrom() {
@@ -71,6 +82,15 @@ public class NewsMessage extends Packetable {
       this.body = body;
    }
 
+   public String getType() {
+      return type;
+   }
+
+   public void setType(String type) {
+      this.type = type;
+   }
+
+
    /**
     * Serialise into a byte array. Keeping the size to a minimum is important.
     * Length, data, length, data format for all the fields.
@@ -88,7 +108,8 @@ public class NewsMessage extends Packetable {
          byte[] fromArray = from.getBytes();
          byte[] subjectArray = subject.getBytes();
          byte[] bodyArray = body.getBytes();
-
+         byte[] bidmidArray = BID_MID.getBytes();
+         byte[] typeArray = type.getBytes();
          // Start off with the date
          dout.writeLong(date);
 
@@ -107,6 +128,12 @@ public class NewsMessage extends Packetable {
 
          dout.writeInt(bodyArray.length);
          dout.write(bodyArray);
+
+         dout.writeInt(bidmidArray.length);
+         dout.write(bidmidArray);
+
+         dout.writeInt(typeArray.length);
+         dout.write(typeArray);
 
          dout.flush();
          dout.close();
@@ -135,12 +162,16 @@ public class NewsMessage extends Packetable {
          String from = Tools.readString(din, din.readInt());
          String subject = Tools.readString(din, din.readInt());
          String body = Tools.readString(din, din.readInt());
+         String bidmid = Tools.readString(din, din.readInt());
+         String type = Tools.readString(din, din.readInt());
 
          setDate(date);
          setGroup(group);
          setFrom(from);
          setSubject(subject);
          setBody(body);
+         setBID_MID(bidmid);
+         setType(type);
 
       } catch (Throwable e) {
          LOG.error("Unable to build message from packet", e);

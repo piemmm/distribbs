@@ -302,8 +302,17 @@ public class Tools {
       Thread t = new Thread(runme);
       t.start();
    }
-   
-  
+
+   /**
+    * Used for things like rate limiting
+    * @param millis
+    */
+   public static void delay(int millis) {
+      try {
+         Thread.sleep(millis);
+      } catch (InterruptedException e) {
+      }
+   }
    
    
 }
