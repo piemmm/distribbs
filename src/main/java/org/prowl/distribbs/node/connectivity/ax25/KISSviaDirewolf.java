@@ -34,7 +34,7 @@ import java.net.Socket;
  */
 public class KISSviaDirewolf implements Connector {
 
-    private static final Log LOG = LogFactory.getLog("KISS");
+    private static final Log LOG = LogFactory.getLog("KISSviaDirewolf");
 
     private String address;
     private int port;
@@ -79,7 +79,7 @@ public class KISSviaDirewolf implements Connector {
             Socket s = new Socket(InetAddress.getByName(address), port);
             InputStream in = s.getInputStream();
             OutputStream out = s.getOutputStream();
-            LOG.info("Connected to kiss port");
+            LOG.info("Connected to kiss service at: " + address+":"+port);
 
             // Our default callsign. acceptInbound can determine if we actually want to accept any callsign requests,
             // not just this one.

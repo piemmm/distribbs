@@ -24,7 +24,6 @@ public class User {
     private String privFlags;
     private String location;
 
-
     public User() {
 
     }
