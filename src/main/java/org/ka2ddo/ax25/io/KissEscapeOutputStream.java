@@ -47,77 +47,17 @@ public class KissEscapeOutputStream extends OutputStream {
     public static final int TFESC = 0xDD;
 
     private int byteCount = 0;
-    private final DataOutput out;
     private final OutputStream os;
     private byte g8bpqCrc = 0;
-
-    /**
-     * This is some weird thing that is not in spec and looks like a hack claiming something about kenwood 'features'
-     * which unfortunately it does not describe what these are or do.
-     *
-     * it is now disabled by default as it breaks normal KISS connections
-     */
-    private final boolean escCForKenwood;
-
-    /**
-     * Create a KissEscapeOutputStream wrapped around an implementation of the java.io.DataOutput
-     * interface.
-     * @param out DataOutput interface implementer to wrap with this stream
-     */
-    public KissEscapeOutputStream(DataOutput out) {
-        this.out = out;
-        if (out instanceof OutputStream) {
-            this.os = (OutputStream)out;
-        } else {
-            this.os = null;
-        }
-        escCForKenwood = false;
-    }
 
     /**
      * Create a KissEscapeOutputStream wrapped around an OutputStream.
      * @param os OutputStream to receive KISS-encoded frames
      */
     public KissEscapeOutputStream(OutputStream os) {
-        if (os instanceof DataOutput) {
-            this.out = (DataOutput)os;
-        } else {
-            this.out = null;
-        }
         this.os = os;
-        escCForKenwood = false;
-    }
+     }
 
-    /**
-     * Create a KissEscapeOutputStream wrapped around an implementation of the java.io.DataOutput
-     * interface.
-     * @param out DataOutput interface implementer to wrap with this stream
-     * @param escCForKenwood boolean, if true also escape 'C' with FESC to protect against Kenwood "features"
-     */
-    public KissEscapeOutputStream(DataOutput out, boolean escCForKenwood) {
-        this.out = out;
-        if (out instanceof OutputStream) {
-            this.os = (OutputStream)out;
-        } else {
-            this.os = null;
-        }
-        this.escCForKenwood = escCForKenwood;
-    }
-
-    /**
-     * Create a KissEscapeOutputStream wrapped around an OutputStream.
-     * @param os OutputStream to receive KISS-encoded frames
-     * @param escCForKenwood boolean, if true also escape 'C' with FESC to protect against Kenwood "features"
-     */
-    public KissEscapeOutputStream(OutputStream os, boolean escCForKenwood) {
-        if (os instanceof DataOutput) {
-            this.out = (DataOutput)os;
-        } else {
-            this.out = null;
-        }
-        this.os = os;
-        this.escCForKenwood = escCForKenwood;
-    }
 
     /**
      * Get the number of bytes passed through this stream (counting escape codes injected by the stream).
@@ -141,42 +81,19 @@ public class KissEscapeOutputStream extends OutputStream {
      * @throws IOException if wrapped stream throws an IOException
      */
     public void write(int b) throws IOException {
-        OutputStream os;
-        if ((os = this.os) != null) {
-            if (b == FEND) {
-                os.write(FESC);
-                os.write(TFEND);
-                byteCount += 2;
-            } else if (b == FESC) {
-                os.write(FESC);
-                os.write(TFESC);
-                byteCount += 2;
-            } else if ('C' == b && escCForKenwood) {
-                os.write(FESC);
-                os.write('C');
-                byteCount += 2;
-            } else {
-                os.write(b);
-                byteCount++;
-            }
+        if (b == FEND) {
+            os.write(FESC);
+            os.write(TFEND);
+            byteCount += 2;
+        } else if (b == FESC) {
+            os.write(FESC);
+            os.write(TFESC);
+            byteCount += 2;
         } else {
-            if (b == FEND) {
-                out.write(FESC);
-                out.write(TFEND);
-                byteCount += 2;
-            } else if (b == FESC) {
-                out.write(FESC);
-                out.write(TFESC);
-                byteCount += 2;
-            } else if ('C' == b && escCForKenwood) {
-                out.write(FESC);
-                out.write('C');
-                byteCount += 2;
-            } else {
-                out.write(b);
-                byteCount++;
-            }
+            os.write(b);
+            byteCount++;
         }
+
         g8bpqCrc ^= (byte)b;
     }
 
