@@ -75,11 +75,11 @@ public class KISSviaDirewolf implements Connector {
 
     public void setup() {
         try {
-            System.out.println("Connecting to kiss port");
+            LOG.info("Connecting to kiss service at: " + address+":"+port);
             Socket s = new Socket(InetAddress.getByName(address), port);
             InputStream in = s.getInputStream();
             OutputStream out = s.getOutputStream();
-            System.out.println("Connected to kiss port");
+            LOG.info("Connected to kiss port");
 
             // Our default callsign. acceptInbound can determine if we actually want to accept any callsign requests,
             // not just this one.
