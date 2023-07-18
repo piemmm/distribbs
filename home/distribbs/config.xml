@@ -97,7 +97,8 @@
         </connector>
 
 
-        <!-- This sync agent talks to an F6FBB BBS using the ASCII style MBL/RLI protocol-->
+        <!-- This sync agent talks to an F6FBB BBS using the ASCII style MBL/RLI protocol
+        this should be used if your country legally requires plaintext radio comms -->
         <connector>
             <type>org.prowl.distribbs.node.connectivity.agents.fbb.FBBSyncAgent</type>
             <addresss>127.0.0.1</addresss>

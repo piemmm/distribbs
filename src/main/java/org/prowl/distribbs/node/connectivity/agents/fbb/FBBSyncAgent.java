@@ -22,6 +22,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This FBB sync agent uses the plain text MBL/RLI sync method for use where you countries
+ * communcations regulations may require plain text radio comms (which also excludes
+ * the ability to use any form of compression)
+ *
+ * Generally, where the remote node supports it, a method using compression should be used.
+ */
 public class FBBSyncAgent implements Connector {
 
     private static final Log LOG = LogFactory.getLog("FBBSyncAgent");
