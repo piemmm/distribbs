@@ -207,9 +207,11 @@ public class FBBSyncAgent implements Connector {
 
                     LOG.info("Reading message body...");
                     int b = 0;
+                    boolean messageGood = false;
                     while (!quit && b != -1) {
                         b = reader.read();
                         if (b == CTRL_Z) {
+                            messageGood = true;
                             break;
                         }
                         if (b != -1) {
@@ -218,10 +220,14 @@ public class FBBSyncAgent implements Connector {
                     }
                     message.setBody(body.toByteArray());
 
-                    // Store the news message
-                    storage.storeNewsMessage(message);
+                    // Store the news message if we reached the EOM marker.
+                    if (messageGood) {
+                        LOG.info("Receiving bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes)");
+                        storage.storeNewsMessage(message);
+                    } else {
+                        LOG.warn("No EOM received for bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes) - discarded.");
+                    }
 
-                    LOG.info("Receiving bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes)");
                     reader.readLine(); // Consume extra linebreak between messages
                 }
 

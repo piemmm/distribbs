@@ -190,4 +190,6 @@ public class NewsMessage extends Packetable {
       return this;
    }
 
+
+
 }

@@ -10,6 +10,8 @@ import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Connector;
 import org.prowl.distribbs.node.connectivity.RFConnector;
+import org.prowl.distribbs.objectstorage.Storage;
+import org.prowl.distribbs.services.newsgroups.NewsMessage;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.uilocal.ansi.parser.Mode;
 import org.prowl.distribbs.uilocal.ansi.parser.MonitorLevel;
@@ -19,9 +21,11 @@ import org.prowl.distribbs.utils.ANSI;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,10 +42,14 @@ public class CommandParser {
 
    private TextClient client;
 
+   private Storage storage;
+
    private Mode mode             = Mode.CMD;                                    // Default to command mode.
 
    public CommandParser(TextClient client) {
       this.client = client;
+      storage = DistriBBS.INSTANCE.getStorage();
+
    }
 
 
@@ -100,6 +108,7 @@ public class CommandParser {
             logout();
             break;
          case LIST:
+         case L:
             listMessages();
             break;
          case CC:
@@ -110,7 +119,32 @@ public class CommandParser {
       }
    }
 
-   public void listMessages() {
+   public void listMessages() throws IOException {
+
+      SimpleDateFormat sdf = new SimpleDateFormat("ddMM/hhmm");
+
+      List<NewsMessage> messages = storage.getNewsMessagesInOrder(null);
+
+      if (messages.size() == 0) {
+         client.send("No messages in BBS yet"+CR);
+      } else {
+         client.send("%BOLD%Msg#    TSLD   Size To    @Route   From    Date/Time Subject%NORMAL%"+CR);
+
+         NumberFormat nf = NumberFormat.getInstance();
+         nf.setMaximumFractionDigits(0);
+         nf.setMinimumFractionDigits(0);
+         nf.setGroupingUsed(false);
+         for (NewsMessage message: messages) {
+
+            client.send((StringUtils.rightPad(nf.format(message.getMessageNumber()),7) + // MessageId
+                      StringUtils.rightPad("", 7) +  // TSLD
+                    StringUtils.rightPad(nf.format(message.getBody().length), 7)+ // Size
+                    StringUtils.rightPad(message.getGroup(), 9)+
+                    StringUtils.rightPad(message.getFrom(), 9)+
+                    StringUtils.rightPad(sdf.format(message.getDate()), 10)+
+                    StringUtils.rightPad(message.getSubject(),50)).trim()+CR);
+         }
+      }
 
    }
 

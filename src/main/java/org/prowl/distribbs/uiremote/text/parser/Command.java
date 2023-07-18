@@ -19,6 +19,7 @@ public enum Command {
    PORTS, // List ports
 
    LIST, // List BBS messages
+   L, // List BBS messages
 
    MH, // List heard stations
    MHEARD, // List heard stations

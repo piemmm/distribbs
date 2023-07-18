@@ -88,8 +88,8 @@ public class TextClient implements RemoteClient {
      */
     public void send(String data) throws IOException {
         // Strip colour if needed.
-        if (!colourEnabled) {
-            data = ANSI.removeANSI(data);
+        if (colourEnabled) {
+            data = ANSI.tokenizeColour(data);
         }
 
         out.write(data.getBytes());

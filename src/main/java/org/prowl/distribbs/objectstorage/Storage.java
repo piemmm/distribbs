@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
@@ -560,6 +557,33 @@ public class Storage {
       }
    }
 
+   public List<NewsMessage> getNewsMessagesInOrder(String groupName) {
+
+      File[] files = listNewsMessages();
+      List<NewsMessage> messages = new ArrayList<>();
+      for (File file:files) {
+         try {
+            NewsMessage message = loadNewsMessage(file);
+            messages.add(message);
+         } catch(Throwable e) {
+            LOG.error(e.getMessage(),e);
+         }
+      }
+
+      Collections.sort(messages, new Comparator<NewsMessage>() {
+         @Override
+         public int compare(NewsMessage o1, NewsMessage o2) {
+            if (o1.getDate() < o2.getDate()) {
+               return -1;
+            } else if (o1.getDate() > o2.getDate()) {
+               return 1;
+            }
+            return 0;
+         }
+      });
+
+      return messages;
+   }
 
    /**
     * Scan the news AND mail folder looking for the highest message ID and store in memory and returns
