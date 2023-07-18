@@ -27,12 +27,24 @@ public class Node {
    /**
     * The signal strength (if applicable), 0 if not.
     */
-   private double    rssi;
+   private double    rssi = Double.MAX_VALUE;
 
    public Node(Connector connector, String callsign, long lastHeard, double rssi) {
       this.callsign = callsign;
       this.lastHeard = lastHeard;
       this.rssi = rssi;
+      this.connector = connector;
+   }
+
+   /**
+    * Create a node object, no signal strength information present
+    * @param connector
+    * @param callsign
+    * @param lastHeard
+    */
+   public Node(Connector connector, String callsign, long lastHeard) {
+      this.callsign = callsign;
+      this.lastHeard = lastHeard;
       this.connector = connector;
    }
 

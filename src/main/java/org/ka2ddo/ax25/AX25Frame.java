@@ -147,6 +147,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
             return null;
         }
         AX25Frame f = new AX25Frame();
+        f.rcptTime = System.currentTimeMillis();
         f.dest = new AX25Callsign(buf, offset, length);
         offset += 7;
         length -= 7;

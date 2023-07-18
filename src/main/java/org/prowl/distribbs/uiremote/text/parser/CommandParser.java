@@ -81,9 +81,12 @@ public class CommandParser {
     */
    public void doCommand(Command command, String[] arguments) throws IOException {
       switch (command) {
+         case H:
          case HELP:
             showHelp(arguments);
             break;
+         case MH:
+         case MHEARD:
          case HEARD:
             showHeard();
             break;
@@ -96,12 +99,19 @@ public class CommandParser {
          case QUIT:
             logout();
             break;
+         case LIST:
+            listMessages();
+            break;
          case CC:
             colourToggle();
             break;
          default:
             unknownCommand();
       }
+   }
+
+   public void listMessages() {
+
    }
 
    public void colourToggle() throws IOException {
@@ -211,7 +221,9 @@ public class CommandParser {
 //      }
 //   }
 
-   public void logout() {
+   public void logout() throws IOException {
+      client.send(Messages.get("userDisconnecting")+CR);
+      client.flush();
       client.close();
    }
 
@@ -269,12 +281,16 @@ public class CommandParser {
       if (nodes.size() == 0) {
          write("No nodes heard"+CR);
       } else {
-         write("Callsign       Last Heard               RSSI"+CR);
-         write("--------------------------------------------"+CR);
+         write("Callsign       Last Heard                    RSSI"+CR);
+         write("-------------------------------------------------"+CR);
 
 
          for (Node node : nodes) {
-            write(StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 24) + StringUtils.rightPad("-" + node.getRSSI() + " dBm",10)+CR);
+            String rssi = "-" + node.getRSSI() + " dBm";
+            if (node.getRSSI() == Double.MAX_VALUE) {
+               rssi = "-";
+            }
+            write((StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 25) + StringUtils.leftPad(rssi,9)).trim()+CR);
          }
        }
    }

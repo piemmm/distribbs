@@ -156,7 +156,7 @@ public class KISSviaDirewolf implements Connector {
             connector.addFrameListener(new AX25FrameListener() {
                 @Override
                 public void consumeAX25Frame(AX25Frame frame, org.ka2ddo.ax25.Connector connector) {
-                    Node node = new Node(KISSviaDirewolf.this, frame.sender.toString(), frame.rcptTime, 0 );
+                    Node node = new Node(KISSviaDirewolf.this, frame.sender.toString(), frame.rcptTime );
                     ServerBus.INSTANCE.post(new HeardNode(node));
                 }
             });

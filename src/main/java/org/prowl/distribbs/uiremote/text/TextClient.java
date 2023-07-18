@@ -51,7 +51,7 @@ public class TextClient implements RemoteClient {
             });
             t.start();
 
-            send("[" + DistriBBS.NAME + ":" + DistriBBS.VERSION + ":" + DistriBBS.INSTANCE.getBBSServices() + "]"+CR);
+            send("[" + DistriBBS.NAME + "-" + DistriBBS.VERSION + "-" + DistriBBS.INSTANCE.getBBSServices() + "]"+CR);
             send(Messages.get("usesColour")+CR+CR);
             send(Messages.get("welcomeNewUser")+CR);
             parser.sendPrompt();
@@ -81,7 +81,17 @@ public class TextClient implements RemoteClient {
         return colourEnabled;
     }
 
+    /**
+     * Send ASCII text data to the client - will strip colour codes if user has requested it.
+     * @param data
+     * @throws IOException
+     */
     public void send(String data) throws IOException {
+        // Strip colour if needed.
+        if (!colourEnabled) {
+            data = ANSI.removeANSI(data);
+        }
+
         out.write(data.getBytes());
     }
 

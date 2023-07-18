@@ -99,7 +99,7 @@ public enum DistriBBS {
    }
 
    public String getBBSServices() {
-      return "";
+      return "X";
    }
 
    public Config getConfiguration() {
