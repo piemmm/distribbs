@@ -167,7 +167,6 @@ public class ConnState implements AX25FrameSource, Closeable {
      * @return boolean true if connection is up and operating
      */
     public boolean isOpen() {
-        System.out.println("isOpen ceck:" +toString());
         return ConnType.NONE != connType && ConnType.CLOSED != connType && ConnTransition.STEADY == transition;
     }
 
