@@ -248,6 +248,13 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     }
 
     /**
+     * @return the body data of the frame.
+     */
+    public byte[] getBody() {
+        return body;
+    }
+
+    /**
      * Get the type of this frame, as stored in the ctl byte.
      * @return frame type code
      * @see #FRAMETYPE_I
@@ -936,6 +943,9 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         }
         return new String(chArray);
     }
+
+
+
 
     /**
      * Compute a checksum for this frame to allow efficiently identifying

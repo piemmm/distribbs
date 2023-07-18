@@ -87,7 +87,7 @@ public class DebugCtl {
 
 
     public static boolean isDebug(String categoryName) {
-        return false;
+        return true;
     }
 
     /**

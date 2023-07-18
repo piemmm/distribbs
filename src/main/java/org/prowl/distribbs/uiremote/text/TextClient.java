@@ -22,6 +22,7 @@ public class TextClient implements RemoteClient {
     private OutputStream out;
     private User user;
     private CommandParser parser;
+    private boolean colourEnabled = true;
 
     public TextClient(User user, InputStream in, OutputStream out) {
         this.in = in;
@@ -52,7 +53,7 @@ public class TextClient implements RemoteClient {
 
             send("[" + DistriBBS.NAME + ":" + DistriBBS.VERSION + ":" + DistriBBS.INSTANCE.getBBSServices() + "]"+CR);
             send(Messages.get("usesColour")+CR+CR);
-            send(Messages.get("welcomeNewUser")+CR+CR);
+            send(Messages.get("welcomeNewUser")+CR);
             parser.sendPrompt();
 
         } catch (Throwable e) {
@@ -70,6 +71,14 @@ public class TextClient implements RemoteClient {
             out.close();
         } catch (Throwable e) {
         }
+    }
+
+    public void setColourEnabled(boolean enabled) {
+        this.colourEnabled = enabled;
+    }
+
+    public boolean getColourEnabled() {
+        return colourEnabled;
     }
 
     public void send(String data) throws IOException {

@@ -3,6 +3,7 @@ package org.prowl.distribbs.uiremote.text.parser;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.lang.StringUtils;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.core.*;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
@@ -65,7 +66,7 @@ public class CommandParser {
 
    public void sendPrompt() throws IOException {
       try {
-         client.send(getPrompt());
+         client.send(CR+getPrompt());
          client.flush();
       } catch(EOFException e) {
          // Connection has gone
@@ -86,6 +87,7 @@ public class CommandParser {
          case HEARD:
             showHeard();
             break;
+         case B:
          case BYE:
          case END:
          case LOGOFF:
@@ -94,8 +96,20 @@ public class CommandParser {
          case QUIT:
             logout();
             break;
+         case CC:
+            colourToggle();
+            break;
          default:
             unknownCommand();
+      }
+   }
+
+   public void colourToggle() throws IOException {
+      client.setColourEnabled(!client.getColourEnabled());
+      if (client.getColourEnabled()) {
+         client.send(Messages.get("colourEnabled") + CR);
+      } else {
+         client.send(Messages.get("colourDisabled") + CR);
       }
    }
    
@@ -203,7 +217,7 @@ public class CommandParser {
 
 
    public void showHelp(String[] arguments) throws IOException {
-      client.send("No help yet\r");
+      client.send("No help yet"+CR);
 
 
    }
@@ -224,6 +238,7 @@ public class CommandParser {
       int port = 0;
       write("Port  Driver       RF      Frequency    Noise Floor    Compress(tx/rx)");
       write("----------------------------------------------------------------------");
+
       for (Connector connector : connectors) {
 
          String noiseFloor = "";
@@ -256,11 +271,12 @@ public class CommandParser {
       } else {
          write("Callsign       Last Heard               RSSI"+CR);
          write("--------------------------------------------"+CR);
+
+
          for (Node node : nodes) {
             write(StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 24) + StringUtils.rightPad("-" + node.getRSSI() + " dBm",10)+CR);
          }
-         write(CR);
-      }
+       }
    }
 
 //   /**

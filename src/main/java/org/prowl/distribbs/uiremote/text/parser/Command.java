@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public enum Command {
 
+   B,
    HELP, // Help text
    BYE, // Logout (close connection)
    QUIT, // Logout (close connection)
@@ -12,6 +13,7 @@ public enum Command {
    LOGOUT, // Logout (close connection)
    LOGOFF, // Logout (close connection)
 
+   CC, // Colour toggle
    PORTS, // List ports
    HEARD; // List heard stations
 

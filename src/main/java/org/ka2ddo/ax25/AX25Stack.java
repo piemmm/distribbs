@@ -80,7 +80,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
      */
     public AX25Stack() {
         if (DebugCtl.isDebug("thread")) {
-            new Throwable("creating AX25Stack parser thread...").printStackTrace(System.out);
+            //new Throwable("creating AX25Stack parser thread...").printStackTrace(System.out);
         }
       //  isDebug = DebugCtl.isDebug("ax25");
         DebugCtl.addDbgListener(this, "ax25", "DebugCtl.ax25");
