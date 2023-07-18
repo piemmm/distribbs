@@ -95,15 +95,12 @@ class AX25OutputStream extends OutputStream {
         } else if (len < 0 || off < 0 || len + off > b.length) {
             throw new IndexOutOfBoundsException();
         }
-        do {
-            int sendableLen = Math.min(len, buf.length - bufIdx);
-            System.arraycopy(b, off, buf, bufIdx, sendableLen);
-            bufIdx += sendableLen;
-            if (bufIdx >= buf.length) {
-                flush();
-            }
-            len -= sendableLen;
-        } while (len > 0);
+
+        // Simply forward to out byte processing to keep things simple.
+        for (int i = 0; i < len; i++) {
+            write(b[off+i]);
+        }
+
     }
 
     /**
