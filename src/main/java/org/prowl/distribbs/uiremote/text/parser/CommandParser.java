@@ -310,14 +310,14 @@ public class CommandParser {
 
    public void showHeard() throws IOException {
 
-      SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+      SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
       MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
       List<Node> nodes = heard.listHeard();
       if (nodes.size() == 0) {
          write("No nodes heard"+CR);
       } else {
-         write("Callsign       Last Heard                    RSSI"+CR);
-         write("-------------------------------------------------"+CR);
+         write("Callsign       Last Heard             RSSI Capabilities"+CR);
+         write("-------------------------------------------------------"+CR);
 
 
          for (Node node : nodes) {
@@ -325,9 +325,26 @@ public class CommandParser {
             if (node.getRSSI() == Double.MAX_VALUE) {
                rssi = "-";
             }
-            write((StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 25) + StringUtils.leftPad(rssi,9)).trim()+CR);
+            write((StringUtils.rightPad(node.getCallsign(),15) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + StringUtils.leftPad(rssi,9)).trim()+" "+StringUtils.rightPad(listCapabilities(node), 14)+CR);
          }
        }
+   }
+
+   /**
+    * Returns a string list of capability names this node has been seen to perform.
+    * @param node
+    * @return
+    */
+   public String listCapabilities(Node node) {
+      StringBuilder sb = new StringBuilder();
+      for (Capability c: node.getCapabilities()) {
+         sb.append(c.getService().getName());
+         sb.append(",");
+      }
+      if (sb.length() > 0) {
+         sb.deleteCharAt(sb.length() - 1);
+      }
+      return sb.toString();
    }
 
 //   /**
@@ -397,9 +414,9 @@ public class CommandParser {
 
       String name = mode.name().toLowerCase();
       if (mode == Mode.CMD) {
-         name = DistriBBS.INSTANCE.getMyCall();
+         name = DistriBBS.INSTANCE.getMyCallNoSSID();
       }
-      return ANSI.BOLD+name+ANSI.NORMAL + PROMPT;
+      return ANSI.YELLOW+ANSI.BOLD+name+ANSI.NORMAL + ANSI.BOLD+PROMPT+ANSI.NORMAL+" ";
    }
 
    public void write(String s) throws IOException {

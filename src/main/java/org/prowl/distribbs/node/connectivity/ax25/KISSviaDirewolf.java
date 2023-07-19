@@ -5,9 +5,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.ax25.*;
 import org.ka2ddo.ax25.io.BasicTransmittingConnector;
+import org.prowl.aprslib.parser.APRSPacket;
+import org.prowl.aprslib.parser.Parser;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketEngine;
+import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.HeardNode;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
@@ -152,15 +156,21 @@ public class KISSviaDirewolf implements Connector {
 
             });
 
-            // AX Frame listener for mheard lists
+            // AX Frame listener for things like mheard lists
             connector.addFrameListener(new AX25FrameListener() {
                 @Override
                 public void consumeAX25Frame(AX25Frame frame, org.ka2ddo.ax25.Connector connector) {
+                    // Create a node to represent what we've seen - we'll merge this in things like
+                    // mheard lists if there is another node there so that capability lists can grow
                     Node node = new Node(KISSviaDirewolf.this, frame.sender.toString(), frame.rcptTime );
+
+                    // Determine the nodes capabilities from the frame type and add this to the node
+                    PacketTools.determineCapabilities(node, frame);
+
+                    // Fire off to anything that wants to know about nodes heard
                     ServerBus.INSTANCE.post(new HeardNode(node));
                 }
             });
-
 
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);

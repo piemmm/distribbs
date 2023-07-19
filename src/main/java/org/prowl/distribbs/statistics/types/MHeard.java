@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
@@ -14,7 +15,7 @@ import com.google.common.eventbus.Subscribe;
 
 public class MHeard {
 
-   private LinkedList<Node> heardList;
+   private final LinkedList<Node> heardList;
    
    public MHeard() {
       heardList = new LinkedList<Node>();
@@ -26,8 +27,18 @@ public class MHeard {
    }
    
    public void addToFront(Node heard) {
-      heardList.remove(heard);
-      heardList.addFirst(heard);
+      synchronized (heardList) {
+         int index = heardList.indexOf(heard);
+         if (index != -1) {
+            // Update existing node
+            Node oldHeard = heardList.remove(index);
+            updateNode(oldHeard, heard);
+            heardList.addFirst(oldHeard);
+         } else {
+            // Add new node to list
+            heardList.addFirst(heard);
+         }
+      }
       
       // Keep the list at a max of 200 entries.
       if (heardList.size() > 200) {
@@ -35,9 +46,24 @@ public class MHeard {
       }
    }
 
+   /**
+    * Update the existing node with the information from the updated one.
+    * @param oldNode
+    * @param newNode
+    */
+   private void updateNode(Node oldNode, Node newNode) {
+      oldNode.setLastHeard(newNode.getLastHeard());
+      oldNode.setRssi(newNode.getRSSI());
+      oldNode.setConnector(newNode.getConnector());
+      for (Capability c: newNode.getCapabilities()) {
+         oldNode.addCapabilityOrUpdate(c);
+      }
+   }
+
    @Subscribe
    public void heardNode(HeardNode heardNode) {
-      addToFront(heardNode.getNode());
+      // Update the heard list with a copy.
+      addToFront(new Node(heardNode.getNode()));
    }
    
    @Subscribe

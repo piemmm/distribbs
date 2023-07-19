@@ -96,7 +96,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * @see #PID_NOLVL3
      * @see #PID_ESCAPE
      */
-    public byte pid;
+    private byte pid;
     /**
      * Byte array containing the higher-level protocol payload for I and UI frames.
      */
@@ -127,6 +127,10 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     static final long previousSerialVersionUID = 4260042831169759L;
 
     /**
+     * Reference to the raw packet itself.
+     */
+    byte[] rawPacket;
+    /**
      * Create an empty AX25Frame initialized for a UI frame containing an APRS packet.
      */
     public AX25Frame() {
@@ -135,6 +139,21 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         pid = PID_NOLVL3;
     }
 
+    /**
+     * Get the frame PID - remember this is a byte so convert by & 0xFF to stick it in an int.
+     * @return
+     */
+    public byte getPid() {
+        return pid;
+    }
+
+    void setPid(byte pid) {
+        this.pid = pid;
+    }
+
+    public byte[] getRawPacket() {
+        return rawPacket;
+    }
     /**
      * Create a AX25Frame from a byte array presumed to contain an AX.25 protocol sequence.
      * @param buf byte array to read frame from
@@ -146,7 +165,10 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         if (length < 15) {
             return null;
         }
+
         AX25Frame f = new AX25Frame();
+        f.rawPacket = new byte[length];
+        System.arraycopy(buf,offset,f.rawPacket,0,length);
         f.rcptTime = System.currentTimeMillis();
         f.dest = new AX25Callsign(buf, offset, length);
         offset += 7;
@@ -943,6 +965,14 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
             chArray[i] = (char)chi;
         }
         return new String(chArray);
+    }
+
+    /**
+     * Get the raw frame body, unaltered.
+     * @return a raw byte frame body
+     */
+    public byte[] getByteFrame() {
+        return body;
     }
 
 

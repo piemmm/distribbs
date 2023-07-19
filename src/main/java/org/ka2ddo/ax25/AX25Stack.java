@@ -1349,7 +1349,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         boolean msgReported = false;
         final AX25Callsign sender = frame.sender;
         final AX25Callsign dest = frame.dest;
-        byte pid = frame.pid;
+        byte pid = frame.getPid();
         byte[] body = frame.body;
 
         if (pid == AX25Frame.PID_NOLVL3) {
@@ -1437,7 +1437,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         parsedMsg.setAx25Frame(frame);
         ArrayList<ParsedAX25MessageListener> parsedAX25MessageListenerList = this.parsedAX25MessageListenerList;
         for (int i = 0; i < parsedAX25MessageListenerList.size(); i++) {
-            parsedAX25MessageListenerList.get(i).parsedAX25MessageReceived(frame.pid, parsedMsg);
+            parsedAX25MessageListenerList.get(i).parsedAX25MessageReceived(frame.getPid(), parsedMsg);
         }
     }
 

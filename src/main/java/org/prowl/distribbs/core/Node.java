@@ -1,6 +1,10 @@
 package org.prowl.distribbs.core;
 
+import org.ka2ddo.ax25.AX25Frame;
 import org.prowl.distribbs.node.connectivity.Connector;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Holder that represents another node
@@ -23,6 +27,33 @@ public class Node {
     * The time it was last heard
     */
    private long      lastHeard;
+
+   private List<Capability> capabilities = new ArrayList<>();
+
+   /**
+    * Enum represenging the station type
+    */
+   public enum Service {
+      BBS("BBS"),
+      NETROM("NET/ROM"),
+      APRS("APRS"), // APRS transmits are NOLVL3 as well.
+      FLEXNET("FLEXNET"),
+      OPENTRAC("OPENTRAC"),
+      TEXNET("TEXNET"),
+      NOLVL3("UI"), // Generic station
+      VJ_IP("VJ-TCP/IP"),
+
+      IP("TCP/IP"); // TCP/IP
+      private String name;
+      Service(String name) {
+         this.name = name;
+      }
+      public String getName() {
+         return name;
+      }
+   }
+
+
 
    /**
     * The signal strength (if applicable), 0 if not.
@@ -48,6 +79,39 @@ public class Node {
       this.connector = connector;
    }
 
+   /**
+    * Create a copy of the supplied node.
+    * @param toCopy
+    */
+   public Node(Node toCopy) {
+      this.callsign = toCopy.callsign;
+      this.lastHeard = toCopy.lastHeard;
+      this.rssi = toCopy.rssi;
+      this.connector = toCopy.getConnector();
+      this.capabilities = new ArrayList<>(toCopy.capabilities);
+   }
+
+   /**
+    * Add a capability if it's not there, otherwise update the last seen.
+    * @param capability
+    */
+   public void addCapabilityOrUpdate(Capability capability) {
+      for (Capability cap: capabilities) {
+         if (cap.getService() == capability.getService()) {
+            cap.setLastSeen(capability.getLastSeen());
+            return;
+         }
+      }
+      capabilities.add(capability);
+   }
+
+   /**
+    * @return a copy of the array list containing current capabilities
+    */
+   public List<Capability> getCapabilities() {
+      return new ArrayList<>(capabilities);
+   }
+
    public String getCallsign() {
       return callsign;
    }
@@ -66,6 +130,18 @@ public class Node {
 
    public Connector getConnector() {
       return connector;
+   }
+
+   public void setConnector(Connector connector) {
+      this.connector = connector;
+   }
+
+   public double getRssi() {
+      return rssi;
+   }
+
+   public void setRssi(double rssi) {
+      this.rssi = rssi;
    }
 
    @Override
@@ -98,5 +174,6 @@ public class Node {
          return false;
       return true;
    }
+
 
 }

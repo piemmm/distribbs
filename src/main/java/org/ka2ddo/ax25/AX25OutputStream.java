@@ -140,7 +140,7 @@ class AX25OutputStream extends OutputStream {
             }
             f.ctl = AX25Frame.FRAMETYPE_I;
             f.mod128 = (ConnState.ConnType.MOD128 == connState.connType);
-            f.pid = AX25Frame.PID_NOLVL3;
+            f.setPid(AX25Frame.PID_NOLVL3);
             f.setCmd(true);
             f.body = new byte[bufIdx];
             System.arraycopy(buf, 0, f.body, 0, bufIdx);

@@ -313,6 +313,14 @@ public class Tools {
       } catch (InterruptedException e) {
       }
    }
-   
+
+   /**
+    * Convenience method
+    * @param number
+    * @return
+    */
+   public static final String toHex(int number) {
+      return Integer.toHexString(number);
+   }
    
 }
