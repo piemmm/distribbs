@@ -30,7 +30,7 @@ import java.util.Date;
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25OutputStream extends OutputStream {
-    private final byte[] buf = new byte[256]; // maximum body length of AX.25 frame
+    private final byte[] buf = new byte[20]; // maximum body length of AX.25 frame (like ax.25 paclen)
     private int bufIdx = 0;
     private final ConnState connState;
 
@@ -155,7 +155,10 @@ class AX25OutputStream extends OutputStream {
                         nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
                     }
                 }
-                if (connState.transmitWindow[nextVS] == null) {
+
+                // AX.25 Spec says we can transmit N(R)-1 frames before waiting for an ACK
+                int nextNextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
+                if (connState.transmitWindow[nextNextVS] == null) {
                     break;
                 }
                 // window buffer is completely full, wait until there is room
@@ -170,6 +173,7 @@ class AX25OutputStream extends OutputStream {
                     throw new EOFException("AX.25 connection closed");
                 }
             } while (true);
+
             connState.transmitWindow[nextVS] = f;
             if (nextVS == connState.vs) {
                 connState.vs = (connState.vs + 1) % (f.mod128 ? 128 : 8);
@@ -182,6 +186,7 @@ class AX25OutputStream extends OutputStream {
                         System.out.println(new Date().toString() + " sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
                     }
                     connState.connector.sendFrame(f);
+
                 } else {
                     throw new NullPointerException("no TransmittingConnector to send data through");
                 }
