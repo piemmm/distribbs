@@ -574,9 +574,9 @@ public class Storage {
          @Override
          public int compare(NewsMessage o1, NewsMessage o2) {
             if (o1.getDate() < o2.getDate()) {
-               return -1;
-            } else if (o1.getDate() > o2.getDate()) {
                return 1;
+            } else if (o1.getDate() > o2.getDate()) {
+               return -1;
             }
             return 0;
          }

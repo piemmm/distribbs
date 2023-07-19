@@ -140,7 +140,7 @@ public class CommandParser {
                       StringUtils.rightPad("", 6) +  // TSLD
                     StringUtils.leftPad(nf.format(message.getBody().length), 5)+" "+ // Size
                     StringUtils.rightPad(message.getGroup(), 7)+  // To
-                    StringUtils.rightPad(message.getRoute(), 9)+ // @route
+                    StringUtils.rightPad(message.getRoute(), 8)+ // @route
                     StringUtils.rightPad(message.getFrom(), 8)+ // from
                     StringUtils.rightPad(sdf.format(message.getDate()), 10)+ // date/time
                     StringUtils.rightPad(message.getSubject(),50)).trim()+CR);
