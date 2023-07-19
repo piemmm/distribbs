@@ -30,7 +30,7 @@ import java.util.Date;
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25OutputStream extends OutputStream {
-    private final byte[] buf = new byte[20]; // maximum body length of AX.25 frame (like ax.25 paclen)
+    private final byte[] buf = new byte[256]; // maximum body length of AX.25 frame (like ax.25 paclen)
     private int bufIdx = 0;
     private final ConnState connState;
 
