@@ -271,6 +271,12 @@ public class ConnState implements AX25FrameSource, Closeable {
         t1TimerTask = new ReschedulableTimerTask() {
             @Override
             public void run() {
+                // if the connection is no longer open, don't bother
+                if (transition == ConnTransition.LINK_DOWN) {
+                    cancel();  // also cancel the timer
+                    return;
+                }
+
                 if (DebugCtl.isDebug("ax25")) {
                     System.out.println("T1 timeout on " + ConnState.this);
                 }
@@ -404,7 +410,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                 transition = ConnTransition.LINK_DOWN;
             }
             if (closeFrame != null) {
-                setResendableFrame(closeFrame, 3);
+                setResendableFrame(closeFrame, 10);
             } else {
                 stack.removeConnState(this);
                 stack.fireConnStateAddedOrRemoved();
