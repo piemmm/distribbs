@@ -33,7 +33,7 @@ class TestStorage {
       // Create a test message
       testMessage = new NewsMessage();
       testMessage.setSubject("This is a test subject");
-      testMessage.setBody("This is the message body");
+      testMessage.setBody("This is the message body".getBytes());
       testMessage.setFrom("G0SGY");
       testMessage.setGroup("TESTING");
       testMessage.setPriority(Priority.LOW);
