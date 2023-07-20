@@ -3,14 +3,16 @@ package org.prowl.distribbs;
 import java.io.IOException;
 import java.util.Locale;
 
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.config.Config;
 import org.prowl.distribbs.node.connectivity.Connectivity;
 import org.prowl.distribbs.objectstorage.Storage;
 import org.prowl.distribbs.statistics.Statistics;
-import org.prowl.distribbs.uilocal.UI;
-import org.prowl.distribbs.uilocal.hardware.Status;
+import org.prowl.distribbs.ui.UI;
+import org.prowl.distribbs.ui.local.hardware.Status;
+
 
 /**
  * DistriBBS starting class
@@ -46,7 +48,7 @@ public enum DistriBBS {
    }
 
    public void startup() {
-      
+
       try {
          // Init resource bundles.
          Messages.init();

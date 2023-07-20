@@ -11,7 +11,7 @@ echo 0 | sudo tee /sys/class/leds/led1/brightness
 echo none | sudo tee /sys/class/leds/led0/trigger
 
 # Start the client
-cd /home/pi/distribbs
+cd /home/pi/distribbs || { echo "Failure to change directory"; exit 1; }
 
 # EXPERIMENTAL FOR LoRA hardware only (not required) to allow for TCP/IP networking create the relevant sockets.
 #socat pty,raw,echo=0,ignoreof,link=./lax0,iexten=0,nonblock pty,raw,echo=0,ignoreof,link=./rax0,iexten=0,nonblock &

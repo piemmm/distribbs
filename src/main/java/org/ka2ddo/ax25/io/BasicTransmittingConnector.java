@@ -511,5 +511,13 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
     }
 
 
+    /**
+     * Set some useful debug information to be included in log messages to identify this connector/stack from others
+     * @param tag
+     */
+    public void setDebugTag(String tag) {
+        stack.setDebugTag(tag);
+    }
+
 }
 

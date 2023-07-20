@@ -88,6 +88,9 @@ public class AX25Stack implements FrameListener, Runnable {
     private  final ReschedulableTimer retransTimer = new ReschedulableTimer("AX.25 Retransmit Timer");
      private  final ArrayList<ConnStateChangeListener> connStateListeners = new ArrayList<>();
 
+     // Create a settable debug tag that can be useful when using multiple stacks.
+     private String debugTag = "";
+
     /**
      * Instantiate the AX25Stack parser thread. Note this should not be done until
      * any dynamically loaded JAR files are added to the classpath and context
@@ -127,9 +130,9 @@ public class AX25Stack implements FrameListener, Runnable {
         }
 
         // Attempt to configure timers appropriately based on the transmitting configuration.
-        long candidateSpeed = maxFrames * pacLen * 20000l / baudRateInBitsPerSecond;
+        long candidateSpeed = maxFrames * pacLen * 40000l / baudRateInBitsPerSecond;
 
-        // Make sure we don't go beflow a sensible minimum or maximum(to prevent stalled connections)
+        // Make sure we don't go below a sensible minimum or maximum(to prevent stalled connections)
         WAIT_FOR_ACK_T1_TIMER = Math.max(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MINIMUM);
         WAIT_FOR_ACK_T1_TIMER = Math.min(WAIT_FOR_ACK_T1_TIMER, WAIT_FOR_ACK_T1_TIMER_MAXIMUM);
 
@@ -439,7 +442,7 @@ public class AX25Stack implements FrameListener, Runnable {
             if ((uType = frame.getUType()) == AX25Frame.UTYPE_UI) {
                 msgReported = processIBody(frame, true, connector, frame.rcptTime);
             } else if (uType == AX25Frame.UTYPE_DISC) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
                     // it doesn't matter who started the connection; either end can terminate it
                     state = getConnState(frame.sender, frame.dest, false);
@@ -459,7 +462,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     fireConnStateAddedOrRemoved();
                 }
             } else if (uType == AX25Frame.UTYPE_DM) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
                  if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
                     // it doesn't matter who started the connection; either end can terminate it
                     state = getConnState(frame.sender, frame.dest, false);
@@ -488,7 +491,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     fireConnStateAddedOrRemoved();
                 }
             } else if (uType == AX25Frame.UTYPE_SABM) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 boolean isNewSession = false;
                 state = getConnState(frame.sender, frame.dest, false);
                 if (state == null) {
@@ -539,7 +542,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     fireConnStateUpdated(state);
                 }
             } else if (uType == AX25Frame.UTYPE_SABME) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 boolean isNewSession = false;
                 state = getConnState(frame.sender, frame.dest, false);
                 if (state == null) {
@@ -591,7 +594,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     fireConnStateUpdated(state);
                 }
             } else if (uType == AX25Frame.UTYPE_UA) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
                 if ((state = getConnState(frame.dest, frame.sender, false)) != null) {
                     switch (state.transition) {
                         case LINK_UP:
@@ -628,7 +631,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     }
                 }
             } else if (uType == AX25Frame.UTYPE_TEST) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 if (toMe && frame.getP()) {
                     frame = frame.dup();
                     frame.sourcePort = null;
@@ -699,7 +702,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     }
                 }
             } else if (uType == AX25Frame.UTYPE_FRMR) {
-                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
                 // if we tried to open a V2.2 connection to a V2.0 station, try again falling back to v2.0 limitations
                 if (toMe) {
                     if ((state = getConnState(frame.dest, frame.sender, false)) != null &&
@@ -722,7 +725,7 @@ public class AX25Stack implements FrameListener, Runnable {
                     }
                 }
             } else {
-                LOG.debug("rcvd unrecognized " + frame.getFrameTypeString() + (frame.getP() ? " P" : ' ') + ' ' + frame.sender + "->" + frame.dest);
+                LOG.debug(debugTag+" rcvd: unrecognized " + frame.getFrameTypeString() + (frame.getP() ? " P" : ' ') + ' ' + frame.sender + "->" + frame.dest);
             }
         } else if (frameType == AX25Frame.FRAMETYPE_I) {
             if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
@@ -731,7 +734,7 @@ public class AX25Stack implements FrameListener, Runnable {
             }
             if (state != null && state.isOpen()) {
                 if (toMe) {
-                    LOG.debug("rcvd " + frame.getFrameTypeString() +
+                    LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() +
                                 (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NS=" + frame.getNS() +
                                 " NR=" + frame.getNR() + " #=" + frame.body.length + " VR=" + state.vr);
                      // check frame number against flow control
@@ -780,7 +783,7 @@ public class AX25Stack implements FrameListener, Runnable {
 
         // Supervisory control frame field
         } else if (frameType == AX25Frame.FRAMETYPE_S) {
-            LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NR=" + frame.getNR());
+            LOG.debug(debugTag+" rcvd: " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NR=" + frame.getNR());
 
             if ((state = getConnState(frame.sender, frame.dest, false)) == null) {
                 state = getConnState(frame.dest, frame.sender, false);
@@ -1527,5 +1530,13 @@ public class AX25Stack implements FrameListener, Runnable {
                 LOG.error(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Set the debug tag - this could be anything useful, most notably frequency when using multiple stack instances.
+     * @param tag String to use as debug tag
+     */
+    public void setDebugTag(String tag) {
+        debugTag = tag;
     }
 }

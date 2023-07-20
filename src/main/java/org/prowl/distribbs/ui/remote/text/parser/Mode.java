@@ -1,4 +1,4 @@
-package org.prowl.distribbs.uilocal.ansi.parser;
+package org.prowl.distribbs.ui.remote.text.parser;
 
 import java.util.Arrays;
 
@@ -7,7 +7,8 @@ public enum Mode {
    
    CMD,
    DXCC,
-   MESSAGE;
+   MESSAGE_READ_PAGINATION,
+   MESSAGE_LIST_PAGINATION;
    
    
    public static Mode findByName(final String name) {

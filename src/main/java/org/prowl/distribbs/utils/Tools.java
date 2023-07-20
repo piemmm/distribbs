@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.NumberFormat;
 import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
@@ -304,7 +305,7 @@ public class Tools {
    }
 
    /**
-    * Used for things like rate limiting
+    * Used for things like rate limiting, avoiding spinning exception loops chewing CPU etc.
     * @param millis
     */
    public static void delay(int millis) {
@@ -338,5 +339,16 @@ public class Tools {
             LOG.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    public static String getNiceFrequency(long frequency) {
+       NumberFormat nf = NumberFormat.getInstance();
+       nf.setMaximumFractionDigits(4);
+       nf.setMinimumFractionDigits(3);
+       String freq = "";
+       if (frequency != 0) {
+          freq = nf.format(frequency / 1000000d);
+       }
+       return freq;
     }
 }

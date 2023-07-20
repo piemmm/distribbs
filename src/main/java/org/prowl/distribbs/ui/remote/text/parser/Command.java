@@ -1,8 +1,14 @@
-package org.prowl.distribbs.uiremote.text.parser;
+package org.prowl.distribbs.ui.remote.text.parser;
 
 import java.util.Arrays;
 
 public enum Command {
+
+   A, // Short for abort
+   ABORT, // Abort
+
+   R,
+   READ, // Read message
 
    B,
    H, // Help text
@@ -23,8 +29,9 @@ public enum Command {
 
    MH, // List heard stations
    MHEARD, // List heard stations
-   HEARD; // List heard stations
+   HEARD, // List heard stations
 
+   ENTER_KEY; // blank line just enter pressed.
 
 
    public static Command findByName(final String name) {
@@ -32,6 +39,10 @@ public enum Command {
       // Special case for some well known characters
       if (name.startsWith("?")) {
          return H;
+      }
+
+      if (name.length() == 0) {
+         return ENTER_KEY;
       }
 
       return Arrays.stream(values()).filter(value -> value.name().equals(name)).findFirst().orElse(null);

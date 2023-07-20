@@ -1,4 +1,4 @@
-package org.prowl.distribbs.uilocal.hardware;
+package org.prowl.distribbs.ui.local.hardware;
 
 import java.text.NumberFormat;
 import java.util.List;

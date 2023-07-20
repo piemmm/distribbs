@@ -1,16 +1,15 @@
-package org.prowl.distribbs.uiremote.text;
+package org.prowl.distribbs.ui.remote.text;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.Messages;
-import org.prowl.distribbs.uiremote.RemoteClient;
+import org.prowl.distribbs.ui.RemoteClient;
 import org.prowl.distribbs.services.user.User;
-import org.prowl.distribbs.uiremote.text.parser.CommandParser;
+import org.prowl.distribbs.ui.remote.text.parser.CommandParser;
 import org.prowl.distribbs.utils.ANSI;
 
 import java.io.*;
-import java.util.ResourceBundle;
 
 public class TextClient implements RemoteClient {
 

@@ -228,8 +228,9 @@ public class GPS implements Connector {
       return null;
    }
 
+   @Override
    public double getNoiseFloor() {
-      return 0;
+      return Double.MAX_VALUE;
    }
 
    public double getRSSI() {

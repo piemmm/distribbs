@@ -1,4 +1,4 @@
-package org.prowl.distribbs.uiremote;
+package org.prowl.distribbs.ui;
 
 public interface RemoteClient {
 

@@ -1,6 +1,6 @@
-package org.prowl.distribbs.uilocal.http;
+package org.prowl.distribbs.ui.local.http;
 
-import org.prowl.distribbs.uilocal.UIService;
+import org.prowl.distribbs.ui.UIService;
 
 public class HTTP implements UIService {
 

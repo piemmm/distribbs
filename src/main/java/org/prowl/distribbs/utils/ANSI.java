@@ -25,9 +25,12 @@ public class ANSI {
     public static final String BOLD_GREEN = "\u001B[1;32m";
     public static final String BOLD_BLUE = "\u001B[1;34m";
     public static final String BOLD_CYAN = "\u001B[1;36m";
+    public static final String BOLD_WHITE = "\u001B[1;37m";
 
-    private static final String[] tokens = new String[]{"%NORMAL%", "%BOLD%", "%UNDERLINE%", "%RED%", "%MAGENTA%", "%YELLOW%", "%GREEN%", "%BLUE%", "%CYAN%", "%WHITE%", "%ORANGE%", "%PURPLE%", "%BLACK%", "%PINK%", "%INDIGO%", "%BOLD_RED%", "%BOLD_YELLOW%", "%BOLD_GREEN%", "%BOLD_BLUE%", "%BOLD_CYAN%"};
-    private static final String[] colours = new String[]{ANSI.NORMAL, ANSI.BOLD, ANSI.UNDERLINE, ANSI.RED, ANSI.MAGENTA, ANSI.YELLOW, ANSI.GREEN, ANSI.BLUE, ANSI.CYAN, ANSI.WHITE, ANSI.ORANGE, ANSI.PURPLE, ANSI.BLACK, ANSI.PINK, ANSI.INDIGO, ANSI.BOLD_RED, ANSI.BOLD_YELLOW, ANSI.BOLD_GREEN, ANSI.BOLD_BLUE, ANSI.BOLD_CYAN};
+    private static final String[] tokens = new String[]{"%NORMAL%", "%BOLD%", "%UNDERLINE%", "%RED%", "%MAGENTA%", "%YELLOW%", "%GREEN%", "%BLUE%", "%CYAN%", "%WHITE%", "%ORANGE%", "%PURPLE%", "%BLACK%", "%PINK%", "%INDIGO%", "%BOLD_RED%", "%BOLD_YELLOW%", "%BOLD_GREEN%", "%BOLD_BLUE%", "%BOLD_CYAN%, %BOLD_WHITE%"};
+    private static final String[] colours = new String[]{ANSI.NORMAL, ANSI.BOLD, ANSI.UNDERLINE, ANSI.RED, ANSI.MAGENTA, ANSI.YELLOW, ANSI.GREEN, ANSI.BLUE, ANSI.CYAN, ANSI.WHITE, ANSI.ORANGE, ANSI.PURPLE, ANSI.BLACK, ANSI.PINK, ANSI.INDIGO, ANSI.BOLD_RED, ANSI.BOLD_YELLOW, ANSI.BOLD_GREEN, ANSI.BOLD_BLUE, ANSI.BOLD_CYAN, ANSI.BOLD_WHITE};
+
+    //private static final String MOVE_TO_START_OF_LINE = "\u001B[1000D";
 
     /**
      * Convert a string with tokens such as %RED% to ANSI colour codes.

@@ -22,11 +22,12 @@ import java.util.List;
  * ax25-tools can play with it.
  * 
  * Data is forwarded and received on the designated rf slot (where an SX1278
- * usually resides)
+ * usually resides) and is then forwarded to a fifo socket made by this app which
+ * then allows ax25-tools in linux to connect to it.
  */
-public class KISS implements Connector {
+public class KISSviaSX127x implements Connector {
 
-   private static final Log          LOG        = LogFactory.getLog("KISS");
+   private static final Log          LOG        = LogFactory.getLog("KISSviaSX127x");
 
    private static final int          KISS_FEND  = 0xc0;
    private static final int          KISS_FESC  = 0xDB;
@@ -49,7 +50,7 @@ public class KISS implements Connector {
    private long                      txUncompressedByteCount;
    private long                      rxUncompressedByteCount;
 
-   public KISS(HierarchicalConfiguration config) {
+   public KISSviaSX127x(HierarchicalConfiguration config) {
       this.config = config;
    }
 
@@ -297,7 +298,7 @@ public class KISS implements Connector {
    public Connector getSlot(int slot) {
       List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
       for (Connector connector : connectors) {
-         if (!(connector instanceof KISS)) {
+         if (!(connector instanceof KISSviaSX127x)) {
             if (connector.getSlot() == slot) {
                return connector;
             }

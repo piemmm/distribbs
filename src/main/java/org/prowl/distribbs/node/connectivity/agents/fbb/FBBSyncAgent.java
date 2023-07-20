@@ -370,7 +370,7 @@ public class FBBSyncAgent implements Connector {
 
     @Override
     public double getNoiseFloor() {
-        return 0;
+        return Double.MAX_VALUE;
     }
 
     @Override

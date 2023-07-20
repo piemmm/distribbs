@@ -1,14 +1,18 @@
-package org.prowl.distribbs.uiremote;
+package org.prowl.distribbs.ui;
 
 import org.prowl.distribbs.services.user.User;
-import org.prowl.distribbs.uiremote.text.TextClient;
+import org.prowl.distribbs.ui.remote.text.TextClient;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Switches between clients the user can access (plain text, ansi, etc) based
- * on their preferences.
+ * Switch for different remote client types - at the moment it does not do anything but in the future it may.
+ *
+ * Local clients are designed for local use, where the connectivity bandwidth is high (a GUI, high speed VT220 console,
+ * etc) and round trip latency is low.
+ *
+ * Remote clients are designed for low bandwidth connections (telnet, low baud packet).
  */
 public class RemoteUISwitch {
 

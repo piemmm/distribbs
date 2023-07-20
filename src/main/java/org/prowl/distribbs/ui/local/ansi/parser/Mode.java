@@ -1,4 +1,4 @@
-package org.prowl.distribbs.uiremote.text.parser;
+package org.prowl.distribbs.ui.local.ansi.parser;
 
 import java.util.Arrays;
 

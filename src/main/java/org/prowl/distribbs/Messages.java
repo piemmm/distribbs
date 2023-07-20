@@ -8,7 +8,7 @@ public final class Messages {
 
     private static ResourceBundle bundle;
 
-    public static final void init() {
+    public static void init() {
         bundle = ResourceBundle.getBundle("messages");
     }
 

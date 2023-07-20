@@ -83,20 +83,25 @@
         <!-- AX.25 KISS tnc socket (fifo) for the linux ax25 ports to interface
             to so we can have nice things like IP networking -->
         <!--		<connector>-->
-        <!--			<type>org.prowl.distribbs.node.connectivity.ax25.KISS</type>-->
+        <!--			<type>org.prowl.distribbs.node.connectivity.ax25.KISSviaSX127x</type>-->
         <!--			<interfaceName>ax0</interfaceName>-->
         <!--			<bindToSlot>0</bindToSlot>-->
         <!--		</connector>-->
 
         <!-- AX.25 KISS tnc socket to things like DireWolf's KISS TCP socket (8001, etc)  -->
         <connector>
-            <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaDirewolf</type>
+            <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaTCP</type>
             <addresss>127.0.0.1</addresss>
             <port>8001</port>
             <callsign>GB7MNK-5</callsign>
+            <!-- The maximum data payload size of each frame sent -->
             <pacLen>120</pacLen>
+            <!-- The maximum amount of frames sent-ahead in one connection -->
             <maxFrames>3</maxFrames>
+            <!-- The channel baud rate used - this is used in T1 timeout calculations -->
             <channelBaudRate>1200</channelBaudRate>
+            <!-- The frequency in Hz for commenting purposes only in the ports list -->
+            <frequency>144937500</frequency>
         </connector>
 
 
@@ -118,7 +123,7 @@
     <ui>
         <!-- Enable the ANSI terminal interface -->
         <interface>
-            <type>org.prowl.distribbs.uiremote.text.TextClient</type>
+            <type>org.prowl.distribbs.ui.remote.text.TextClient</type>
         </interface>
     </ui>
 
