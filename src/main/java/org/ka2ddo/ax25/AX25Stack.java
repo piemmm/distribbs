@@ -69,9 +69,9 @@ public class AX25Stack implements FrameListener, Runnable {
     public int maxFrames = 3; // Sensible default for maxframes
     public int baudRateInBitsPerSecond = 1200; // Normally used baud rate
 
-    private static final HashMap<AX25Callsign, Map<AX25Callsign, ConnState>> connMap = new LinkedHashMap<>();
-    private static String[] digipeaters;
-    private static String toCall;
+    private final HashMap<AX25Callsign, Map<AX25Callsign, ConnState>> connMap = new LinkedHashMap<>();
+    private String[] digipeaters;
+    private String toCall;
     private static final int MAX_FRAMES_BEFORE_FREEZE_CHECK = 50;
     private final ArrayList<AX25FrameListener> ax25FrameListeners = new ArrayList<>();
     private final ArrayList<ParsedAX25MessageListener> parsedAX25MessageListenerList = new ArrayList<>();
@@ -147,7 +147,7 @@ public class AX25Stack implements FrameListener, Runnable {
      * Get the default list of digipeaters for this stack.
      * @return array of String digipeater aliases supported by this stack
      */
-    public static String[] getDigipeaters() {
+    public String[] getDigipeaters() {
         return digipeaters;
     }
 
@@ -155,8 +155,8 @@ public class AX25Stack implements FrameListener, Runnable {
      * Set the default list of digipeaters for this stack.
      * @param digipeaters array of String digipeater aliases
      */
-    public static void setDigipeaters(String[] digipeaters) {
-        AX25Stack.digipeaters = Arrays.copyOf(digipeaters, digipeaters.length);
+    public void setDigipeaters(String[] digipeaters) {
+        this.digipeaters = Arrays.copyOf(digipeaters, digipeaters.length);
     }
 
     /**
@@ -164,7 +164,7 @@ public class AX25Stack implements FrameListener, Runnable {
      * by this station.
      * @return destination callsign (tocall)
      */
-    public static String getToCall() {
+    public String getToCall() {
         return toCall;
     }
 
@@ -173,8 +173,8 @@ public class AX25Stack implements FrameListener, Runnable {
      * by this station.
      * @param toCall destination callsign (tocall)
      */
-    public static void setToCall(String toCall) {
-        AX25Stack.toCall = toCall;
+    public void setToCall(String toCall) {
+        this.toCall = toCall;
     }
 
     /**
