@@ -131,7 +131,7 @@ public class AX25Stack implements FrameListener, Runnable {
 
         // Make sure we don't go beflow a sensible minimum or maximum(to prevent stalled connections)
         WAIT_FOR_ACK_T1_TIMER = Math.max(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MINIMUM);
-        WAIT_FOR_ACK_T1_TIMER = Math.min(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MAXIMUM);
+        WAIT_FOR_ACK_T1_TIMER = Math.min(WAIT_FOR_ACK_T1_TIMER, WAIT_FOR_ACK_T1_TIMER_MAXIMUM);
 
         LOG.debug("Configured stack ACK1 timer: " + WAIT_FOR_ACK_T1_TIMER+"ms");
     }
