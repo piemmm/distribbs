@@ -59,7 +59,6 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
         startTxThread();
         stack.setTransmitting(this);
         stack.setConnectionRequestListener(connectionRequestListener);
-        stack.configure();
     }
 
     public void addFrameListener(AX25FrameListener l) {
