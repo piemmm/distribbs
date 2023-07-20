@@ -16,6 +16,9 @@ public class RemoteUISwitch {
      * Take a newly connected user and decide what UI they are getting based on if they are new
      * or if they have set something in their preferences.
      *
+     * Generally we would use terminal answerback functionality (^E) however in TNC land, because most things are
+     * newline buffered we are not able to use this as the answerback message does not terminate with a newline.
+     *
      * @param user The connecting user
      * @param in
      * @param out
