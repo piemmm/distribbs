@@ -1,50 +1,55 @@
 package org.prowl.distribbs.utils;
+
 /**
- * ANSI.java
- *
- * Statics holding common-used codes to make telnet/ansi terminals
- * look pretty.
- *
- * @author Ian Hawkins.
+ * This class can take a string token such as %RED% from a supplied String and replace it with the appropriate ANSI colour code.
  */
 public class ANSI {
-    public static final String NORMAL = new String(new byte[]{27, 91, 48, 109});
-    public static final String BOLD = new String(new byte[]{27, 91, 49, 109});
-    public static final String UNDERLINE = new String(new byte[]{27, 91, 51, 109});
-    public static final String RED = new String(new byte[]{27, 91, 51, 49, 109});
-    public static final String MAGENTA = new String(new byte[]{27, 91, 51, 53, 109});
-    public static final String YELLOW = new String(new byte[]{27, 91, 51, 51, 109});
-    public static final String GREEN = new String(new byte[]{27, 91, 51, 50, 109});
-    public static final String BLUE = new String(new byte[]{27, 91, 51, 52, 109});
-    public static final String CYAN = new String(new byte[]{27, 91, 51, 54, 109});
-    public static final String WHITE = new String(new byte[]{27, 91, 51, 55, 109});
 
+    public static final String NORMAL = "\u001B[0m";
+    public static final String BOLD = "\u001B[1m";
+    public static final String UNDERLINE = "\u001B[4m";
+    public static final String RED = "\u001B[31m";
+    public static final String MAGENTA = "\u001B[35m";
+    public static final String YELLOW = "\u001B[33m";
+    public static final String GREEN = "\u001B[32m";
+    public static final String BLUE = "\u001B[34m";
+    public static final String CYAN = "\u001B[36m";
+    public static final String WHITE = "\u001B[37m";
+    public static final String ORANGE = "\u001B[38;5;208m";
+    public static final String PURPLE = "\u001B[38;5;135m";
+    public static final String BLACK = "\u001B[30m";
+    public static final String PINK = "\u001B[38;5;205m";
+    public static final String INDIGO = "\u001B[38;5;63m";
+    public static final String BOLD_RED = "\u001B[1;31m";
+    public static final String BOLD_YELLOW = "\u001B[1;33m";
+    public static final String BOLD_GREEN = "\u001B[1;32m";
+    public static final String BOLD_BLUE = "\u001B[1;34m";
+    public static final String BOLD_CYAN = "\u001B[1;36m";
 
-    public static String removeANSI(String s) {
-        return s.replace(NORMAL,"")
-                .replace(BOLD,"")
-                .replace(UNDERLINE,"")
-                .replace(RED,"")
-                .replace(MAGENTA,"")
-                .replace(YELLOW,"")
-                .replace(GREEN,"")
-                .replace(BLUE,"")
-                .replace(CYAN,"")
-                .replace(WHITE,"");
+    private static final String[] tokens = new String[]{"%NORMAL%", "%BOLD%", "%UNDERLINE%", "%RED%", "%MAGENTA%", "%YELLOW%", "%GREEN%", "%BLUE%", "%CYAN%", "%WHITE%", "%ORANGE%", "%PURPLE%", "%BLACK%", "%PINK%", "%INDIGO%", "%BOLD_RED%", "%BOLD_YELLOW%", "%BOLD_GREEN%", "%BOLD_BLUE%", "%BOLD_CYAN%"};
+    private static final String[] colours = new String[]{ANSI.NORMAL, ANSI.BOLD, ANSI.UNDERLINE, ANSI.RED, ANSI.MAGENTA, ANSI.YELLOW, ANSI.GREEN, ANSI.BLUE, ANSI.CYAN, ANSI.WHITE, ANSI.ORANGE, ANSI.PURPLE, ANSI.BLACK, ANSI.PINK, ANSI.INDIGO, ANSI.BOLD_RED, ANSI.BOLD_YELLOW, ANSI.BOLD_GREEN, ANSI.BOLD_BLUE, ANSI.BOLD_CYAN};
+
+    /**
+     * Convert a string with tokens such as %RED% to ANSI colour codes.
+     * @param stringToDetokenize The string to convert
+     * @return The converted string
+     */
+    public static String convertTokensToANSIColours(String stringToDetokenize) {
+        for (int i = 0; i < tokens.length; i++) {
+            stringToDetokenize = stringToDetokenize.replace(tokens[i], colours[i]);
+        }
+        return stringToDetokenize;
     }
 
-
-    public static String tokenizeColour(String b) {
-        b = b.replace("%NORMAL%", ANSI.NORMAL);
-        b = b.replace("%BOLD%", ANSI.BOLD);
-        b = b.replace("%UNDERLINE%", ANSI.UNDERLINE);
-        b = b.replace("%RED%", ANSI.RED);
-        b = b.replace("%MAGENTA%", ANSI.MAGENTA);
-        b = b.replace("%YELLOW%", ANSI.YELLOW);
-        b = b.replace("%GREEN%", ANSI.GREEN);
-        b = b.replace("%BLUE%", ANSI.BLUE);
-        b = b.replace("%CYAN%", ANSI.CYAN);
-        b = b.replace("%WHITE%", ANSI.WHITE);
-        return b;
+    public static String stripAnsiCodes(String stringToStrip) {
+        return stringToStrip.replaceAll("\u001B\\[[;\\d]*m", "");
     }
+
+    public static String stripKnownColourTokens(String stringToStrip) {
+        for (int i = 0; i < tokens.length; i++) {
+            stringToStrip = stringToStrip.replace(tokens[i], "");
+        }
+        return stringToStrip;
+    }
+
 }

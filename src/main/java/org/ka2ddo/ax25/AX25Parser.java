@@ -22,7 +22,6 @@ package org.ka2ddo.ax25;
 /**
  * Interface declaring an API for parsing an AX25Frame into a particular protocol (PID)'s
  * decoded message.
- * @see AX25Frame#pid
  * @author Andrew Pavlin, KA2DDO
  */
 @FunctionalInterface

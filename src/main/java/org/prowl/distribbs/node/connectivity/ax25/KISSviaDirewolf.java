@@ -67,14 +67,9 @@ public class KISSviaDirewolf implements Connector {
             throw new IOException("Configuration problem - port " + port + " needs to be greater than 0");
         }
 
-
         Tools.runOnThread(() -> {
             setup();
-
-
         });
-
-
     }
 
     public void setup() {

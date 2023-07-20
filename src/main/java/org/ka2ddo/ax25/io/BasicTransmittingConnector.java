@@ -423,7 +423,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     public void sendDecodedKissFrameToParser() {
         AX25Frame frame = AX25Frame.decodeFrame(rcvBuf, 1, wEnd - 1, stack);
-       // System.out.println("Frame:" + frame.toString() + " data:" + frame.getAsciiFrame());
+        //System.out.println("rxFrame:" + frame.toString() + " data:" + frame.getAsciiFrame());
         stack.consumeFrameNow(this, frame);
     }
 

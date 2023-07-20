@@ -18,7 +18,8 @@ package org.ka2ddo.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
-import org.ka2ddo.util.DebugCtl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.util.FastBlockingQueue;
 import org.ka2ddo.util.ReschedulableTimer;
 
@@ -45,13 +46,14 @@ import java.util.Map;
  * It does not implement the level 7 applications or any layer 3 protocols.
  * @author Andrew Pavlin, KA2DDO
  */
-public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener {
+public class AX25Stack implements FrameListener, Runnable {
+    private static final Log LOG = LogFactory.getLog("AX25Stack");
 
     /**
      * Time interval (in milliseconds) to wait for an acknowledgement from the
      * other end of a AX.25 connection.
      */
-    public static final int WAIT_FOR_ACK_T1_TIMER = 3000;
+    public static final int WAIT_FOR_ACK_T1_TIMER = 10000; // 10 seconds should be sufficient for a slow or busy channel, worst case.
     private static final HashMap<AX25Callsign, Map<AX25Callsign, ConnState>> connMap = new LinkedHashMap<>();
     private static String[] digipeaters;
     private static String toCall;
@@ -61,7 +63,6 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
     private final FastBlockingQueue<AX25Frame> frameParserQueue = new FastBlockingQueue<>(4096);
     private transient ConnectionRequestListener connectionRequestListener = null;
     private final Thread parserThread;
-    private static boolean isDebug = false;
     private  boolean allowInboundConnectedMode = true;
     private transient int maxBacklog = 0;
     private transient int numConsumedMsgs = 0;
@@ -79,11 +80,6 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
      * full access to all defined classes.
      */
     public AX25Stack() {
-        if (DebugCtl.isDebug("thread")) {
-            //new Throwable("creating AX25Stack parser thread...").printStackTrace(System.out);
-        }
-      //  isDebug = DebugCtl.isDebug("ax25");
-        DebugCtl.addDbgListener(this, "ax25", "DebugCtl.ax25");
         parserThread = new Thread(this, "AX25Stack parser");
         parserThread.setDaemon(true);
         parserThread.start();
@@ -122,20 +118,6 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
      */
     public static void setToCall(String toCall) {
         AX25Stack.toCall = toCall;
-    }
-
-    /**
-     * Specify if a specific category of debug messages should be printed out.
-     *
-     * @param categoryName String name of category to enable debug logging for
-     * @param setting      boolean true or false to enable or disable debugging this category
-     */
-    public void setDebug(String categoryName, boolean setting) {
-        if ("ax25".equals(categoryName)) {
-            isDebug = setting | DebugCtl.isDebugOnly("all");
-        } else if ("all".equals(categoryName)) {
-            isDebug = setting | DebugCtl.isDebugOnly("ax25");
-        }
     }
 
     /**
@@ -213,7 +195,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
      */
     public void setConnectionRequestListener(ConnectionRequestListener l) {
         if (connectionRequestListener != null && l != null && connectionRequestListener != l) {
-            System.out.println("connectionRequestListener being changed behind original one's back, was " + connectionRequestListener + ", now " + l);
+            LOG.warn("connectionRequestListener being changed behind original one's back, was " + connectionRequestListener + ", now " + l);
         }
         connectionRequestListener = l;
     }
@@ -263,7 +245,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         try {
             FastBlockingQueue<AX25Frame> frameParserQueue;
             if (!(frameParserQueue = this.frameParserQueue).offer(frame)) {
-                System.out.println(new Date(frame.rcptTime).toString() + ": AX25Stack parser queue filled up, parsing thread can't keep up from " + Thread.currentThread().toString());
+                LOG.warn("AX25Stack parser queue filled up, parsing thread can't keep up from " + Thread.currentThread().toString());
                 frameParserQueue.put(frame);
             }
             int sz;
@@ -271,7 +253,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                 maxBacklog = sz;
             }
         } catch (InterruptedException e) {
-            e.printStackTrace(System.out);
+            LOG.error(e.getMessage(),e);
         }
     }
 
@@ -334,8 +316,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     AX25Frame frame = deqBuf[i];
                     consumeFrameNow(frame.sourcePort, frame);
                 } catch (Throwable e) {
-                    System.out.print(new Date().toString() + ": AX25Stack parser thread reported exception while parsing an AX25Frame: ");
-                    e.printStackTrace(System.out);
+                    LOG.error(" AX25Stack parser thread reported exception while parsing an AX25Frame: ",e);
                 }
             }
             numConsumedMsgs += numFrames;
@@ -403,9 +384,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
             if ((uType = frame.getUType()) == AX25Frame.UTYPE_UI) {
                 msgReported = processIBody(frame, true, connector, frame.rcptTime);
             } else if (uType == AX25Frame.UTYPE_DISC) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
                     // it doesn't matter who started the connection; either end can terminate it
                     state = getConnState(frame.sender, frame.dest, false);
@@ -425,10 +404,8 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     fireConnStateAddedOrRemoved();
                 }
             } else if (uType == AX25Frame.UTYPE_DM) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
-                }
-                if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
+                 if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
                     // it doesn't matter who started the connection; either end can terminate it
                     state = getConnState(frame.sender, frame.dest, false);
                 }
@@ -456,9 +433,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     fireConnStateAddedOrRemoved();
                 }
             } else if (uType == AX25Frame.UTYPE_SABM) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 boolean isNewSession = false;
                 state = getConnState(frame.sender, frame.dest, false);
                 if (state == null) {
@@ -482,7 +457,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                     // ensure incoming I frames don't get lost
                                     state.getInputStream();
                                 } catch (IOException e) {
-                                    e.printStackTrace(System.out);
+                                    LOG.error(e.getMessage(),e);
                                 }
                                 if (state.listener != null) {
                                     state.listener.connectionEstablished(state.sessionIdentifier, state);
@@ -509,9 +484,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     fireConnStateUpdated(state);
                 }
             } else if (uType == AX25Frame.UTYPE_SABME) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 boolean isNewSession = false;
                 state = getConnState(frame.sender, frame.dest, false);
                 if (state == null) {
@@ -535,7 +508,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                     // ensure incoming I frames don't get lost
                                     state.getInputStream();
                                 } catch (IOException e) {
-                                    e.printStackTrace(System.out);
+                                    LOG.error(e.getMessage(),e);
                                 }
                                 if (state.listener != null) {
                                     state.listener.connectionEstablished(state.sessionIdentifier, state);
@@ -563,9 +536,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     fireConnStateUpdated(state);
                 }
             } else if (uType == AX25Frame.UTYPE_UA) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
                 if ((state = getConnState(frame.dest, frame.sender, false)) != null) {
                     switch (state.transition) {
                         case LINK_UP:
@@ -576,7 +547,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                     // ensure incoming I frames don't get lost
                                     state.getInputStream();
                                 } catch (IOException e) {
-                                    e.printStackTrace(System.out);
+                                    LOG.error(e.getMessage(),e);
                                 }
                             }
                             // type remains MOD8 or MOD128 as it was set when sending the SABM(E)
@@ -602,9 +573,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     }
                 }
             } else if (uType == AX25Frame.UTYPE_TEST) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 if (toMe && frame.getP()) {
                     frame = frame.dup();
                     frame.sourcePort = null;
@@ -619,9 +588,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     }
                 }
             } else if (uType == AX25Frame.UTYPE_XID) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("xid rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest);
                 if (frame.isCmd) {
                     if (toMe) {
                         // all clear, so generate our XID response
@@ -653,7 +620,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                             }
                         } catch (IOException e) {
                             // report transmission failure???
-                            e.printStackTrace(System.out);
+                            LOG.error(e.getMessage(),e);
                         }
                         msgReported = true;
                     }
@@ -663,30 +630,28 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     DataInputStream dis = new DataInputStream(bais);
                     try {
                         XIDGroup g = XIDGroup.read(dis);
-                        if (isDebug) {
-                            System.out.print("   addressed to " + frame.dest + " XID:");
-                            for (XIDParameter p : g.paramList) {
-                                System.out.print(" ");
-                                System.out.print(p);
-                                //TODO: do something with the XID response
-                            }
-                            System.out.println();
+
+                        StringBuilder sb = new StringBuilder();
+                        for (XIDParameter p : g.paramList) {
+                           sb.append(p);
+                           sb.append(" ");
+                           //TODO: do something with the XID response
                         }
+                        LOG.debug("recv xid addressed to " + frame.dest + " XID:"+sb.toString());
+
                     } catch (IOException e) {
-                        e.printStackTrace(System.out);
+                        LOG.error(e.getMessage(),e);
                     }
                 }
             } else if (uType == AX25Frame.UTYPE_FRMR) {
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
-                }
+                LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " F " : ' ') + frame.sender + "->" + frame.dest);
                 // if we tried to open a V2.2 connection to a V2.0 station, try again falling back to v2.0 limitations
                 if (toMe) {
                     if ((state = getConnState(frame.dest, frame.sender, false)) != null &&
                         state.transition == ConnState.ConnTransition.LINK_UP &&
                         state.connType == ConnState.ConnType.MOD128 &&
                         transmitting != null) {
-                        if (isDebug) System.out.println("Transmitter.openConnection(" + frame.dest + ',' + frame.sender + ',' + Arrays.toString(state.via) + "): sending SABM U-frame");
+                        LOG.debug("Transmitter.openConnection(" + frame.dest + ',' + frame.sender + ',' + Arrays.toString(state.via) + "): sending SABM U-frame");
                         state.connType = ConnState.ConnType.MOD8;
                         AX25Frame sabmFrame = new AX25Frame();
                         sabmFrame.sender = frame.dest.dup();
@@ -702,7 +667,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     }
                 }
             } else {
-                System.out.println(new Date().toString() + ": rcvd unrecognized " + frame.getFrameTypeString() + (frame.getP() ? " P" : ' ') + ' ' + frame.sender + "->" + frame.dest);
+                LOG.debug("rcvd unrecognized " + frame.getFrameTypeString() + (frame.getP() ? " P" : ' ') + ' ' + frame.sender + "->" + frame.dest);
             }
         } else if (frameType == AX25Frame.FRAMETYPE_I) {
             if ((state = getConnState(frame.dest, frame.sender, false)) == null) {
@@ -711,12 +676,10 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
             }
             if (state != null && state.isOpen()) {
                 if (toMe) {
-                    if (isDebug) {
-                        System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() +
+                    LOG.debug("rcvd " + frame.getFrameTypeString() +
                                 (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NS=" + frame.getNS() +
                                 " NR=" + frame.getNR() + " #=" + frame.body.length + " VR=" + state.vr);
-                    }
-                    // check frame number against flow control
+                     // check frame number against flow control
                     int ns = frame.getNS();
                     if (ns == state.vr) {
                         if (state.localRcvBlocked) {
@@ -759,11 +722,11 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                     transmitDM(connector, frame.dest, frame.sender, reverseDigipeaters(frame.digipeaters), true);
                 }
             }
+
+        // Supervisory control frame field
         } else if (frameType == AX25Frame.FRAMETYPE_S) {
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": rcvd " + frame.getFrameTypeString() +
-                        (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NR=" + frame.getNR());
-            }
+            LOG.debug("rcvd " + frame.getFrameTypeString() + (frame.getP() ? " P " : ' ') + frame.sender + "->" + frame.dest + " NR=" + frame.getNR());
+
             if ((state = getConnState(frame.sender, frame.dest, false)) == null) {
                 state = getConnState(frame.dest, frame.sender, false);
             }
@@ -771,6 +734,11 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                 ConnState.ConnType connType;
                 if (((connType = state.getConnType()) == ConnState.ConnType.MOD128 || connType == ConnState.ConnType.MOD8)) {
                     switch (frame.getSType()) {
+
+                        // Receive Ready
+                        //  - indicates that the sender of the RR is now able to receive more I frames.
+                        //  - acknowledges all I frames up to N(R)-1.
+                        //  - clears a previously set RNR busy condition.
                         case AX25Frame.STYPE_RR:
                             state.xmtToRemoteBlocked = false;
                             if (frame.getP() && frame.isCmd) {
@@ -795,27 +763,34 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                 }
                                 state.va = (state.va + 1) % (state.getConnType() == ConnState.ConnType.MOD128 ? 128 : 8);
                             }
+
                             if (ackFrames) {
                                 state.clearResendableFrame();
                                 AX25Frame f;
                                 if (state.transmitWindow != null && (f = state.transmitWindow[state.va]) != null) {                                        // send the next frame
-                                    state.setResendableFrame(f, state.getNumTransmitsBeforeDecay());
                                     if (state.connector != null) {
                                         try {
                                             state.connector.sendFrame(f);
                                         } catch (IOException e) {
-                                            e.printStackTrace(System.out);
+                                            LOG.error(e.getMessage(),e);
                                         }
                                     } else {
                                         transmitting.queue(f);
                                     }
-                                    if (DebugCtl.isDebug("ax25")) {
-                                        System.out.println(new Date().toString() + " sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                                    }
-                                }
+                                    // Once it's been successfully queued(as the queue may block), we can set the resendable frame timer off!
+                                    state.setResendableFrame(f, state.getNumTransmitsBeforeDecay());
+
+                                    LOG.debug(" sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
+                                 }
                             }
                             //TODO: note that this might not include all frames we have sent, if so, requeue T1 timer
                             break;
+
+                        // RNR frames are used to tell the other end that we are not ready to receive more I frames.
+                        // Frames up to N(R)-1 are acknowledged. Frames at N(R) and above are considered discarded and must be retransmitted when
+                        // the busy condition clears.
+                        // The RNR condition is cleared by the sending of a UA, RR, REJ, or SABM(E) frame.
+                        // The status fo the TNC at the other end of the link is requested by sending an RNR command frame with the P bit set.
                         case AX25Frame.STYPE_RNR:
                             if (frame.getP() && frame.isCmd) {
                                 if (toMe) {
@@ -844,6 +819,12 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                 state.clearResendableFrame();
                             }
                             break;
+
+                        // REJ frames are used to request retransmission of I frames starting with the N(R).
+                        // Additional I frames that may exist after this may be appended to the retransmission of the requested N(R) I frame.
+                        // Only 1 REJ frame is allowed in each direction at a time. The REJ condition is cleared by the proper reception of I frames
+                        // up to the I frame that caused the reject condition
+                        // The status of the TNC at the other end of the link is requested by sending a REJ command frame with the P bit set.
                         case AX25Frame.STYPE_REJ:
                             if (frame.getP()) {
                                 if (toMe) {
@@ -878,19 +859,14 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                                 try {
                                                     state.connector.sendFrame(f);
                                                 } catch (IOException e) {
-                                                    e.printStackTrace(System.out);
+                                                    LOG.error(e.getMessage(),e);
                                                 }
                                             } else {
                                                 transmitting.queue(f);
                                             }
-                                            if (DebugCtl.isDebug("ax25")) {
-                                                System.out.println(new Date().toString() + " resending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                                            }
-                                            try {
-                                                Thread.sleep(250L); // spread out the packets a little bit
-                                            } catch (InterruptedException e) {
-                                                // ignore
-                                            }
+
+                                            LOG.debug("(REJ) resending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
+
                                         } else {
                                             break; // ran out of frames to resend
                                         }
@@ -900,6 +876,10 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                 }
                             }
                             break;
+
+                        // SREJ frames are used to request retransmission of a single frame.
+                        // If P/F is set in an SREJ frame, then frames up to N(R)-1 are considered acknowledged.
+                        // If P/F is not set then N(R) does not indicate acknowledged I frames.
                         case AX25Frame.STYPE_SREJ:
                             if (frame.getP()) {
                                 int newVA;
@@ -926,15 +906,13 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                                         try {
                                             state.connector.sendFrame(f);
                                         } catch (IOException e) {
-                                            e.printStackTrace(System.out);
+                                            LOG.error(e.getMessage(),e);
                                         }
                                     } else {
                                         transmitting.queue(f);
                                     }
-                                    if (DebugCtl.isDebug("ax25")) {
-                                        System.out.println(new Date().toString() + " resending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                                    }
-                                }
+                                    LOG.debug("(SREJ) resending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
+                                 }
                             }
                             break;
                         default:
@@ -1048,12 +1026,9 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending U UA" + (finish ? " F" : "") + " to " + resp.dest);
-            }
+            LOG.debug("sending U UA" + (finish ? " F" : "") + " to " + resp.dest);
         } catch (IOException e) {
-            System.out.println("unable to send UA frame to " + remote.toString());
-            e.printStackTrace(System.out);
+            LOG.error("unable to send UA frame to " + remote.toString(), e);
         }
     }
 
@@ -1077,18 +1052,13 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         if (connector != null) {
             try {
                 connector.sendFrame(resp);
-                if (isDebug) {
-                    System.out.println(new Date().toString() + ": sending U DISC" + (poll ? " P" : "") + " to " + resp.dest);
-                }
+                LOG.debug("sending U DISC" + (poll ? " P" : "") + " to " + resp.dest);
             } catch (IOException e) {
-                System.out.println("unable to send DISC frame to " + remote.toString());
-                e.printStackTrace(System.out);
-            }
+                LOG.error("unable to send DISC frame to " + remote.toString(),e);
+             }
         } else {
             transmitting.queue(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": queuing U DISC to " + resp.dest);
-            }
+            LOG.debug("queuing U DISC to " + resp.dest);
         }
         return resp;
     }
@@ -1111,12 +1081,10 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending U DM" + (finish ? " F" : "") + " to " + resp.dest);
-            }
+            LOG.debug("sending U DM" + (finish ? " F" : "") + " to " + resp.dest);
         } catch (IOException e) {
-            System.out.println("unable to send DM frame to " + remote.toString());
-            e.printStackTrace(System.out);
+            LOG.error("unable to send DM frame to " + remote.toString(),e);
+
         }
     }
 
@@ -1159,12 +1127,9 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending S RR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
-            }
+            LOG.debug("sending S RR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (Exception e) {
-            System.out.println("unable to send RR frame to " + remote.toString());
-            e.printStackTrace(System.out);
+            LOG.error("unable to send RR frame to " + remote.toString(),e);
         }
     }
 
@@ -1207,12 +1172,9 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending S RNR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
-            }
+            LOG.debug("sending S RNR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (Exception e) {
-            System.out.println("unable to send RR frame to " + remote.toString());
-            e.printStackTrace(System.out);
+            LOG.error("unable to send RR frame to " + remote.toString(),e);
         }
     }
 
@@ -1240,12 +1202,9 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending S REJ" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
-            }
+            LOG.debug("sending S REJ" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (IOException e) {
-            System.out.println("unable to send REJ frame to " + remote.toString());
-            e.printStackTrace(System.out);
+            LOG.error("unable to send REJ frame to " + remote.toString(),e);
         }
     }
 
@@ -1273,12 +1232,9 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
         resp.body = new byte[0];
         try {
             ((TransmittingConnector)connector).sendFrame(resp);
-            if (isDebug) {
-                System.out.println(new Date().toString() + ": sending S SREJ" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
-            }
+            LOG.debug("sending S SREJ" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (IOException e) {
-            System.out.println("unable to send SREJ frame to " + remote);
-            e.printStackTrace(System.out);
+            LOG.error("unable to send SREJ frame to " + remote,e);
         }
     }
 
@@ -1329,9 +1285,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                 r.setSSID(maxHops - r.getSSID());
             }
         }
-        if (isDebug) {
-            System.out.println("reversing " + Arrays.toString(srcRelays) + "->" + Arrays.toString(returnPath));
-        }
+        LOG.debug("reversing " + Arrays.toString(srcRelays) + "->" + Arrays.toString(returnPath));
         return returnPath;
     }
 
@@ -1371,8 +1325,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                         }
                         msgReported = true;
                     } catch (Exception e) {
-                        System.out.println(new Date().toString() + ": " + connector + " invalid APRS frame: " + new String(body, StandardCharsets.UTF_8));
-                        e.printStackTrace(System.out);
+                        LOG.error(connector + " invalid APRS frame: " + new String(body, StandardCharsets.UTF_8), e);
                         if (connector != null) {
                             connector.getStats().numBadRcvFrames++;
                         }
@@ -1414,13 +1367,11 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
                             msgReported = true;
                         }
                     } catch (Exception e) {
-                        e.printStackTrace(System.out);
+                        LOG.error(e.getMessage(), e);
                     }
                 } else {
                     // log unhandleable/unrecognized protocol
-                    System.out.println(new Date().toString() + ": " + connector + ": unsupported " + body.length +
-                            "-byte protocol PID=0x" + Integer.toHexString(pid & 0xFF) + " msg from " + sender +
-                            "->" + dest);
+                    LOG.debug(connector + ": ignored " + body.length +  "-byte protocol PID=0x" + Integer.toHexString(pid & 0xFF) + " msg from " + sender +  "->" + dest);
                 }
             }
         }
@@ -1507,7 +1458,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
             try {
                 connStateListeners.get(i).updateConnStateRow(connState.src, connState.dst);
             } catch (Exception e) {
-                e.printStackTrace(System.out);
+                LOG.error(e.getMessage(), e);
             }
         }
     }
@@ -1518,7 +1469,7 @@ public class AX25Stack implements FrameListener, Runnable, DebugCtl.DbgListener 
             try {
                 connStateListeners.get(i).updateWholeConStateTable();
             } catch (Exception e) {
-                e.printStackTrace(System.out);
+                LOG.error(e.getMessage(), e);
             }
         }
     }

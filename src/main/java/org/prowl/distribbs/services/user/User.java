@@ -3,7 +3,6 @@ package org.prowl.distribbs.services.user;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.services.InvalidMessageException;
-import org.prowl.distribbs.services.messages.MailMessage;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.ByteArrayOutputStream;
@@ -23,18 +22,38 @@ public class User {
     private String baseCallsign;
     private String privFlags;
     private String location;
+    private String passwordHash; // This is used for things like telnet remote access (not over radio) or sysop acces
 
+    /**
+     * Create an empty user
+     */
     public User() {
 
     }
 
-
-    public User(String name, String baseCallsign, String privFlags) {
+    /**
+     * Create a user with a name, callsign, priviliges and password
+     * @param name
+     * @param baseCallsign
+     * @param privFlags
+     * @param hashPassword
+     */
+    public User(String name, String baseCallsign, String privFlags, String hashPassword) {
 
         this.name = name;
         this.baseCallsign = baseCallsign;
         this.privFlags = privFlags;
+        this.passwordHash = hashPassword;
+    }
 
+    /**
+     * Take a password and return a hash seeded with the baseCallsign
+     * @param password The password to hash
+     * @param baseCallsign the callsign we will use as a seeed
+     * @return
+     */
+    public static String hashPassword(String password, String baseCallsign) {
+        return Tools.hashString(password + baseCallsign);
     }
 
     public String getName() {
@@ -65,9 +84,6 @@ public class User {
         this.location = location;
     }
 
-
-
-
     /**
      * Serialise into a byte array. Keeping the size to a minimum is important.
      * Length, data, length, data format for all the fields.
@@ -85,7 +101,7 @@ public class User {
             byte[] bbaseCallsign = baseCallsign.getBytes();
             byte[] bprivFlags = privFlags.getBytes();
             byte[] blocation = location.getBytes();
-
+            byte[] bPasswordHash = passwordHash.getBytes();
             dout.writeInt(bname.length);
             dout.write(bname);
 
@@ -97,6 +113,9 @@ public class User {
 
             dout.writeInt(blocation.length);
             dout.write(blocation);
+
+            dout.writeInt(bPasswordHash.length);
+            dout.write(bPasswordHash);
 
             dout.flush();
             dout.close();
@@ -116,6 +135,14 @@ public class User {
         this.privFlags = privFlags;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     /**
      * Deserialise from a byte array
      **/
@@ -127,11 +154,13 @@ public class User {
             String baseCallsign = Tools.readString(din, din.readInt());
             String privFlags = Tools.readString(din, din.readInt());
             String location = Tools.readString(din, din.readInt());
+            String passwordHash = Tools.readString(din, din.readInt());
 
             setName(name);
             setBaseCallsign(baseCallsign);
             setPrivFlags(privFlags);
             setLocation(location);
+            setPasswordHash(passwordHash);
 
         } catch (Throwable e) {
             LOG.error("Unable to build message from packet", e);

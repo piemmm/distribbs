@@ -18,7 +18,8 @@ package org.ka2ddo.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
-import org.ka2ddo.util.DebugCtl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.util.ReschedulableTimerTask;
 
 import java.io.Closeable;
@@ -32,6 +33,9 @@ import java.util.concurrent.TimeoutException;
  * @author Andrew Pavlin, KA2DDO
  */
 public class ConnState implements AX25FrameSource, Closeable {
+
+    private static final Log LOG = LogFactory.getLog("ConnState");
+
     /**
      * Enum identifying the transitional condition of the connection.
      * @author Andrew Pavlin, KA2DDO
@@ -108,8 +112,8 @@ public class ConnState implements AX25FrameSource, Closeable {
      * AX.25 spec section 4.2.2.6.
      */
     int va = 0;
-    boolean localRcvBlocked = false;
-    boolean xmtToRemoteBlocked = false;
+    volatile boolean localRcvBlocked = false;
+    volatile boolean xmtToRemoteBlocked = false;
     /**
      * Listener to be asynchronously informed of state changes in the session.
      */
@@ -277,9 +281,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                     return;
                 }
 
-                if (DebugCtl.isDebug("ax25")) {
-                    System.out.println("T1 timeout on " + ConnState.this);
-                }
+                   LOG.debug("T1 timeout on " + ConnState.this);
                 if (retriesRemaining-- > 0) {
                     if (localRcvBlocked) {
                         stack.transmitRNR((Connector)connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
@@ -402,7 +404,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                 }
             }
             if (stack.isLocalDest(src)) {
-                if (DebugCtl.isDebug("ax25")) System.out.println("ConnState.close(): closing open connection we initiated");
+                LOG.debug("ConnState.close(): closing open connection we initiated");
                 closeFrame = stack.transmitDISC(connector, src, dst, via, false);
                 transition = ConnTransition.LINK_DOWN;
             } else if (stack.isLocalDest(dst)) {
@@ -419,7 +421,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                 listener.connectionClosed(sessionIdentifier, false);
             }
         } else {
-            if (DebugCtl.isDebug("ax25")) System.out.println("ConnState.close(): cancelling incompletely opened connection");
+            LOG.debug("ConnState.close(): cancelling incompletely opened connection");
             transition = ConnTransition.STEADY;
             connType = ConnType.CLOSED;
             stack.removeConnState(this);

@@ -114,12 +114,6 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
     protected Map<Enum, Object> extensions = null;
 
     /**
-     * TimeZone object for Greenwich Mean Time (or Universal Coordinated Time), used for converting
-     * text string times and dates into binary.
-     */
-    public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-
-    /**
      * Constructor for partially initialized AX25Message.
      */
     protected AX25Message() {}
@@ -773,8 +767,6 @@ outerloop:
      * @param value the data value
      * @param <K> any enum subclass
      * @param <V> any Java object class
-     * @see org.ka2ddo.aprs.DataExtensionEnum
-     * @see org.ka2ddo.aprs.WeatherEnum
      */
     public <K extends Enum, V>void storeExtension(K key, V value) {
         Map<Enum, Object> extensions1;
@@ -794,8 +786,6 @@ outerloop:
     /**
      * Get a reference to the extension map that should not be modified.
      * @return Map of extension data element (may be an empty Map)
-     * @see org.ka2ddo.aprs.DataExtensionEnum
-     * @see org.ka2ddo.aprs.WeatherEnum
      */
     public Map<Enum, Object> getReadOnlyExtensionMap() {
         if (extensions != null) {
@@ -809,8 +799,6 @@ outerloop:
      * Get a particular extension value from this message.
      * @param key Enum instance identifying the desired extension
      * @return value for that extension, or null if no value stored
-     * @see org.ka2ddo.aprs.DataExtensionEnum
-     * @see org.ka2ddo.aprs.WeatherEnum
      */
     public Object getExtension(Enum key) {
         if (extensions != null) {

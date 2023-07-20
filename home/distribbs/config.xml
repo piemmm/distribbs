@@ -115,7 +115,7 @@
     <ui>
         <!-- Enable the ANSI terminal interface -->
         <interface>
-            <type>org.prowl.distribbs.uilocal.ansi.ANSIServer</type>
+            <type>org.prowl.distribbs.uiremote.text.TextClient</type>
         </interface>
     </ui>
 

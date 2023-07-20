@@ -322,5 +322,21 @@ public class Tools {
    public static final String toHex(int number) {
       return Integer.toHexString(number);
    }
-   
+
+   /**
+    * Convenience method to return the sha-256 hash of a string
+    * @param s
+    * @return
+    */
+    public static String hashString(String s) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(s.getBytes());
+            byte[] digest = md.digest();
+            return byteArrayToHexString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error(e.getMessage(), e);
+            return null;
+        }
+    }
 }

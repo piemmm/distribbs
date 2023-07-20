@@ -74,7 +74,7 @@ public class CommandParser {
 
    public void sendPrompt() throws IOException {
       try {
-         client.send(CR+getPrompt());
+         write(CR+getPrompt());
          client.flush();
       } catch(EOFException e) {
          // Connection has gone
@@ -120,15 +120,16 @@ public class CommandParser {
    }
 
    public void listMessages() throws IOException {
+      write(CR);
 
       SimpleDateFormat sdf = new SimpleDateFormat("ddMM/hhmm");
 
       List<NewsMessage> messages = storage.getNewsMessagesInOrder(null);
 
       if (messages.size() == 0) {
-         client.send("No messages in BBS yet"+CR);
+         write("No messages in BBS yet"+CR);
       } else {
-         client.send("%BOLD%Msg#   TSLD  Size To     @Route  From    Date/Time Subject%NORMAL%"+CR);
+         write(ANSI.UNDERLINE+ANSI.BOLD+"Msg#   TSLD  Size To     @Route  From    Date/Time Subject"+ANSI.NORMAL+CR);
 
          NumberFormat nf = NumberFormat.getInstance();
          nf.setMaximumFractionDigits(0);
@@ -136,7 +137,7 @@ public class CommandParser {
          nf.setGroupingUsed(false);
          for (NewsMessage message: messages) {
 
-            client.send((StringUtils.rightPad(nf.format(message.getMessageNumber()),6) + // MessageId
+            write((StringUtils.rightPad(nf.format(message.getMessageNumber()),6) + // MessageId
                       StringUtils.rightPad("", 6) +  // TSLD
                     StringUtils.leftPad(nf.format(message.getBody().length), 5)+" "+ // Size
                     StringUtils.rightPad(message.getGroup(), 7)+  // To
@@ -152,111 +153,15 @@ public class CommandParser {
    public void colourToggle() throws IOException {
       client.setColourEnabled(!client.getColourEnabled());
       if (client.getColourEnabled()) {
-         client.send(Messages.get("colourEnabled") + CR);
+         write(Messages.get("colourEnabled") + CR);
       } else {
-         client.send(Messages.get("colourDisabled") + CR);
+         write(Messages.get("colourDisabled") + CR);
       }
    }
    
-//   public void changeBaud(String[] arguments) {
-//
-//      if (arguments.length != 2) {
-//         write(INCORRECT_ARGS);
-//         return;
-//      }
-//
-//      int baud = 0;
-//      try {
-//         baud = Integer.parseInt(arguments[1]);
-//      } catch(NumberFormatException e) {
-//         write(INVALID_ARGUMENT);
-//         return;
-//      }
-//
-//      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
-//      if (connector instanceof RFConnector) {
-//        int b = ((RFConnector) connector).setBaud(baud);
-//        write("Baud set to: " +b);
-//      } else {
-//         write(PORT_UNSUPPORTED);
-//         return;
-//      }
-//   }
-//
-//   public void changeDeviation(String[] arguments) {
-//      if (arguments.length != 2) {
-//         write(INCORRECT_ARGS);
-//         return;
-//      }
-//
-//      double dev = 0;
-//      try {
-//         dev = Double.parseDouble(arguments[1]);
-//      } catch(NumberFormatException e) {
-//         write(INVALID_ARGUMENT);
-//         return;
-//      }
-//
-//      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
-//      if (connector instanceof RFConnector) {
-//         double d = ((RFConnector) connector).setDeviation(dev / 1000d);
-//         write("Deviation set to: "+d);
-//      } else {
-//         write(PORT_UNSUPPORTED);
-//         return;
-//      }
-//   }
-   
-//   public void changeDemodFilter(String[] arguments) {
-//      if (arguments.length != 2) {
-//         write(INCORRECT_ARGS);
-//         return;
-//      }
-//
-//      int dem = 0;
-//      try {
-//         dem = Integer.parseInt(arguments[1]);
-//      } catch(NumberFormatException e) {
-//         write(INVALID_ARGUMENT);
-//         return;
-//      }
-//
-//      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
-//      if (connector instanceof RFConnector) {
-//        int d = ((RFConnector) connector).setDemodFilter(dem);
-//        write("Demod filter set to: " +d);
-//      } else {
-//         write(PORT_UNSUPPORTED);
-//         return;
-//      }
-//
-//   }
-   
-//   public void changeAFCFilter(String[] arguments) {
-//      if (arguments.length != 2) {
-//         write(INCORRECT_ARGS);
-//         return;
-//      }
-//
-//      int afc = 0;
-//      try {
-//         afc = Integer.parseInt(arguments[1]);
-//      } catch(NumberFormatException e) {
-//         write(INVALID_ARGUMENT);
-//         return;
-//      }
-//
-//      Connector connector = DistriBBS.INSTANCE.getConnectivity().getPort(port);
-//      if (connector instanceof RFConnector) {
-//         int a = ((RFConnector) connector).setAFCFilter(afc);
-//         write("AFC Filter set to: "+a);
-//      } else {
-//         write(PORT_UNSUPPORTED);
-//         return;
-//      }
-//   }
 
    public void logout() throws IOException {
+      client.send(CR);
       client.send(Messages.get("userDisconnecting")+CR);
       client.flush();
       client.close();
@@ -264,14 +169,13 @@ public class CommandParser {
 
 
    public void showHelp(String[] arguments) throws IOException {
+      client.send(CR);
       client.send("No help yet"+CR);
-
-
    }
 
    public void showPorts() throws IOException {
-
-      write("List of ports:");
+      write(CR);
+      write(ANSI.UNDERLINE+ANSI.BOLD+"List of ports:"+ANSI.NORMAL+CR);
       
       NumberFormat nf = NumberFormat.getInstance();
       nf.setMaximumFractionDigits(4);
@@ -283,8 +187,7 @@ public class CommandParser {
 
       List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
       int port = 0;
-      write("Port  Driver       RF      Frequency    Noise Floor    Compress(tx/rx)");
-      write("----------------------------------------------------------------------");
+      write(ANSI.UNDERLINE+ANSI.BOLD+"Port  Driver       RF      Frequency    Noise Floor    Compress(tx/rx)"+ANSI.NORMAL+CR);
 
       for (Connector connector : connectors) {
 
@@ -309,16 +212,14 @@ public class CommandParser {
    }
 
    public void showHeard() throws IOException {
-
+      write(CR);
       SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
       MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
       List<Node> nodes = heard.listHeard();
       if (nodes.size() == 0) {
          write("No nodes heard"+CR);
       } else {
-         write("Callsign       Last Heard             RSSI Capabilities"+CR);
-         write("-------------------------------------------------------"+CR);
-
+         write(ANSI.UNDERLINE+ANSI.BOLD+"Callsign       Last Heard             RSSI Capabilities"+ANSI.NORMAL+CR);
 
          for (Node node : nodes) {
             String rssi = "-" + node.getRSSI() + " dBm";
@@ -347,67 +248,8 @@ public class CommandParser {
       return sb.toString();
    }
 
-//   /**
-//    * Change the port number
-//    *
-//    * @param arguments
-//    */
-//   public void changePort(String[] arguments) {
-//      if (arguments.length == 2) {
-//         try {
-//            int p = Integer.parseInt(arguments[1]);
-//            if (DistriBBS.INSTANCE.getConnectivity().getPort(p) != null) {
-//               port = p;
-//               write("Port changed to: " + port);
-//            } else {
-//               write("No such port: " + p);
-//            }
-//         } catch (Throwable e) {
-//            write(INVALID_ARGUMENT);
-//         }
-//      } else {
-//         write(INCORRECT_ARGS);
-//      }
-//   }
-//
-//   public void pingDevice(String[] arguments) {
-//
-//      if (arguments.length != 2) {
-//         write(INCORRECT_ARGS);
-//         return;
-//      }
-//      if (arguments[1].trim().length() < 2) {
-//         write(INVALID_ARGUMENT);
-//         return;
-//      }
-//
-//      String callsign = arguments[1].trim().toUpperCase(Locale.ENGLISH);
-//      Connector c = DistriBBS.INSTANCE.getConnectivity().getPort(port);
-//      PacketEngine p = c.getPacketEngine();
-//
-//      if (p == null) {
-//         write("Command not supported on this port");
-//         return;
-//      }
-//
-//      write("Pinging '" + callsign + "' on port "+port+"("+c.getFrequency()+")");
-//
-//      p.ping(callsign,
-//            new ResponseListener() {
-//
-//               @Override
-//               public void response(Response r) {
-//                  if (r.getResponseTime() != -1) {
-//                     write(r.getFrom() + " responded in " + r.getResponseTime() + "ms");
-//                  } else {
-//                     write("No ping response from " + r.getFrom());
-//                  }
-//               }
-//            });
-//   }
-
    public void unknownCommand() throws IOException {
-      client.send(UNKNOWN_COMMAND+CR);
+      client.send(ANSI.BOLD_RED+UNKNOWN_COMMAND+ANSI.NORMAL+CR);
    }
 
    public String getPrompt() {

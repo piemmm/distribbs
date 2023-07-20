@@ -18,7 +18,8 @@ package org.ka2ddo.ax25;
 *  see <http://www.gnu.org/licenses/>.
 */
 
-import org.ka2ddo.util.DebugCtl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -30,6 +31,9 @@ import java.util.Date;
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25OutputStream extends OutputStream {
+
+    private static final Log LOG = LogFactory.getLog("AX25OutputStream");
+
     private final byte[] buf = new byte[256]; // maximum body length of AX.25 frame (like ax.25 paclen)
     private int bufIdx = 0;
     private final ConnState connState;
@@ -164,7 +168,7 @@ class AX25OutputStream extends OutputStream {
                 // window buffer is completely full, wait until there is room
                 synchronized (connState) {
                     try {
-                        wait(10000L);
+                        wait(1000L);
                     } catch (InterruptedException e) {
                         // ignore
                     }
@@ -182,9 +186,7 @@ class AX25OutputStream extends OutputStream {
                 if (connState.connector != null) {
                     f.setNS(nextVS);
                     f.setNR(connState.vr);
-                    if (DebugCtl.isDebug("ax25")) {
-                        System.out.println(new Date().toString() + " sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                    }
+                    LOG.debug("sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
                     connState.connector.sendFrame(f);
 
                 } else {

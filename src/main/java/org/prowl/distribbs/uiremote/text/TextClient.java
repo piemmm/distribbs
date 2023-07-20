@@ -52,7 +52,7 @@ public class TextClient implements RemoteClient {
             t.start();
 
             send("[" + DistriBBS.NAME + "-" + DistriBBS.VERSION + "-" + DistriBBS.INSTANCE.getBBSServices() + "]"+CR);
-            send(Messages.get("usesColour")+CR+CR);
+            send(ANSI.BOLD_CYAN+Messages.get("usesColour")+CR+ANSI.NORMAL+CR);
             send(Messages.get("welcomeNewUser")+CR);
             parser.sendPrompt();
 
@@ -89,7 +89,10 @@ public class TextClient implements RemoteClient {
     public void send(String data) throws IOException {
         // Strip colour if needed.
         if (colourEnabled) {
-            data = ANSI.tokenizeColour(data);
+            data = ANSI.convertTokensToANSIColours(data);
+        } else {
+            data = ANSI.stripAnsiCodes(data);
+            data = ANSI.stripKnownColourTokens(data);
         }
 
         out.write(data.getBytes());
