@@ -130,6 +130,9 @@ public class SX127x implements RFConnector {
    }
 
    public String getName() {
+      if (modulation != null) {
+         return getClass().getSimpleName() + "-" + modulation.name();
+      }
       return getClass().getSimpleName();
    }
 
