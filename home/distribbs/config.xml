@@ -94,6 +94,9 @@
             <addresss>127.0.0.1</addresss>
             <port>8001</port>
             <callsign>GB7MNK-5</callsign>
+            <pacLen>120</pacLen>
+            <maxFrames>3</maxFrames>
+            <channelBaudRate>1200</channelBaudRate>
         </connector>
 
 

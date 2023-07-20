@@ -23,7 +23,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     /**
      * These four bits contain the KISS device ID to be used in KISS frames sent through this port.
-     * This supports the {@link KissOverTcpConnector} port type when talking to the DireWolf
+     * This supports the TCP port type when talking to the DireWolf
      * software TNC which can support up to 6 audio devices (and therefore up to 6 device IDs in
      * KISS frames). Conveniently, since these bits weren't used before, the backwards-compatible
      * default KISS device ID is zero.
@@ -49,16 +49,17 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
     private OutputStream out;
     private KissEscapeOutputStream kos;
 
-    public BasicTransmittingConnector(AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
+    public BasicTransmittingConnector(int pacLen, int maxFrames, int baudRateInBits, AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
         this.defaultCallsign = defaultCallsign;
         this.out = out;
         kos = new KissEscapeOutputStream(out);
         this.in = in;
-        stack = new AX25Stack();
+        stack = new AX25Stack(pacLen, maxFrames, baudRateInBits);
         startRxThread();
         startTxThread();
         stack.setTransmitting(this);
         stack.setConnectionRequestListener(connectionRequestListener);
+        stack.configure();
     }
 
     public void addFrameListener(AX25FrameListener l) {

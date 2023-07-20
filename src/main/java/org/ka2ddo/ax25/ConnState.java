@@ -217,7 +217,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                 throw new IOException("cannot open stream to session this station is not part of (" +
                         src + "->" + dst + ')');
             }
-            out = new AX25OutputStream(this);
+            out = new AX25OutputStream(this, stack.pacLen);
         }
         return out;
     }
@@ -302,7 +302,7 @@ public class ConnState implements AX25FrameSource, Closeable {
                 }
             }
         };
-        t1TimerTask.resched(stack.getRetransTimer(), AX25Stack.WAIT_FOR_ACK_T1_TIMER, AX25Stack.WAIT_FOR_ACK_T1_TIMER);
+        t1TimerTask.resched(stack.getRetransTimer(), stack.getWaitForAckT1Timer(), stack.getWaitForAckT1Timer());
     }
 
     /**

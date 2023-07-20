@@ -31,12 +31,12 @@ public class AX25OutputStreamTest {
 
         // Create a mock AX25 system
         MockTransmitting mockTransmitting = new MockTransmitting();
-        AX25Stack stack = new AX25Stack();
+        AX25Stack stack = new AX25Stack(255, 7, 1200);
         stack.setTransmitting(mockTransmitting);
         ConnState state = new ConnState(SRC_CALL, DST_CALL, stack);
         state.setConnector(mockTransmitting);
         state.setConnType(ConnState.ConnType.MOD8);
-        AX25OutputStream out = new AX25OutputStream(state);
+        AX25OutputStream out = new AX25OutputStream(state, 255);
         out.write(SMALL_BUFFER,0, SMALL_BUFFER.length);
         out.flush();
 
@@ -58,12 +58,12 @@ public class AX25OutputStreamTest {
 
         // Create a mock AX25 system
         MockTransmitting mockTransmitting = new MockTransmitting();
-        AX25Stack stack = new AX25Stack();
+        AX25Stack stack = new AX25Stack(255, 7, 1200);
         stack.setTransmitting(mockTransmitting);
         ConnState state = new ConnState(SRC_CALL, DST_CALL, stack);
         state.setConnector(mockTransmitting);
         state.setConnType(ConnState.ConnType.MOD8);
-        AX25OutputStream out = new AX25OutputStream(state);
+        AX25OutputStream out = new AX25OutputStream(state, 255);
         out.write(LARGE_BUFFER ,0, LARGE_BUFFER.length);
         out.flush();
 

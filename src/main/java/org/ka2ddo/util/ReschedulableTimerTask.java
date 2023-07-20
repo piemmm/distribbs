@@ -40,7 +40,7 @@ abstract public class ReschedulableTimerTask implements Runnable, Comparable<Res
      * @param queue ReschedulableTimer to manage this task
      * @param delay interval in milliseconds before this task should be executed
      */
-    public void resched(final ReschedulableTimer queue, int delay) {
+    public void resched(final ReschedulableTimer queue, long delay) {
         if (this.queue != null) {
             // remove from other timer queue
             this.queue.cancel(this);
@@ -58,7 +58,7 @@ abstract public class ReschedulableTimerTask implements Runnable, Comparable<Res
      * @param delay interval in milliseconds before this task should be executed
      * @param repeatInterval time in milliseconds after last scheduled run time that this task should run again
      */
-    public void resched(final ReschedulableTimer queue, int delay, int repeatInterval) {
+    public void resched(final ReschedulableTimer queue, long delay, long repeatInterval) {
         if (this.queue != null && this.queue != queue) {
             // remove from other timer queue
             this.queue.cancel(this);

@@ -44,6 +44,10 @@ public class KISSviaDirewolf implements Connector {
     private int port;
     private String callsign;
 
+    private int pacLen;
+    private int maxFrames;
+    private int baudRate;
+
     private BasicTransmittingConnector connector;
 
 
@@ -60,6 +64,10 @@ public class KISSviaDirewolf implements Connector {
         address = config.getString("address");
         port = config.getInt("port");
         callsign = config.getString("callsign");
+
+        pacLen = config.getInt("pacLen",120);
+        baudRate = config.getInt("channelBaudRate",1200);
+        maxFrames = config.getInt("maxFrames",3);
 
 
         // Check the slot is obtainable.
@@ -84,7 +92,7 @@ public class KISSviaDirewolf implements Connector {
             // not just this one.
             AX25Callsign defaultCallsign = new AX25Callsign(callsign);
 
-            connector = new BasicTransmittingConnector(defaultCallsign, in, out, new ConnectionRequestListener() {
+            connector = new BasicTransmittingConnector(pacLen, maxFrames, baudRate, defaultCallsign, in, out, new ConnectionRequestListener() {
 
                 /**
                  * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept

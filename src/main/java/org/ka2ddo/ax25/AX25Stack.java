@@ -52,8 +52,23 @@ public class AX25Stack implements FrameListener, Runnable {
     /**
      * Time interval (in milliseconds) to wait for an acknowledgement from the
      * other end of a AX.25 connection.
+     *
+     * If we are feeding KISS frames, then this may allow (in the worst case) MAXLEN frames of 255 PACLEN to be sent over
+     * a 300 baud connection, but the send routine returns immediately so the caller doesn't know that they have not actually
+     * been sent (but starts the T1 ack timer anyway).  It may take > 30 seconds to send all those frames, especially on a
+     * busy channel!
+     *
+     * The correct solution would be to correctly configure maxframes and paclen for the speed of the channel and then the timer can
+     * possibly be sized appropriately.
      */
-    public static final int WAIT_FOR_ACK_T1_TIMER = 10000; // 10 seconds should be sufficient for a slow or busy channel, worst case.
+    public static final long WAIT_FOR_ACK_T1_TIMER_MINIMUM = 1000L * 15L; // 15 seconds minimum
+    public static final long WAIT_FOR_ACK_T1_TIMER_MAXIMUM = 1000L * 300L; // 300 seconds maximum
+
+    public long WAIT_FOR_ACK_T1_TIMER = WAIT_FOR_ACK_T1_TIMER_MINIMUM;
+    int pacLen = 112; // Sensible default for paclen.
+    public int maxFrames = 3; // Sensible default for maxframes
+    public int baudRateInBitsPerSecond = 1200; // Normally used baud rate
+
     private static final HashMap<AX25Callsign, Map<AX25Callsign, ConnState>> connMap = new LinkedHashMap<>();
     private static String[] digipeaters;
     private static String toCall;
@@ -79,12 +94,51 @@ public class AX25Stack implements FrameListener, Runnable {
      * class loader of the invoking thread, so anything this thread invokes has
      * full access to all defined classes.
      */
-    public AX25Stack() {
+    public AX25Stack(int pacLen, int maxFrames, int baudRateInBitsPerSecond) {
+        // First configure the stack based on supplied information
+        this.pacLen = pacLen;
+        this.maxFrames = maxFrames;
+        this.baudRateInBitsPerSecond = baudRateInBitsPerSecond;
+        configure();
+
+        // Now start the parser thread
         parserThread = new Thread(this, "AX25Stack parser");
         parserThread.setDaemon(true);
         parserThread.start();
     }
 
+
+    /**
+     * Configure the stack for use with the supplied settings.
+     */
+    public void configure() throws AssertionError {
+
+        // Check settings.
+        if (pacLen < 3 || pacLen > 256) {
+            throw new AssertionError("pacLen is out of range");
+        }
+
+        if (maxFrames < 1 || maxFrames > 7) {
+            throw new AssertionError("maxFrames is out of range");
+        }
+
+        if (baudRateInBitsPerSecond < 300 || baudRateInBitsPerSecond > 115200) {
+            throw new AssertionError("baudRateInBitsPerSecond is out of range");
+        }
+
+        // Attempt to configure timers appropriately based on the transmitting configuration.
+        long candidateSpeed = maxFrames * pacLen * 20000l / baudRateInBitsPerSecond;
+
+        // Make sure we don't go beflow a sensible minimum or maximum(to prevent stalled connections)
+        WAIT_FOR_ACK_T1_TIMER = Math.max(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MINIMUM);
+        WAIT_FOR_ACK_T1_TIMER = Math.min(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MAXIMUM);
+
+        LOG.debug("Configured stack ACK1 timer: " + WAIT_FOR_ACK_T1_TIMER+"ms");
+    }
+
+    public long getWaitForAckT1Timer() {
+        return WAIT_FOR_ACK_T1_TIMER;
+    }
 
     /**
      * Get the default list of digipeaters for this stack.
@@ -132,6 +186,7 @@ public class AX25Stack implements FrameListener, Runnable {
     /**
      * Set the Transmitting object that this AX25Stack will use for implicit but unrouted
      * transmissions.
+     *
      * @param transmitting Transmitting object
      */
     public void setTransmitting(Transmitting transmitting) {

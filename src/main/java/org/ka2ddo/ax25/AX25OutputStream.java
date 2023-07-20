@@ -34,13 +34,14 @@ class AX25OutputStream extends OutputStream {
 
     private static final Log LOG = LogFactory.getLog("AX25OutputStream");
 
-    private final byte[] buf = new byte[256]; // maximum body length of AX.25 frame (like ax.25 paclen)
+    private byte[] buf; // maximum body length of AX.25 frame (like ax.25 paclen)
     private int bufIdx = 0;
     private final ConnState connState;
 
-    AX25OutputStream(ConnState connState) {
+    AX25OutputStream(ConnState connState, int pacLen) {
         this.connState = connState;
         connState.transmitWindow = new AX25Frame[connState.connType == ConnState.ConnType.MOD128 ? 128 : 8];
+        buf = new byte[pacLen];
     }
 
     /**
@@ -161,7 +162,7 @@ class AX25OutputStream extends OutputStream {
                 }
 
                 // AX.25 Spec says we can transmit N(R)-1 frames before waiting for an ACK
-                int nextNextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
+                int nextNextVS = (nextVS + 1+(7-connState.stack.maxFrames)) % (f.mod128 ? 128 : 8);
                 if (connState.transmitWindow[nextNextVS] == null) {
                     break;
                 }
