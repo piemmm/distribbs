@@ -109,7 +109,6 @@ public class FBBSyncAgent implements Connector {
             LOG.info("Incoming connection from:" + connection.getInetAddress().getHostAddress());
 
             InputStream in = connection.getInputStream();
-            //DataInput reader = new DataInput(new InputStreamReader(in));
             DataInputStream reader = new DataInputStream((in));
             OutputStream out = connection.getOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(out);
@@ -147,96 +146,108 @@ public class FBBSyncAgent implements Connector {
                 return;
             }
 
-            // Send new prompt - not entirely sure why this should not actually be sent after a []....
-            //writer.write(">");
-            //writer.flush();
 
-            String line;
-            List<FBBProposal> proposals = new ArrayList<>();
-            while ((line = reader.readLine()) != null) {
-                //LOG.info("Line:" + line);
-                // Remote station sends proposals, ends with 'F>'
-                if (line.toLowerCase().startsWith("f>")) {
-                    break;
-                } else if (line.toLowerCase().startsWith("fb")) {
-                    FBBProposal proposal = new FBBProposal(line);
-                    proposals.add(proposal);
-                    LOG.info("Receiving proposal: " + line);
-                } else {
-                    // Out of spec protocol.
-                    return;
-                }
-            }
-
-            // I reply with a load of 'FS' and +,- or = for want, no want, or maybe later for each message in the proposal
-            if (proposals.size() > 0) {
-                StringBuilder sb = new StringBuilder();
-                for (FBBProposal proposal : proposals) {
-                    // Do I want the BID_MID key? - lets check to see if I have it or not
-                    NewsMessage searchMessage = new NewsMessage();
-                    searchMessage.setBID_MID(proposal.getBID_MID());
-                    searchMessage.setGroup(proposal.getRecipient());
-                    if (storage.doesNewsMessageExist(searchMessage)) {
-                        sb.append("-");
-                        proposal.setSkip(true);
+            // Remote station sends proposal, ends with 'F>'
+            while (!quit) {
+                String line;
+                List<FBBProposal> proposals = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    LOG.debug("Recieve:" + line);
+                    if (line.toLowerCase().startsWith("fq")) {
+                        LOG.info("Remote station wants to quit");
+                        return;
+                    }
+                    // Remote station sends proposals, ends with 'F>' or reports no messages with 'FF'
+                    if (line.toLowerCase().startsWith("f>") || line.toLowerCase().startsWith("ff")) {
+                        break;
+                    } else if (line.toLowerCase().startsWith("fb")) {
+                        FBBProposal proposal = new FBBProposal(line);
+                        proposals.add(proposal);
+                        LOG.info("Receiving proposal: " + line);
                     } else {
-                        sb.append("+");
+                        LOG.info("Out of spec data received:");
+                        // Out of spec protocol.
+                        return;
                     }
                 }
-                LOG.info("Request list:" +sb.toString());
-                writer.write("FS " + sb.toString() + CR);
-                writer.flush();
 
-                // Remote end then dumps the messages to me, separated by CTRL-Z
-                for (FBBProposal proposal : proposals) {
-                    // Skip any messages we said we were not interested in
-                    if (proposal.isSkip()) {
-                        continue;
-                    }
-                    NewsMessage message = new NewsMessage();
-                    message.setSubject(reader.readLine());
-                    message.setRoute(proposal.getRoute());
-                    message.setBID_MID(proposal.getBID_MID());
-                    message.setFrom(proposal.getSender());
-                    message.setType(proposal.getType());
-                    message.setGroup(proposal.getRecipient());
-                    message.setDate(System.currentTimeMillis()); // Every BBS uses the date the message entered the system
-                    message.setMessageNumber(storage.getNextMessageID());
-
-                    ByteArrayOutputStream body = new ByteArrayOutputStream();
-                    // Should append our header to the message body at the top
-                    //R:230711/0800Z @:GB7MNK.#43.GBR.EURO #:25140 [Milton Keynes] $:51407_GB7CIP
-                    body.write(stampMessage(message).getBytes());
-
-                    LOG.info("Reading message body...");
-                    int b = 0;
-                    boolean messageGood = false;
-                    while (!quit && b != -1) {
-                        b = reader.read();
-                        if (b == CTRL_Z) {
-                            messageGood = true;
-                            break;
-                        }
-                        if (b != -1) {
-                            body.write(b);
+                // I reply with a load of 'FS' and +,- or = for want, no want, or maybe later for each message in the proposal
+                if (proposals.size() > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (FBBProposal proposal : proposals) {
+                        // Do I want the BID_MID key? - lets check to see if I have it or not
+                        NewsMessage searchMessage = new NewsMessage();
+                        searchMessage.setBID_MID(proposal.getBID_MID());
+                        searchMessage.setGroup(proposal.getRecipient());
+                        if (storage.doesNewsMessageExist(searchMessage)) {
+                            sb.append("-");
+                            proposal.setSkip(true);
+                        } else {
+                            sb.append("+");
                         }
                     }
-                    message.setBody(body.toByteArray());
+                    LOG.info("Request list:" + sb.toString());
+                    writer.write("FS " + sb.toString() + CR);
+                    writer.flush();
 
-                    // Store the news message if we reached the EOM marker.
-                    if (messageGood) {
-                        LOG.info("Receiving bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes)");
-                        storage.storeNewsMessage(message);
-                    } else {
-                        LOG.warn("No EOM received for bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes) - discarded.");
+                    // Remote end then dumps the messages to me, separated by CTRL-Z
+                    for (FBBProposal proposal : proposals) {
+                        // Skip any messages we said we were not interested in
+                        if (proposal.isSkip()) {
+                            continue;
+                        }
+                        NewsMessage message = new NewsMessage();
+                        message.setSubject(reader.readLine());
+                        message.setRoute(proposal.getRoute());
+                        message.setBID_MID(proposal.getBID_MID());
+                        message.setFrom(proposal.getSender());
+                        message.setType(proposal.getType());
+                        message.setGroup(proposal.getRecipient());
+                        message.setDate(System.currentTimeMillis()); // Every BBS uses the date the message entered the system
+                        message.setMessageNumber(storage.getNextMessageID());
+
+                        ByteArrayOutputStream body = new ByteArrayOutputStream();
+                        // Should append our header to the message body at the top
+                        //R:230711/0800Z @:GB7MNK.#43.GBR.EURO #:25140 [Milton Keynes] $:51407_GB7CIP
+                        body.write(stampMessage(message).getBytes());
+
+                        LOG.info("Reading message body...");
+                        int b = 0;
+                        boolean messageGood = false;
+                        while (!quit && b != -1) {
+                            b = reader.read();
+                            if (b == CTRL_Z) {
+                                messageGood = true;
+                                break;
+                            }
+                            if (b != -1) {
+                                body.write(b);
+                            }
+                        }
+                        message.setBody(body.toByteArray());
+
+                        // Store the news message if we reached the EOM marker.
+                        if (messageGood) {
+                            LOG.info("Receiving bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes)");
+                            storage.storeNewsMessage(message);
+                        } else {
+                            LOG.warn("No EOM received for bulletin: " + message.getFrom() + ": " + message.getSubject() + " (" + body.size() + " bytes) - discarded.");
+                        }
+
+                        // Consume linebreak after ctrl-z
+                        LOG.info("Message break:" + reader.readLine());
                     }
-
-                    reader.readLine(); // Consume extra linebreak between messages
                 }
 
                 // Once all messages sent, then I can send my proposal(ets as above), or FF for nothing then FQ to quit.
+                // todo: add message proposals here
+                LOG.debug("Sending FF (no more messages for me to send)");
+                writer.write("FF" + CR);
+                writer.flush();
             }
-            writer.write("FF" + CR);
+
+            // Then fq to quit
+            LOG.debug("Sending FQ (All done, time to go.)");
             writer.write("FQ" + CR);
             writer.flush();
             LOG.info("All done - disconnecting");
