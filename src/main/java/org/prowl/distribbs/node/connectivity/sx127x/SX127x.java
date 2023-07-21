@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Modulation;
 import org.prowl.distribbs.node.connectivity.RFConnector;
 
 /**
@@ -19,7 +18,7 @@ import org.prowl.distribbs.node.connectivity.RFConnector;
  * Data to send is compressed before it is sent, and decompressed in any rx
  * events when required.
  */
-public class SX127x implements RFConnector {
+public class SX127x extends RFConnector {
 
    private static final Log          LOG  = LogFactory.getLog("SX127x");
 
@@ -193,11 +192,6 @@ public class SX127x implements RFConnector {
    protected void addTxStats(long compressedByteCount, long uncompressedByteCount) {
       txCompressedByteCount+= compressedByteCount;
       txUncompressedByteCount = uncompressedByteCount;
-   }
-
-   @Override
-   public int setFrequency(int frequencyHz) {
-       return device.setFrequency(frequencyHz);
    }
 
    @Override

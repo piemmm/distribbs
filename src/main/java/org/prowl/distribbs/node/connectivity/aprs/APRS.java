@@ -30,15 +30,15 @@ import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 import org.prowl.distribbs.node.connectivity.gps.GPS;
 
 import com.google.common.eventbus.Subscribe;
 
 import net.sf.marineapi.nmea.util.Position;
 
-public class APRS implements Connector {
+public class APRS extends Interface {
 
    private static final Log          LOG = LogFactory.getLog("APRSIS");
 
@@ -362,7 +362,7 @@ public class APRS implements Connector {
 
                         APRSPacket packet = new APRSPacket(DistriBBS.INSTANCE.getMyCall(), "", digis, op);
                         TxRFPacket txPacket = new TxRFPacket(DistriBBS.INSTANCE.getMyCall(), packet.getDigiString(), "", packet.getAprsInformation().toString().getBytes());
-                        DistriBBS.INSTANCE.getConnectivity().getPort(0).sendPacket(txPacket);
+                        DistriBBS.INSTANCE.getInterfaceHandler().getPort(0).sendPacket(txPacket);
                         lastGPSPosition = position;
                         lastSendTime = System.currentTimeMillis();
                         lastHeading = currentHeading;

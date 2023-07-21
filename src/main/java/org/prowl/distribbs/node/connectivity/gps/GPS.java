@@ -1,7 +1,6 @@
 package org.prowl.distribbs.node.connectivity.gps;
 
 import java.io.IOException;
-import java.io.Reader;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
@@ -9,8 +8,8 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 
 import com.pi4j.io.serial.Baud;
 import com.pi4j.io.serial.DataBits;
@@ -23,11 +22,7 @@ import com.pi4j.io.serial.SerialPort;
 import com.pi4j.io.serial.StopBits;
 
 import net.sf.marineapi.nmea.io.SentenceReader;
-import net.sf.marineapi.nmea.parser.DataNotAvailableException;
 import net.sf.marineapi.nmea.parser.SentenceFactory;
-import net.sf.marineapi.nmea.sentence.GLLSentence;
-import net.sf.marineapi.nmea.sentence.GSASentence;
-import net.sf.marineapi.nmea.sentence.Sentence;
 import net.sf.marineapi.nmea.util.Date;
 import net.sf.marineapi.nmea.util.GpsFixStatus;
 import net.sf.marineapi.nmea.util.Position;
@@ -43,7 +38,7 @@ import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
 import org.prowl.distribbs.utils.Tools;
 
-public class GPS implements Connector {
+public class GPS extends Interface {
 
    private static final Log          LOG = LogFactory.getLog("GPS");
 

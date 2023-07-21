@@ -1,6 +1,6 @@
 package org.prowl.distribbs.eventbus.events;
 
-import org.prowl.distribbs.services.chat.ChatMessage;
+import org.prowl.distribbs.objects.chat.ChatMessage;
 
 public class NewChatMessageEvent extends BaseEvent {
 

@@ -10,8 +10,8 @@ import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 
 import java.io.*;
 import java.util.LinkedList;
@@ -25,7 +25,7 @@ import java.util.List;
  * usually resides) and is then forwarded to a fifo socket made by this app which
  * then allows ax25-tools in linux to connect to it.
  */
-public class KISSviaSX127x implements Connector {
+public class KISSviaSX127x extends Interface {
 
    private static final Log          LOG        = LogFactory.getLog("KISSviaSX127x");
 
@@ -295,9 +295,9 @@ public class KISSviaSX127x implements Connector {
       return bindToSlot;
    }
 
-   public Connector getSlot(int slot) {
-      List<Connector> connectors = DistriBBS.INSTANCE.getConnectivity().getPorts();
-      for (Connector connector : connectors) {
+   public Interface getSlot(int slot) {
+      List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+      for (Interface connector : connectors) {
          if (!(connector instanceof KISSviaSX127x)) {
             if (connector.getSlot() == slot) {
                return connector;

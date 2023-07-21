@@ -1,11 +1,10 @@
 package org.prowl.distribbs.eventbus.events;
 
-import java.io.EOFException;
 import java.util.Locale;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 /**
@@ -22,7 +21,7 @@ public class RxRFPacket extends BaseEvent {
    private long             rxTime;
    private byte[]           packet;
    private byte[]           compressedPacket;
-   private Connector        connector;
+   private Interface connector;
 
    // Decoded bits
    private String           source;
@@ -32,7 +31,7 @@ public class RxRFPacket extends BaseEvent {
    private double           rssi;
    private boolean          corrupt = false;
 
-   public RxRFPacket(Connector connector, byte[] compressedPacket, long rxTime, double rssi) {
+   public RxRFPacket(Interface connector, byte[] compressedPacket, long rxTime, double rssi) {
       super();
       this.rxTime = rxTime;
       this.connector = connector;
@@ -97,7 +96,7 @@ public class RxRFPacket extends BaseEvent {
       return compressedPacket;
    }
 
-   public Connector getConnector() {
+   public Interface getConnector() {
       return connector;
    }
 

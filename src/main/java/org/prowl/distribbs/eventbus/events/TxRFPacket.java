@@ -5,7 +5,7 @@ import java.io.EOFException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 
@@ -29,7 +29,7 @@ public class TxRFPacket extends BaseEvent {
 
    private byte[]           packet;
    private byte[]           compressedPacket;
-   private Connector        connector;
+   private Interface connector;
 
    private String           source;
    private String           destination;
@@ -71,7 +71,7 @@ public class TxRFPacket extends BaseEvent {
       }
    }
 
-   public void setConnector(Connector connector) {
+   public void setConnector(Interface connector) {
       this.connector = connector;
    }
 
@@ -90,7 +90,7 @@ public class TxRFPacket extends BaseEvent {
       return compressedPacket;
    }
 
-   public Connector getConnector() {
+   public Interface getConnector() {
       return connector;
    }
 

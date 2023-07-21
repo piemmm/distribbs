@@ -1,13 +1,13 @@
 package org.prowl.distribbs.services.messages;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
 import org.junit.jupiter.api.Test;
+import org.prowl.distribbs.objects.messages.Message;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MessageTest  {
 
@@ -23,20 +23,20 @@ public class MessageTest  {
    @Test
    public void testSerialise() {
 
-      MailMessage message = new MailMessage();
-      message.setBody(TEST_BODY);
+      Message message = new Message();
+      message.setBody(TEST_BODY.getBytes());
       message.setDate(TEST_DATE);
       message.setFrom(TEST_FROM);
-      message.setTo(TEST_TO);
+      message.setGroup(TEST_TO);
       message.setSubject(TEST_SUBJECT);
 
       byte[] serialised = message.toPacket();
 
       try {
-         MailMessage message2 = new MailMessage().fromPacket(new DataInputStream(new ByteArrayInputStream(serialised)));
-         assertEquals(TEST_BODY, message2.getBody());
+         Message message2 = new Message().fromPacket(new DataInputStream(new ByteArrayInputStream(serialised)));
+         assertArrayEquals(TEST_BODY.getBytes(), message2.getBody());
          assertEquals(TEST_DATE, message2.getDate());
-         assertEquals(TEST_TO, message2.getTo());
+         assertEquals(TEST_TO, message2.getGroup());
          assertEquals(TEST_SUBJECT, message2.getSubject());
          assertEquals(TEST_FROM, message2.getFrom());
       } catch (Throwable e) {

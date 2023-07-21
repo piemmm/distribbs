@@ -7,11 +7,11 @@ import java.util.Locale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.config.Config;
-import org.prowl.distribbs.node.connectivity.Connectivity;
-import org.prowl.distribbs.objectstorage.Storage;
+import org.prowl.distribbs.node.connectivity.InterfaceHandler;
+import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.statistics.Statistics;
-import org.prowl.distribbs.ui.UI;
-import org.prowl.distribbs.ui.local.hardware.Status;
+import org.prowl.distribbs.services.ServiceHandler;
+import org.prowl.distribbs.ui.hardware.Status;
 
 
 /**
@@ -36,11 +36,11 @@ public enum DistriBBS {
    private static final Log   LOG            = LogFactory.getLog("DistriBBS");
 
    private Config             configuration;
-   private Connectivity       connectivity;
+   private InterfaceHandler interfaceHandler;
    private Storage            storage;
    private Status             status;
    private Statistics         statistics;
-   private UI                 ui;
+   private ServiceHandler serviceHandler;
    private String             myCall;
    private String             myBBSAddress;
 
@@ -70,18 +70,18 @@ public enum DistriBBS {
    
          // Init object storage
          storage = new Storage(configuration.getConfig("storage"));
-   
-         // Init connectors
-         connectivity = new Connectivity(configuration.getConfig("connectivity"));
-   
-         // Start connectors
-         connectivity.start();
-   
-         // Init User interfaces
-         ui = new UI(configuration.getConfig("ui"));
-   
+
+         // Init services
+         serviceHandler = new ServiceHandler(configuration.getConfig("services"));
+
+         // Init interfaces
+         interfaceHandler = new InterfaceHandler(configuration.getConfig("interfaces"));
+
          // Start node services
-         ui.start();
+         serviceHandler.start();
+
+         // Start interfaces
+         interfaceHandler.start();
    
          // All done
          Thread t = new Thread() {
@@ -124,9 +124,11 @@ public enum DistriBBS {
       return statistics;
    }
 
-   public Connectivity getConnectivity() {
-      return connectivity;
+   public InterfaceHandler getInterfaceHandler() {
+      return interfaceHandler;
    }
+
+   public ServiceHandler getServiceHandler() {  return serviceHandler;  }
 
    public static void main(String[] args) {
       INSTANCE.startup();

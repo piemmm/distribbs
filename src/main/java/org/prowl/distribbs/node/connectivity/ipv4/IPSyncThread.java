@@ -1,47 +1,5 @@
 package org.prowl.distribbs.node.connectivity.ipv4;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.security.SecureRandom;
-import java.util.LinkedList;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Semaphore;
-
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.eventbus.events.NewAPRSMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewChatMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewMailMessageEvent;
-import org.prowl.distribbs.eventbus.events.NewNewsMessageEvent;
-import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
-import org.prowl.distribbs.objectstorage.NodeProperties;
-import org.prowl.distribbs.objectstorage.Storage;
-import org.prowl.distribbs.services.InvalidMessageException;
-import org.prowl.distribbs.services.Packetable;
-import org.prowl.distribbs.services.Priority;
-import org.prowl.distribbs.services.aprs.APRSMessage;
-import org.prowl.distribbs.services.chat.ChatMessage;
-import org.prowl.distribbs.services.messages.MailMessage;
-import org.prowl.distribbs.services.newsgroups.NewsMessage;
-import org.prowl.distribbs.utils.Tools;
-
-import com.google.common.eventbus.Subscribe;
-
 /**
  * The sync thread is responsible for negotiating a sync of messages between 2
  * clients, as well as propagating things like APRS and chat messages throughout

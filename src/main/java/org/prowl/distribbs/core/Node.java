@@ -1,7 +1,6 @@
 package org.prowl.distribbs.core;
 
-import org.ka2ddo.ax25.AX25Frame;
-import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Interface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ public class Node {
    /**
     * Reference to the connector the device was heard on
     */
-   private Connector connector;
+   private Interface connector;
 
    /**
     * The node callsign
@@ -60,7 +59,7 @@ public class Node {
     */
    private double    rssi = Double.MAX_VALUE;
 
-   public Node(Connector connector, String callsign, long lastHeard, double rssi) {
+   public Node(Interface connector, String callsign, long lastHeard, double rssi) {
       this.callsign = callsign;
       this.lastHeard = lastHeard;
       this.rssi = rssi;
@@ -73,7 +72,7 @@ public class Node {
     * @param callsign
     * @param lastHeard
     */
-   public Node(Connector connector, String callsign, long lastHeard) {
+   public Node(Interface connector, String callsign, long lastHeard) {
       this.callsign = callsign;
       this.lastHeard = lastHeard;
       this.connector = connector;
@@ -128,11 +127,11 @@ public class Node {
       return rssi;
    }
 
-   public Connector getConnector() {
+   public Interface getConnector() {
       return connector;
    }
 
-   public void setConnector(Connector connector) {
+   public void setConnector(Interface connector) {
       this.connector = connector;
    }
 

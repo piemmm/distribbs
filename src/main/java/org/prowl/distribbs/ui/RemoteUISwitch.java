@@ -1,7 +1,8 @@
 package org.prowl.distribbs.ui;
 
-import org.prowl.distribbs.services.user.User;
-import org.prowl.distribbs.ui.remote.text.TextClient;
+import org.prowl.distribbs.objects.user.User;
+import org.prowl.distribbs.services.ClientHandler;
+import org.prowl.distribbs.services.bbs.BBSClientHandler;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,7 +29,7 @@ public class RemoteUISwitch {
      * @param out
      */
     public static void newUserConnected(User user, InputStream in, OutputStream out) {
-        RemoteClient client = new TextClient(user,in,out);
+        ClientHandler client = new BBSClientHandler(user,in,out);
         client.start();
     }
 

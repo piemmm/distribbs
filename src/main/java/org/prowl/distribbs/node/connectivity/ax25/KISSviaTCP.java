@@ -12,10 +12,10 @@ import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.HeardNode;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
-import org.prowl.distribbs.services.user.User;
-import org.prowl.distribbs.ui.RemoteUISwitch;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
+import org.prowl.distribbs.objects.user.User;
+import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.BufferedOutputStream;
@@ -25,6 +25,9 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Implements a KISS type passthrough on a fifo file so that things like
@@ -33,13 +36,13 @@ import java.net.Socket;
  * Data is forwarded and received on the designated rf slot (where an SX1278
  * usually resides)
  */
-public class KISSviaTCP implements Connector {
+public class KISSviaTCP extends Interface {
 
     private static final Log LOG = LogFactory.getLog("KISSviaTCP");
 
     private String address;
     private int port;
-    private String callsign;
+    private String defaultOutgoingCallsign;
 
     private int pacLen;
     private int maxFrames;
@@ -47,8 +50,6 @@ public class KISSviaTCP implements Connector {
     private int frequency;
 
     private BasicTransmittingConnector connector;
-
-
     private HierarchicalConfiguration config;
     private boolean running;
 
@@ -59,10 +60,18 @@ public class KISSviaTCP implements Connector {
     @Override
     public void start() throws IOException {
         running = true;
+
+        // The address and port of the KISS interface we intend to connect to (KISS over IP or Direwolf, etc)
         address = config.getString("address");
         port = config.getInt("port");
-        callsign = config.getString("callsign");
 
+        // This is the default callsign used for any frames sent out not using a registered service(with its own call).
+        // So if I were to say at node level 'broadcast this UI frame on all interfaces' it would use this callsign.
+        // But if a service wanted to do the same, (eg: BBS service sending an FBB list) then it would use the service
+        // callsign instead.
+        defaultOutgoingCallsign = DistriBBS.INSTANCE.getMyCall();
+
+        // Settings for timeouts, max frames a
         pacLen = config.getInt("pacLen", 120);
         baudRate = config.getInt("channelBaudRate", 1200);
         maxFrames = config.getInt("maxFrames", 3);
@@ -108,10 +117,9 @@ public class KISSviaTCP implements Connector {
 
         // Our default callsign. acceptInbound can determine if we actually want to accept any callsign requests,
         // not just this one.
-        AX25Callsign defaultCallsign = new AX25Callsign(callsign);
+        AX25Callsign defaultCallsign = new AX25Callsign(defaultOutgoingCallsign);
 
         connector = new BasicTransmittingConnector(pacLen, maxFrames, baudRate, defaultCallsign, in, out, new ConnectionRequestListener() {
-
             /**
              * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept
              * if we are interested in the callsign being sent a connection request.
@@ -124,57 +132,25 @@ public class KISSviaTCP implements Connector {
             @Override
             public boolean acceptInbound(ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
 
-                LOG.info("Incoming connection request from " + originator + " to " + state.getDst());
+                LOG.info("Incoming connection request from " + originator + " to " + state.getDst()+" ("+serviceList.size()+" registered services to check...)");
 
-                // If we're going to accept then add a listener so we can keep track of the connection
-                state.listener = new ConnectionEstablishmentListener() {
-                    @Override
-                    public void connectionEstablished(Object sessionIdentifier, ConnState conn) {
-
-                        Thread tx = new Thread(() -> {
-                            // Do inputty and outputty stream stuff here
-                            try {
-                                User user = DistriBBS.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
-                                InputStream in = state.getInputStream();
-                                OutputStream out = state.getOutputStream();
-
-                                // This wrapper provides a simple way to terminate the connection when the outputstream
-                                // is also closed.
-                                OutputStream wrapped = new BufferedOutputStream(out) {
-                                    @Override
-                                    public void close() throws IOException {
-                                        conn.close();
-                                    }
-
-                                };
-
-                                RemoteUISwitch.newUserConnected(user, in, wrapped);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        tx.start();
+                for (Service service: serviceList) {
+                    if (service.getCallsign() != null && state.getDst().toString().equalsIgnoreCase(service.getCallsign())) {
+                        LOG.info("Accepting connection request from " + originator + " to " + state.getDst() + " for service " + service.getName());
+                        setupConnectionListener(service, state, originator, port);
+                        return true;
                     }
-
-                    @Override
-                    public void connectionNotEstablished(Object sessionIdentifier, Object reason) {
-
-                    }
-
-                    @Override
-                    public void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd) {
-
-                    }
-
-                    @Override
-                    public void connectionLost(Object sessionIdentifier, Object reason) {
-
-                    }
-                };
-                return true;
+                }
+                // Do not accept (possibly replace this with a default handler to display a message in the future?)
+                // Maybe use the remoteUISwitch to do it?
+                LOG.info("Rejecting connection request from " + originator + " to " + state.getDst() + " as no service is registered for this callsign");
+                return false;
             }
         });
+
+        // Tag for debug logs so we know what instance/frequency this connector is
         connector.setDebugTag(Tools.getNiceFrequency(frequency));
+
         // AX Frame listener for things like mheard lists
         connector.addFrameListener(new AX25FrameListener() {
             @Override
@@ -193,6 +169,62 @@ public class KISSviaTCP implements Connector {
 
     }
 
+
+    /**
+     * A connection has been accepted therefore we will set it up and also a listener to handle state changes
+     * @param state
+     * @param originator
+     * @param port
+     */
+    public void setupConnectionListener(Service service, ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
+        // If we're going to accept then add a listener so we can keep track of this connection state
+        state.listener = new ConnectionEstablishmentListener() {
+            @Override
+            public void connectionEstablished(Object sessionIdentifier, ConnState conn) {
+
+                Thread tx = new Thread(() -> {
+                    // Do inputty and outputty stream stuff here
+                    try {
+                        User user = DistriBBS.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
+                        InputStream in = state.getInputStream();
+                        OutputStream out = state.getOutputStream();
+
+                        // This wrapper provides a simple way to terminate the connection when the outputstream
+                        // is also closed.
+                        OutputStream wrapped = new BufferedOutputStream(out) {
+                            @Override
+                            public void close() throws IOException {
+                                conn.close();
+                            }
+
+                        };
+
+                        service.acceptedConnection(user, in, wrapped);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                tx.start();
+
+            }
+
+            @Override
+            public void connectionNotEstablished(Object sessionIdentifier, Object reason) {
+                LOG.info("Connection not established from " + originator + " to " + state.getDst() + " for service " + service.getName());
+            }
+
+            @Override
+            public void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd) {
+                LOG.info("Connection closed from " + originator + " to " + state.getDst() + " for service " + service.getName());
+            }
+
+            @Override
+            public void connectionLost(Object sessionIdentifier, Object reason) {
+                LOG.info("Connection lost from " + originator + " to " + state.getDst() + " for service " + service.getName());
+            }
+        };
+    }
+
     @Override
     public void stop() {
         ServerBus.INSTANCE.unregister(this);
@@ -205,77 +237,9 @@ public class KISSviaTCP implements Connector {
     }
 
     @Override
-    public boolean isAnnounce() {
-        return false;
-    }
-
-    @Override
-    public int getAnnouncePeriod() {
-        return 0;
-    }
-
-    @Override
-    public Modulation getModulation() {
-        return Modulation.NONE;
-    }
-
-    @Override
-    public PacketEngine getPacketEngine() {
-        return null;
-    }
-
-    @Override
-    public boolean isRF() {
-        return false;
-    }
-
-    @Override
-    public boolean canSend() {
-        return false;
-    }
-
-    @Override
-    public boolean sendPacket(TxRFPacket packet) {
-        return true;
-    }
-
-    @Override
     public int getFrequency() {
         return frequency;
     }
 
-    @Override
-    public double getNoiseFloor() {
-        return Double.MAX_VALUE;
-    }
-
-    @Override
-    public double getRSSI() {
-        return 0;
-    }
-
-    public int getSlot() {
-        return 0;
-    }
-
-    @Override
-    public long getTxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getTxUncompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxUncompressedByteCount() {
-        return 0;
-    }
 
 }

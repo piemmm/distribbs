@@ -1,16 +1,14 @@
 package org.prowl.distribbs.node.connectivity;
 
-public interface RFConnector extends Connector {
+public abstract class RFConnector extends Interface {
 
-   public int setFrequency(int frequencyHz);
+   public abstract double setDeviation(double deviationHz);
    
-   public double setDeviation(double deviationHz);
+   public abstract int setAFCFilter(int afcHz);
    
-   public int setAFCFilter(int afcHz);
+   public abstract int setDemodFilter(int demodHz);
    
-   public int setDemodFilter(int demodHz);
-   
-   public int setBaud(int baud);
+   public abstract int setBaud(int baud);
    
    
 }

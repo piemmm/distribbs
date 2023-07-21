@@ -12,13 +12,11 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
-import org.prowl.distribbs.node.connectivity.ipv4.events.IPNodeConnectedEvent;
-import org.prowl.distribbs.node.connectivity.sx127x.Device;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 import org.prowl.distribbs.utils.Tools;
 
-public class IPv4 implements Connector {
+public class IPv4 extends Interface {
 
    private static final Log          LOG          = LogFactory.getLog("IPv4");
 

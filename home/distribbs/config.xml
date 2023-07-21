@@ -2,73 +2,83 @@
 
 <!-- DistriBBS configuration test file -->
 <configuration>
-    <!-- Station Details -->
-    <callsign>GB7MNK-5</callsign>
-    <bbsAddress>GB7MNK.#43.GBR.EURO</bbsAddress>
+    <!-- Station default callsign used for outgoing connections on any interface, unless overridden
+         in the interface config itself -->
+    <callsign>GB7MNK</callsign>
 
-    <!-- Connectivity setup -->
-    <connectivity>
+    <!-- Allow remote radio TX closedowns of the radio ports? You can closedown
+        your node by going to the 'REMOTE' chat group and typing: 'closedown [callsign]
+        [secretphrase]' -->
+    <allowremoteClosedown>true</allowremoteClosedown>
 
-        <!--		&lt;!&ndash; Connector types can be: S127x, IPv4, IPv6, GPS &ndash;&gt;-->
-        <!--		<connector>-->
-        <!--			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
-        <!--			&lt;!&ndash; Slot 0 = 144MHz module slot &ndash;&gt;-->
-        <!--			<slot>0</slot>-->
-        <!--			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
-        <!--			<frequency>144637500</frequency>-->
-        <!--			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
-        <!--			<deviation>2600</deviation>-->
-        <!--			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with -->
-        <!--				5000, etc) &ndash;&gt;-->
-        <!--			<baud>4800</baud>-->
-        <!--			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
-        <!--			<modulation>MSK</modulation>-->
-        <!--			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
-        <!--			<announce>true</announce>-->
-        <!--			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
-        <!--			<announcePeriod>60</announcePeriod>-->
-        <!--		</connector>-->
+    <!-- The secret phrase used to remotely closedown your station if required.
+        You should change this after using it as it should be treated as a one-time
+        phrase -->
+    <remoteClosedownPhrase>MySecretPhrase</remoteClosedownPhrase>
+
+    <!-- Interface setup -->
+    <interfaces>
+
+<!--        		&lt;!&ndash; Connector types can be: S127x, IPv4, IPv6, GPS &ndash;&gt;-->
+<!--        		<interface>-->
+<!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+<!--        			&lt;!&ndash; Slot 0 = 144MHz module slot &ndash;&gt;-->
+<!--        			<slot>0</slot>-->
+<!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+<!--        			<frequency>144637500</frequency>-->
+<!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+<!--        			<deviation>2600</deviation>-->
+<!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with -->
+<!--        				5000, etc) &ndash;&gt;-->
+<!--        			<baud>4800</baud>-->
+<!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+<!--        			<modulation>MSK</modulation>-->
+<!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+<!--        			<announce>true</announce>-->
+<!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+<!--        			<announcePeriod>60</announcePeriod>-->
+<!--        		</interface>-->
 
 
-        <!--		<connector>-->
-        <!--			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
-        <!--			&lt;!&ndash; Slot 1 = 433MHz module slot &ndash;&gt;-->
-        <!--			<slot>1</slot>-->
-        <!--			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
-        <!--			<frequency>432625000</frequency>-->
-        <!--			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
-        <!--			<deviation>5</deviation>-->
-        <!--			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with-->
-        <!--				5000, etc) &ndash;&gt;-->
-        <!--			<baud>12500</baud>-->
-        <!--			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
-        <!--			<modulation>MSK</modulation>-->
-        <!--			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
-        <!--			<announce>true</announce>-->
-        <!--			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
-        <!--			<announcePeriod>60</announcePeriod>-->
-        <!--		</connector>-->
+<!--        		<interface>-->
+<!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+<!--        			&lt;!&ndash; Slot 1 = 433MHz module slot &ndash;&gt;-->
+<!--        			<slot>1</slot>-->
+<!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+<!--        			<frequency>432625000</frequency>-->
+<!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+<!--        			<deviation>5</deviation>-->
+<!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with-->
+<!--        				5000, etc) &ndash;&gt;-->
+<!--        			<baud>12500</baud>-->
+<!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+<!--        			<modulation>MSK</modulation>-->
+<!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+<!--        			<announce>true</announce>-->
+<!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+<!--        			<announcePeriod>60</announcePeriod>-->
+<!--        		</interface>-->
 
         <!-- Our internal GPS connector -->
-        <connector>
+        <interface>
             <type>org.prowl.distribbs.node.connectivity.gps.GPS</type>
-        </connector>
+        </interface>
 
         <!-- APRS-IS connector, the callsign used is the node callsign -->
-        <!--		<connector>-->
+        <!--		<interface>-->
         <!--			<type>org.prowl.distribbs.node.connectivity.aprs.APRSIS</type>-->
         <!--			<server></server>-->
         <!--			<password></password>-->
         <!--			<announcePeriod>10</announcePeriod>-->
         <!--			<aprsSymbols>/#</aprsSymbols> &lt;!&ndash; Aprs Symbol table: /> is a car, /# a digi, etc &ndash;&gt;-->
         <!--			&lt;!&ndash; <comment>A comment about your station</comment> &ndash;&gt;-->
-        <!--		</connector>-->
+        <!--		</interface>-->
 
 
         <!-- IPv4 connector. Have one of these sections for each node that you
             want to connect to, we can use a shared secret here because it's not RF and subject
             to licensing conditions (usually preventing the use of encryption on RF) -->
-        <!--		<connector>-->
+        <!--		<interface>-->
         <!--			<type>org.prowl.distribbs.node.connectivity.ipv4.IPv4</type>-->
         <!--			<listenIp>0.0.0.0</listenIp> &lt;!&ndash; The IP to listen to requests on &ndash;&gt;-->
         <!--			<listenPort>0</listenPort> &lt;!&ndash; The port to listen on &ndash;&gt;-->
@@ -78,22 +88,23 @@
         <!--			<remoteCallsign>N0CALL</remoteCallsign> &lt;!&ndash; The remote nodes callsign &ndash;&gt;-->
         <!--			<peerSecret>ThisIsASecretYouShareBetweenYourPeerKeepItSecureAndUnique-->
         <!--			</peerSecret> &lt;!&ndash; Shared between both nodes &ndash;&gt;-->
-        <!--		</connector>-->
+        <!--		</interface>-->
 
         <!-- AX.25 KISS tnc socket (fifo) for the linux ax25 ports to interface
             to so we can have nice things like IP networking -->
-        <!--		<connector>-->
+        <!--		<interface>-->
         <!--			<type>org.prowl.distribbs.node.connectivity.ax25.KISSviaSX127x</type>-->
         <!--			<interfaceName>ax0</interfaceName>-->
         <!--			<bindToSlot>0</bindToSlot>-->
-        <!--		</connector>-->
+        <!--		</interface>-->
 
         <!-- AX.25 KISS tnc socket to things like DireWolf's KISS TCP socket (8001, etc)  -->
-        <connector>
+        <interface>
             <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaTCP</type>
+            <!-- The IP of the KISS interface to connect to (eg: DireWolf) -->
             <addresss>127.0.0.1</addresss>
+            <!-- The port of the KISS interface to connect to (eg: DireWolf) -->
             <port>8001</port>
-            <callsign>GB7MNK-5</callsign>
             <!-- The maximum data payload size of each frame sent -->
             <pacLen>120</pacLen>
             <!-- The maximum amount of frames sent-ahead in one connection -->
@@ -102,51 +113,56 @@
             <channelBaudRate>1200</channelBaudRate>
             <!-- The frequency in Hz for commenting purposes only in the ports list -->
             <frequency>144937500</frequency>
-        </connector>
+            <!-- This is the default callsign used for outgoing connections on this port - this is optional and
+                            the main station callsign will be used if this is absent -->
+            <!-- <callsign>GB7MNK-5</callsign> -->
 
+            <!-- Services that listen on this interfaces for connections (defined in the services tag) -->
+            <services>
+                <service>bbs</service>
+            </services>
+
+        </interface>
 
         <!-- This sync agent talks to an F6FBB BBS using the ASCII style MBL/RLI protocol
         this should be used if your country legally requires plaintext radio comms -->
-        <connector>
-            <type>org.prowl.distribbs.node.connectivity.agents.fbb.FBBSyncAgent</type>
-            <addresss>127.0.0.1</addresss>
-            <port>6300</port>
-            <username>BBSUSERNAME</username>
-            <password>BBSPASSWORD</password>
-
-            <!-- Listen for incoming connection to us -->
-            <listenPort>6300</listenPort>
-        </connector>
-
-    </connectivity>
-
-    <ui>
-        <!-- Enable the ANSI terminal interface -->
         <interface>
-            <type>org.prowl.distribbs.ui.remote.text.TextClient</type>
+            <type>org.prowl.distribbs.node.connectivity.agents.fbb.FBBSyncAgent</type>
+            <!-- The IP of the FBB BBS -->
+            <addresss>127.0.0.1</addresss>
+            <!-- The port of the FBB BBS -->
+            <port>6300</port>
+            <!-- We can also listen for incoming connection to us  - we need a user setup here with the correct
+                 privileges for the remote bbs to use to login -->
+            <listenPort>6300</listenPort>
+            <!-- The username allocated to us on the remote BBS so we can login -->
+            <username>BBSUSERNAME</username>
+            <!-- The password allocated to us on the remote BBS so we can login -->
+            <password>BBSPASSWORD</password>
         </interface>
-    </ui>
 
+    </interfaces>
+
+    <!-- Services are the things that run on the node, they can be local or remote types
+         and can be accessed via the UI or via the radio ports.
+         You specify services that you want running on particular interfaces in the interface
+         section above -->
     <services>
-
+        <!-- The BBS service -->
         <service>
-            <type>chat</type>
+            <name>bbs</name>
+            <!-- The callsign this service responds to and uses to make outgoing calls -->
+            <callsign>GB7MNK-5</callsign>
+            <!-- The BBS Address used in routing messages -->
+            <bbsAddress>GB7MNK.#43.GBR.EURO</bbsAddress>
+            <!-- The BBS service class that handles all of this -->
+            <type>org.prowl.distribbs.services.bbs.BBSService</type>
         </service>
 
+        <!-- Enable the local console telnet interface-->
         <service>
-            <type>messages</type>
-        </service>
-
-        <service>
-            <type>aprs</type>
-        </service>
-
-        <service>
-            <type>newsgroups</type>
-        </service>
-
-        <service>
-            <type>qsl</type>
+            <name>console</name>
+            <type>org.prowl.distribbs.services.console.ConsoleService</type>
         </service>
 
     </services>
@@ -173,17 +189,5 @@
         <discard>fuck</discard>
 
     </filters>
-
-    <remote>
-        <!-- Allow remote radio TX closedowns of the radio ports? You can closedown
-            your node by going to the 'REMOTE' chat group and typing: 'closedown [callsign]
-            [secretphrase]' -->
-        <allowremoteClosedown>true</allowremoteClosedown>
-
-        <!-- The secret phrase used to remotely closedown your station if required.
-            You should change this after using it as it should be treated as a one-time
-            phrase -->
-        <remoteClosedownPhrase>MySecretPhrase</remoteClosedownPhrase>
-    </remote>
 
 </configuration>

@@ -1,6 +1,6 @@
 package org.prowl.distribbs.eventbus.events;
 
-import org.prowl.distribbs.services.aprs.APRSMessage;
+import org.prowl.distribbs.objects.aprs.APRSMessage;
 
 public class NewAPRSMessageEvent extends BaseEvent {
 

@@ -7,7 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 import com.pi4j.io.gpio.GpioController;
@@ -89,10 +89,10 @@ public class LoRaDevice implements Device {
    private int                  deviation                  = 2600;
    private int                  baud                       = 4800;
 
-   private Connector            connector;
+   private Interface connector;
    private int                  slot;
 
-   public LoRaDevice(Connector connector, int slot, int frequency, int deviation, int baud) {
+   public LoRaDevice(Interface connector, int slot, int frequency, int deviation, int baud) {
       this.connector = connector;
       this.slot = slot;
       this.frequency = frequency;

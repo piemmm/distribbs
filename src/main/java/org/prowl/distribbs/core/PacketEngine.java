@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
+import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 public class PacketEngine {
@@ -20,9 +20,9 @@ public class PacketEngine {
 
    private List<TriggerRunnable> triggerList;
 
-   private Connector             connector;
+   private Interface connector;
 
-   public PacketEngine(Connector connector) {
+   public PacketEngine(Interface connector) {
       this.connector = connector;
       triggerList = new LinkedList<>();
       init();

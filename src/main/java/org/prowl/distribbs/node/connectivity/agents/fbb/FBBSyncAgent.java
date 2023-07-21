@@ -7,10 +7,10 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Connector;
-import org.prowl.distribbs.node.connectivity.Modulation;
-import org.prowl.distribbs.objectstorage.Storage;
-import org.prowl.distribbs.services.newsgroups.NewsMessage;
+import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
+import org.prowl.distribbs.objects.Storage;
+import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.*;
@@ -29,7 +29,7 @@ import java.util.TimeZone;
  * <p>
  * Generally, where the remote node supports it, a method using compression should be used.
  */
-public class FBBSyncAgent implements Connector {
+public class FBBSyncAgent extends Interface {
 
     private static final Log LOG = LogFactory.getLog("FBBSyncAgent");
     private static final String CR = "\r";
@@ -176,7 +176,7 @@ public class FBBSyncAgent implements Connector {
                     StringBuilder sb = new StringBuilder();
                     for (FBBProposal proposal : proposals) {
                         // Do I want the BID_MID key? - lets check to see if I have it or not
-                        NewsMessage searchMessage = new NewsMessage();
+                        Message searchMessage = new Message();
                         searchMessage.setBID_MID(proposal.getBID_MID());
                         searchMessage.setGroup(proposal.getRecipient());
                         if (storage.doesNewsMessageExist(searchMessage)) {
@@ -196,7 +196,7 @@ public class FBBSyncAgent implements Connector {
                         if (proposal.isSkip()) {
                             continue;
                         }
-                        NewsMessage message = new NewsMessage();
+                        Message message = new Message();
                         message.setSubject(reader.readLine());
                         message.setRoute(proposal.getRoute());
                         message.setBID_MID(proposal.getBID_MID());
@@ -258,7 +258,7 @@ public class FBBSyncAgent implements Connector {
         }
     }
 
-    public String stampMessage(NewsMessage message) {
+    public String stampMessage(Message message) {
         StringBuilder sb = new StringBuilder();
 
         // Date stamp
@@ -328,79 +328,7 @@ public class FBBSyncAgent implements Connector {
         return getClass().getSimpleName();
     }
 
-    @Override
-    public boolean isAnnounce() {
-        return false;
-    }
 
-    @Override
-    public int getAnnouncePeriod() {
-        return 0;
-    }
-
-    @Override
-    public Modulation getModulation() {
-        return Modulation.NONE;
-    }
-
-    @Override
-    public PacketEngine getPacketEngine() {
-        return null;
-    }
-
-    @Override
-    public boolean isRF() {
-        return false;
-    }
-
-    @Override
-    public boolean canSend() {
-        return false;
-    }
-
-    @Override
-    public boolean sendPacket(TxRFPacket packet) {
-        return true;
-    }
-
-    @Override
-    public int getFrequency() {
-        return 0;
-    }
-
-    @Override
-    public double getNoiseFloor() {
-        return Double.MAX_VALUE;
-    }
-
-    @Override
-    public double getRSSI() {
-        return 0;
-    }
-
-    public int getSlot() {
-        return 0;
-    }
-
-    @Override
-    public long getTxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getTxUncompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxUncompressedByteCount() {
-        return 0;
-    }
 
 
 }
