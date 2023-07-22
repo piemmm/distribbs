@@ -5,10 +5,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.core.PacketEngine;
-import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Interface;
-import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.utils.Tools;
@@ -327,8 +324,6 @@ public class FBBSyncAgent extends Interface {
     public String getName() {
         return getClass().getSimpleName();
     }
-
-
 
 
 }

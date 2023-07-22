@@ -4,9 +4,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.Messages;
-import org.prowl.distribbs.services.bbs.parser.CommandParser;
-import org.prowl.distribbs.services.ClientHandler;
 import org.prowl.distribbs.objects.user.User;
+import org.prowl.distribbs.services.ClientHandler;
+import org.prowl.distribbs.services.bbs.parser.CommandParser;
 import org.prowl.distribbs.utils.ANSI;
 
 import java.io.*;
@@ -50,9 +50,9 @@ public class BBSClientHandler implements ClientHandler {
             });
             t.start();
 
-            send("[" + DistriBBS.NAME + "-" + DistriBBS.VERSION + "-" + DistriBBS.INSTANCE.getBBSServices() + "]"+CR);
-            send(ANSI.BOLD_CYAN+Messages.get("usesColour")+CR+ANSI.NORMAL+CR);
-            send(Messages.get("welcomeNewUser")+CR);
+            send("[" + DistriBBS.NAME + "-" + DistriBBS.VERSION + "-" + DistriBBS.INSTANCE.getBBSServices() + "]" + CR);
+            send(ANSI.BOLD_CYAN + Messages.get("usesColour") + CR + ANSI.NORMAL + CR);
+            send(Messages.get("welcomeNewUser") + CR);
             parser.sendPrompt();
 
         } catch (Throwable e) {
@@ -82,6 +82,7 @@ public class BBSClientHandler implements ClientHandler {
 
     /**
      * Send ASCII text data to the client - will strip colour codes if user has requested it.
+     *
      * @param data
      * @throws IOException
      */
@@ -99,11 +100,10 @@ public class BBSClientHandler implements ClientHandler {
         }
 
 
-
         out.write(data.getBytes());
     }
 
-    public void flush() throws IOException{
+    public void flush() throws IOException {
         out.flush();
     }
 }

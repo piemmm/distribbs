@@ -20,8 +20,9 @@ package org.ka2ddo.ax25;
 
 /**
  * This class provides an association between a frame and a PortConnector for transmission.
+ *
  * @author Andrew Pavlin, KA2DDO
-*/
+ */
 public class FrameWrapper implements AX25FrameSource {
     private final AX25Frame frame;
     private final FrameState state;
@@ -29,9 +30,10 @@ public class FrameWrapper implements AX25FrameSource {
 
     /**
      * Wrap an AX25Frame with information to direct it to a single Coonector port.
+     *
      * @param frame AX25Frame to transmit
      * @param state FrameState object to be updated when the frame is transmitted, or null if statistics not desired
-     * @param port Connector to send the frame through
+     * @param port  Connector to send the frame through
      */
     public FrameWrapper(AX25Frame frame, FrameState state, Connector port) {
         this.frame = frame;
@@ -44,10 +46,10 @@ public class FrameWrapper implements AX25FrameSource {
      *
      * @param incrementXmtCount indicate whether the transmit counter (used to cycle through
      *                          proportional pathing) should be incremented
-     * @param protocolId indicate the protocol to generate this frame for (not relevant for
-     *                   digipeated frames)
-     * @param senderCallsign String of local callsign sending this message (may be ignored if digipeating
-     *                        a message from another station)
+     * @param protocolId        indicate the protocol to generate this frame for (not relevant for
+     *                          digipeated frames)
+     * @param senderCallsign    String of local callsign sending this message (may be ignored if digipeating
+     *                          a message from another station)
      * @return array of AX25Frame objects to transmit (may be zero-length)
      */
     public AX25Frame[] getFrames(boolean incrementXmtCount, ProtocolFamily protocolId, String senderCallsign) {
@@ -59,6 +61,7 @@ public class FrameWrapper implements AX25FrameSource {
 
     /**
      * Get number of times frame will be retransmitted before inter-packet delay is increased.
+     *
      * @return transmission count before interval increase
      */
     public int getNumTransmitsBeforeDecay() {
@@ -67,10 +70,11 @@ public class FrameWrapper implements AX25FrameSource {
 
     /**
      * Specify the Connector this message should be transmitted through.
+     *
      * @return a specific Connector instance to transmit through, or null for all
-     *             applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
-     *             this specific packet [such as IGateConnectors shouldn't re-transmit
-     *             something received from the IGate])
+     * applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
+     * this specific packet [such as IGateConnectors shouldn't re-transmit
+     * something received from the IGate])
      * @see Connector#CAP_XMT_PACKET_DATA
      */
     public Connector getConnector() {
@@ -79,6 +83,7 @@ public class FrameWrapper implements AX25FrameSource {
 
     /**
      * Generate a String representation of this FrameWrapper.
+     *
      * @return descriptive String
      */
     @Override

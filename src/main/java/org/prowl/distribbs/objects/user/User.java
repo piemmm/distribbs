@@ -11,12 +11,12 @@ import java.io.DataOutputStream;
 
 /**
  * This represents a user.
- *
+ * <p>
  * A user has a name, priviliges, and a callsign.
  */
 public class User {
 
-    private static final Log LOG         = LogFactory.getLog("User");
+    private static final Log LOG = LogFactory.getLog("User");
 
     private String name;
     private String baseCallsign;
@@ -33,6 +33,7 @@ public class User {
 
     /**
      * Create a user with a name, callsign, priviliges and password
+     *
      * @param name
      * @param baseCallsign
      * @param privFlags
@@ -48,7 +49,8 @@ public class User {
 
     /**
      * Take a password and return a hash seeded with the baseCallsign
-     * @param password The password to hash
+     *
+     * @param password     The password to hash
      * @param baseCallsign the callsign we will use as a seeed
      * @return
      */
@@ -92,7 +94,7 @@ public class User {
      */
     public byte[] toPacket() {
 
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream( 30);
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(30);
              DataOutputStream dout = new DataOutputStream(bos)) {
 
             // String.length measures UTF units, which is no good to use, so we will use the

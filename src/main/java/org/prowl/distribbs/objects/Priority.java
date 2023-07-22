@@ -7,11 +7,10 @@ package org.prowl.distribbs.objects;
  */
 public enum Priority {
 
-   
-   HIGH,    // things like chat
-   MEDIUM,  // APRS and things that are not as important as chat
-   LOW;     // background message sync
-   
-   
-   
+
+    HIGH,    // things like chat
+    MEDIUM,  // APRS and things that are not as important as chat
+    LOW;     // background message sync
+
+
 }

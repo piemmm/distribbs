@@ -23,6 +23,7 @@ package org.ka2ddo.ax25;
  * This enumeration categorizes AX.25 messages by what protocol they are carrying,
  * to make it easier for YAAC I/O ports to determine if a particular AX25Frame should
  * be sent out a particular port.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public enum ProtocolFamily {
@@ -47,6 +48,7 @@ public enum ProtocolFamily {
 
     /**
      * Get the AX.25 protocol ID value associated with this ProtocolFamily.
+     *
      * @return PID value
      */
     public byte getPid() {

@@ -1,26 +1,26 @@
-/* 
+/*
  * Reference Huffman coding
  * Copyright (c) Project Nayuki
- * 
+ *
  * https://www.nayuki.io/page/reference-huffman-coding
  * https://github.com/nayuki/Reference-Huffman-coding
- * 
+ *
  * License
  * Copyright © 2018 Project Nayuki. (MIT License)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, 
- * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
+ * associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial 
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
  * portions of the Software.
- * 
- * The Software is provided "as is", without warranty of any kind, express or implied, including but not 
- * limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In 
- * no event shall the authors or copyright holders be liable for any claim, damages or other liability, 
- * whether in an action of contract, tort or otherwise, arising from, out of or in connection with the 
+ *
+ * The Software is provided "as is", without warranty of any kind, express or implied, including but not
+ * limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In
+ * no event shall the authors or copyright holders be liable for any claim, damages or other liability,
+ * whether in an action of contract, tort or otherwise, arising from, out of or in connection with the
  * Software or the use or other dealings in the Software.
  */
 package org.prowl.distribbs.utils.compression.huffman;
@@ -50,7 +50,7 @@ import java.util.Objects;
  *    10: Symbol B
  *    110: Symbol C
  *    111: Symbol D
- *  
+ *
  *  Code tree:
  *      .
  *     / \
@@ -59,115 +59,118 @@ import java.util.Objects;
  *      B   .
  *         / \
  *        C   D</pre>
+ *
  * @see FrequencyTable
  * @see CanonicalCode
  */
 public final class CodeTree {
-	
-	/*---- Fields and constructor ----*/
-	
-	/**
-	 * The root node of this code tree (not {@code null}).
-	 */
-	public final InternalNode root;
-	
-	// Stores the code for each symbol, or null if the symbol has no code.
-	// For example, if symbol 5 has code 10011, then codes.get(5) is the list [1,0,0,1,1].
-	private List<List<Integer>> codes;
-	
-	
-	
-	/**
-	 * Constructs a code tree from the specified tree of nodes and specified symbol limit.
-	 * Each symbol in the tree must have value strictly less than the symbol limit.
-	 * @param root the root of the tree
-	 * @param symbolLimit the symbol limit
-	 * @throws NullPointerException if tree root is {@code null}
-	 * @throws IllegalArgumentException if the symbol limit is less than 2, any symbol in the tree has
-	 * a value greater or equal to the symbol limit, or a symbol value appears more than once in the tree
-	 */
-	public CodeTree(InternalNode root, int symbolLimit) {
-		this.root = Objects.requireNonNull(root);
-		if (symbolLimit < 2)
-			throw new IllegalArgumentException("At least 2 symbols needed");
-		
-		codes = new ArrayList<List<Integer>>();  // Initially all null
-		for (int i = 0; i < symbolLimit; i++)
-			codes.add(null);
-		buildCodeList(root, new ArrayList<Integer>());  // Fill 'codes' with appropriate data
-	}
-	
-	
-	// Recursive helper function for the constructor
-	private void buildCodeList(Node node, List<Integer> prefix) {
-		if (node instanceof InternalNode) {
-			InternalNode internalNode = (InternalNode)node;
-			
-			prefix.add(0);
-			buildCodeList(internalNode.leftChild , prefix);
-			prefix.remove(prefix.size() - 1);
-			
-			prefix.add(1);
-			buildCodeList(internalNode.rightChild, prefix);
-			prefix.remove(prefix.size() - 1);
-			
-		} else if (node instanceof Leaf) {
-			Leaf leaf = (Leaf)node;
-			if (leaf.symbol >= codes.size())
-				throw new IllegalArgumentException("Symbol exceeds symbol limit");
-			if (codes.get(leaf.symbol) != null)
-				throw new IllegalArgumentException("Symbol has more than one code");
-			codes.set(leaf.symbol, new ArrayList<Integer>(prefix));
-			
-		} else {
-			throw new AssertionError("Illegal node type");
-		}
-	}
-	
-	
-	
-	/*---- Various methods ----*/
-	
-	/**
-	 * Returns the Huffman code for the specified symbol, which is a list of 0s and 1s.
-	 * @param symbol the symbol to query
-	 * @return a list of 0s and 1s, of length at least 1
-	 * @throws IllegalArgumentException if the symbol is negative, or no
-	 * Huffman code exists for it (e.g. because it had a zero frequency)
-	 */
-	public List<Integer> getCode(int symbol) {
-		if (symbol < 0)
-			throw new IllegalArgumentException("Illegal symbol");
-		else if (codes.get(symbol) == null)
-			throw new IllegalArgumentException("No code for given symbol");
-		else
-			return codes.get(symbol);
-	}
-	
-	
-	/**
-	 * Returns a string representation of this code tree,
-	 * useful for debugging only, and the format is subject to change.
-	 * @return a string representation of this code tree
-	 */
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		toString("", root, sb);
-		return sb.toString();
-	}
-	
-	
-	// Recursive helper function for toString()
-	private static void toString(String prefix, Node node, StringBuilder sb) {
-		if (node instanceof InternalNode) {
-			InternalNode internalNode = (InternalNode)node;
-			toString(prefix + "0", internalNode.leftChild , sb);
-			toString(prefix + "1", internalNode.rightChild, sb);
-		} else if (node instanceof Leaf) {
-			sb.append(String.format("Code %s: Symbol %d%n", prefix, ((Leaf)node).symbol));
-		} else {
-			throw new AssertionError("Illegal node type");
-		}
-	}
-	
+
+    /*---- Fields and constructor ----*/
+
+    /**
+     * The root node of this code tree (not {@code null}).
+     */
+    public final InternalNode root;
+
+    // Stores the code for each symbol, or null if the symbol has no code.
+    // For example, if symbol 5 has code 10011, then codes.get(5) is the list [1,0,0,1,1].
+    private List<List<Integer>> codes;
+
+
+    /**
+     * Constructs a code tree from the specified tree of nodes and specified symbol limit.
+     * Each symbol in the tree must have value strictly less than the symbol limit.
+     *
+     * @param root        the root of the tree
+     * @param symbolLimit the symbol limit
+     * @throws NullPointerException     if tree root is {@code null}
+     * @throws IllegalArgumentException if the symbol limit is less than 2, any symbol in the tree has
+     *                                  a value greater or equal to the symbol limit, or a symbol value appears more than once in the tree
+     */
+    public CodeTree(InternalNode root, int symbolLimit) {
+        this.root = Objects.requireNonNull(root);
+        if (symbolLimit < 2)
+            throw new IllegalArgumentException("At least 2 symbols needed");
+
+        codes = new ArrayList<List<Integer>>();  // Initially all null
+        for (int i = 0; i < symbolLimit; i++)
+            codes.add(null);
+        buildCodeList(root, new ArrayList<Integer>());  // Fill 'codes' with appropriate data
+    }
+
+
+    // Recursive helper function for the constructor
+    private void buildCodeList(Node node, List<Integer> prefix) {
+        if (node instanceof InternalNode) {
+            InternalNode internalNode = (InternalNode) node;
+
+            prefix.add(0);
+            buildCodeList(internalNode.leftChild, prefix);
+            prefix.remove(prefix.size() - 1);
+
+            prefix.add(1);
+            buildCodeList(internalNode.rightChild, prefix);
+            prefix.remove(prefix.size() - 1);
+
+        } else if (node instanceof Leaf) {
+            Leaf leaf = (Leaf) node;
+            if (leaf.symbol >= codes.size())
+                throw new IllegalArgumentException("Symbol exceeds symbol limit");
+            if (codes.get(leaf.symbol) != null)
+                throw new IllegalArgumentException("Symbol has more than one code");
+            codes.set(leaf.symbol, new ArrayList<Integer>(prefix));
+
+        } else {
+            throw new AssertionError("Illegal node type");
+        }
+    }
+
+
+
+    /*---- Various methods ----*/
+
+    /**
+     * Returns the Huffman code for the specified symbol, which is a list of 0s and 1s.
+     *
+     * @param symbol the symbol to query
+     * @return a list of 0s and 1s, of length at least 1
+     * @throws IllegalArgumentException if the symbol is negative, or no
+     *                                  Huffman code exists for it (e.g. because it had a zero frequency)
+     */
+    public List<Integer> getCode(int symbol) {
+        if (symbol < 0)
+            throw new IllegalArgumentException("Illegal symbol");
+        else if (codes.get(symbol) == null)
+            throw new IllegalArgumentException("No code for given symbol");
+        else
+            return codes.get(symbol);
+    }
+
+
+    /**
+     * Returns a string representation of this code tree,
+     * useful for debugging only, and the format is subject to change.
+     *
+     * @return a string representation of this code tree
+     */
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toString("", root, sb);
+        return sb.toString();
+    }
+
+
+    // Recursive helper function for toString()
+    private static void toString(String prefix, Node node, StringBuilder sb) {
+        if (node instanceof InternalNode) {
+            InternalNode internalNode = (InternalNode) node;
+            toString(prefix + "0", internalNode.leftChild, sb);
+            toString(prefix + "1", internalNode.rightChild, sb);
+        } else if (node instanceof Leaf) {
+            sb.append(String.format("Code %s: Symbol %d%n", prefix, ((Leaf) node).symbol));
+        } else {
+            throw new AssertionError("Illegal node type");
+        }
+    }
+
 }

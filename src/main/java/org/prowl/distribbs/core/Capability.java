@@ -1,10 +1,12 @@
 package org.prowl.distribbs.core;
+
 /**
  * Reference to what services this node is running and when that service was last seen so it can be expired;
  */
 public class Capability {
     private Node.Service service;
     private long lastSeen;
+
     public Capability(Node.Service service, long lastSeen) {
         this.service = service;
         this.lastSeen = lastSeen;

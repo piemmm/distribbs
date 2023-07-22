@@ -19,16 +19,12 @@ package org.ka2ddo.ax25;
  */
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * This class defines the common infrastructure for one decoded AX.25 message. Subclasses implement
  * the details for different layer 3 and above protocols.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 abstract public class AX25Message implements Comparable<AX25Message>, Serializable, Cloneable {
@@ -73,6 +69,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
      * sender will be the callsign of the station transmitting the message onto RF, and originatingCallsign
      * will be taken from the third-party routing information to indicate the station that
      * originally injected this message into the network of networks.
+     *
      * @see AX25Frame#sender
      */
     public String originatingCallsign;
@@ -82,6 +79,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
      * destination will be the "tocall" (assuming APRS) of the station transmitting the message onto RF, and originatingDest
      * will be taken from the third-party routing information to indicate the destination that
      * originally injected this message into the network of networks.
+     *
      * @see AX25Frame#dest
      */
     public String originatingDest;
@@ -116,13 +114,15 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
     /**
      * Constructor for partially initialized AX25Message.
      */
-    protected AX25Message() {}
+    protected AX25Message() {
+    }
 
     /**
      * Constructor for AX25Message specifying the third-party network routing and receive time of the message.
+     *
      * @param thirdParty The entire third-party routing path for this AX25Message, or null if this AX25message
-     * is still on its original network.
-     * @param rcptTime The time the message was received by the system in Java standard milliseconds since 1970 UTC.
+     *                   is still on its original network.
+     * @param rcptTime   The time the message was received by the system in Java standard milliseconds since 1970 UTC.
      */
     protected AX25Message(String thirdParty, long rcptTime) {
         if (thirdParty != null && thirdParty.length() > 0) {
@@ -133,6 +133,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the Object o is a duplicate of this Message.
+     *
      * @param o Object to compare against this message.
      * @return true if o is a Message with the same contents as this Message
      */
@@ -157,6 +158,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
      * Compare the contents of the body of the message, reporting if they match. This method
      * must be overridden by concrete subclasses, but will only be called when the Class of the
      * other message equals the Class of this message.
+     *
      * @param other another AX25Message to compare against
      * @return boolean true if the body values are equivalent
      */
@@ -165,7 +167,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
     /**
      * Returns a hash code for this Message.
      *
-     * @return  a hash code value for this object.
+     * @return a hash code value for this object.
      */
     public int hashCode() {
         int result = 0;
@@ -181,12 +183,11 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
      * negative integer, zero, or a positive integer as this object is less
      * than, equal to, or greater than the specified object.
      *
-     * @param   o the object to be compared.
-     * @return  a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
-     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
      * @throws ClassCastException if the specified object's type prevents it
-     *         from being compared to this object.
+     *                            from being compared to this object.
      */
     public int compareTo(AX25Message o) {
         if (PERMANENT == timestamp || PERMANENT == o.timestamp) {
@@ -214,9 +215,10 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the specified part of the message body is strictly only ASCII digits.
+     *
      * @param body String containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are ASCII digits
      */
     public static boolean onlyDigits(String body, int pos, int len) {
@@ -231,9 +233,10 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the specified part of the message body is strictly only ASCII digits.
+     *
      * @param body String containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are ASCII digits
      */
     public static boolean onlyDigitsOrPeriod(String body, int pos, int len) {
@@ -248,14 +251,15 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the specified part of the message body is strictly only ASCII digits.
+     *
      * @param body byte array containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are ASCII digits
      */
     public static boolean onlyDigits(byte[] body, int pos, int len) {
         for (int i = 0; i < len; i++) {
-            if (body[pos+i] < '0' || body[pos+i] > '9') {
+            if (body[pos + i] < '0' || body[pos + i] > '9') {
                 return false;
             }
         }
@@ -265,14 +269,15 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
     /**
      * Test if the specified part of the message body is only ASCII digits or
      * characters just after the digits (to support base+offset message codes in APRS).
+     *
      * @param body byte array containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are in the 16-byte block containing ASCII digits
      */
     protected static boolean onlyDigitsPlus(byte[] body, int pos, int len) {
         for (int i = 0; i < len; i++) {
-            if (body[pos+i] < '0' || body[pos+i] > '?') {
+            if (body[pos + i] < '0' || body[pos + i] > '?') {
                 return false;
             }
         }
@@ -281,14 +286,15 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the specified part of the message body is strictly only ASCII digits or space characters.
+     *
      * @param body byte array containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are ASCII digits or spaces
      */
     protected static boolean onlyDigitsOrSpace(byte[] body, int pos, int len) {
         for (int i = 0; i < len; i++) {
-            if ((body[pos+i] < '0' || body[pos+i] > '9') && ' ' != body[pos+i]) {
+            if ((body[pos + i] < '0' || body[pos + i] > '9') && ' ' != body[pos + i]) {
                 return false;
             }
         }
@@ -297,14 +303,15 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Test if the specified part of the message body is strictly only period characters.
+     *
      * @param body byte array containing the message body
-     * @param pos starting index in the array to test
-     * @param len number of bytes to test
+     * @param pos  starting index in the array to test
+     * @param len  number of bytes to test
      * @return boolean true if all the bytes are periods
      */
     protected static boolean onlyPeriods(byte[] body, int pos, int len) {
         for (int i = 0; i < len; i++) {
-            if (body[pos+i] != '.') {
+            if (body[pos + i] != '.') {
                 return false;
             }
         }
@@ -313,9 +320,10 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Search a byte array (assumed to be an ASCII string) for a matching character.
-     * @param buf byte array to search
-     * @param bufLen index of end of used part of buffer
-     * @param matchCh character value to search for in a forward search
+     *
+     * @param buf      byte array to search
+     * @param bufLen   index of end of used part of buffer
+     * @param matchCh  character value to search for in a forward search
      * @param startPos zero-based index to start searching at
      * @return first index of character occurrence after the start pos, or -1 if not found
      */
@@ -330,18 +338,19 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
 
     /**
      * Search a byte array (assumed to be an ASCII string) for a matching ASCII string.
-     * @param buf byte array to search
-     * @param bufLen index of end of used part of buffer
+     *
+     * @param buf      byte array to search
+     * @param bufLen   index of end of used part of buffer
      * @param matchStr String value to search for in a forward search
      * @param startPos zero-based index to start searching at
      * @return first index of string occurrence after the start pos, or -1 if not found
      */
     public static int indexOf(byte[] buf, int bufLen, String matchStr, int startPos) {
-outerloop:
+        outerloop:
         for (int i = startPos; i < bufLen - matchStr.length(); i++) {
             if (buf[i] == matchStr.charAt(0)) {
                 for (int j = 1; j < matchStr.length(); j++) {
-                    if (buf[j+i] != matchStr.charAt(j)) {
+                    if (buf[j + i] != matchStr.charAt(j)) {
                         // not the whole string
                         continue outerloop;
                     }
@@ -355,6 +364,7 @@ outerloop:
     /**
      * Descriptive text about this message, to be included in the toString() method's response.
      * This method may be overridden. Its default implementation returns an empty string.
+     *
      * @return String describing the contents of this message
      * @see #toString()
      */
@@ -365,7 +375,7 @@ outerloop:
     /**
      * Returns a string representation of the object.
      *
-     * @return  a string representation of the object.
+     * @return a string representation of the object.
      */
     @Override
     public String toString() {
@@ -374,6 +384,7 @@ outerloop:
 
     /**
      * Extract the originating station callsign for this AX25Message.
+     *
      * @throws IllegalArgumentException if thirdParty string is provided but doesn't have a sender&gt;dest delimiter
      */
     public void extractSource() throws IllegalArgumentException {
@@ -404,6 +415,7 @@ outerloop:
 
     /**
      * Get the AX.25 frame from which this Message was extracted.
+     *
      * @return transport-compatible AX25Frame for this Message
      */
     public final AX25Frame getAx25Frame() {
@@ -412,6 +424,7 @@ outerloop:
 
     /**
      * Attach the AX.25 frame from which this Message was extracted.
+     *
      * @param ax25Frame AX25Frame object containing the encoding of this Message
      */
     public final void setAx25Frame(AX25Frame ax25Frame) {
@@ -423,7 +436,8 @@ outerloop:
 
     /**
      * Extract the callsign of the original destination of this message.
-     * @param src AX25Callsign of the source of the original AX25Frame
+     *
+     * @param src        AX25Callsign of the source of the original AX25Frame
      * @param thirdParty String of the third-party routing of this message, or null if not routed over another network
      * @return source callsign String
      */
@@ -442,7 +456,8 @@ outerloop:
 
     /**
      * Extract the callsign of the original destination of this message.
-     * @param dest AX25Callsign of the destination (tocall) of the original AX25Frame
+     *
+     * @param dest       AX25Callsign of the destination (tocall) of the original AX25Frame
      * @param thirdParty String of the third-party routing of this message, or null if not routed over another network
      * @return destination callsign String
      */
@@ -464,9 +479,10 @@ outerloop:
 
     /**
      * Return the callsign of the last digipeat station for this message.
+     *
      * @param digipeaters array of AX25Callsign digipeater addresses in AX.25 frame
      * @return String station ID of last digipeat station, or empty string if received
-     *      directly from originating station
+     * directly from originating station
      */
     public String getLastDigipeat(AX25Callsign[] digipeaters) {
         if (lastDigipeater != null) {
@@ -487,8 +503,8 @@ outerloop:
             if (-1 == nextPos) {
                 nextPos = thirdPartyLength;
             }
-            if (s.charAt(nextPos-1) == '*') {
-                int hyphenPos = s.lastIndexOf('-', nextPos-2);
+            if (s.charAt(nextPos - 1) == '*') {
+                int hyphenPos = s.lastIndexOf('-', nextPos - 2);
                 if (hyphenPos <= srcPos) {
                     if (!Character.isDigit(s.charAt(nextPos - 2))) {
                         return lastDigipeater = s.substring(srcPos, nextPos - 1);
@@ -502,8 +518,8 @@ outerloop:
                     return lastDigipeater = s.substring(lastSrcPos, srcPos - 1);
                 }
                 return lastDigipeater = "";
-            } else if ("TCPIP".regionMatches(0, s, srcPos, nextPos-srcPos) ||
-                       "TCPXX".regionMatches(0, s, srcPos, nextPos-srcPos)) {
+            } else if ("TCPIP".regionMatches(0, s, srcPos, nextPos - srcPos) ||
+                    "TCPXX".regionMatches(0, s, srcPos, nextPos - srcPos)) {
                 // didn't use any pre-I-Gate digipeaters
                 return lastDigipeater = "";
             }
@@ -516,9 +532,10 @@ outerloop:
     /**
      * Return the callsign of the first digipeat station for this message. Note this code
      * considers a direct receive by an I-gate as the I-gate being the first "digipeater".
+     *
      * @param digipeaters array of AX25Callsign digipeater addresses in AX.25 frame
      * @return String station ID of first digipeat station, or empty string if received
-     *      directly from originating station
+     * directly from originating station
      */
     public String getFirstDigipeat(AX25Callsign[] digipeaters) {
         String thirdParty1;
@@ -559,8 +576,9 @@ outerloop:
      * RF packet, the RF digipeaters used by the transmitting I-gate will then be
      * iterated through. Note that RF digipeater aliases that are not marked has-been-repeated
      * will not be counted, nor will "q" codes in a third-party prefix.
+     *
      * @param digipeaters array of AX25Callsign digipeater addresses in AX.25 frame
-     * @param index zero-based index into the list of digipeat aliases
+     * @param index       zero-based index into the list of digipeat aliases
      * @return String station ID of Nth digipeat station, or null if past end of used digipeat list
      */
     public String getNthDigipeat(AX25Callsign[] digipeaters, int index) {
@@ -573,23 +591,23 @@ outerloop:
             int preIGateDigis = 0;
             boolean hasTcpip = false;
             while ((nextDelimPos = thirdParty1.indexOf(',', delimPos + 1)) > 0) {
-                if (thirdParty1.charAt(delimPos+1) == 'q' ||
-                        ((nextDelimPos - delimPos == 6 || (nextDelimPos - delimPos == 7 && thirdParty1.charAt(nextDelimPos-1) == '*')) &&
-                                (hasTcpip = (thirdParty1.regionMatches(delimPos+1, "TCPIP", 0, 5) ||
-                                 thirdParty1.regionMatches(delimPos+1, "TCPXX", 0, 5))))) {
+                if (thirdParty1.charAt(delimPos + 1) == 'q' ||
+                        ((nextDelimPos - delimPos == 6 || (nextDelimPos - delimPos == 7 && thirdParty1.charAt(nextDelimPos - 1) == '*')) &&
+                                (hasTcpip = (thirdParty1.regionMatches(delimPos + 1, "TCPIP", 0, 5) ||
+                                        thirdParty1.regionMatches(delimPos + 1, "TCPXX", 0, 5))))) {
                     delimPos = nextDelimPos;
                     break;
                 }
                 preIGateDigis++;
                 if (index-- <= 0) {
-                    token = thirdParty1.substring(delimPos+1, nextDelimPos);
+                    token = thirdParty1.substring(delimPos + 1, nextDelimPos);
                     break;
                 }
                 delimPos = nextDelimPos;
             }
             if (index <= 0) {
                 if (token == null && preIGateDigis == 0 && !hasTcpip) {
-                    token = thirdParty1.substring(delimPos+1);
+                    token = thirdParty1.substring(delimPos + 1);
                 }
                 if (token != null) {
                     if (token.endsWith("*")) { // some callsign end with '*' meaning it was used?
@@ -608,7 +626,8 @@ outerloop:
 
     /**
      * Test if the specified callsign is the first digipeat station for this message.
-     * @param digipeaters array of AX25Callsign digipeater addresses in AX.25 frame
+     *
+     * @param digipeaters  array of AX25Callsign digipeater addresses in AX.25 frame
      * @param digiCallsign String callsign/SSID of digipeater
      * @return boolean true if the specified digipeater is the first digi for this message
      */
@@ -646,8 +665,9 @@ outerloop:
     /**
      * Get the timestamp associated with this Message in milliseconds since
      * 1 Jan 1970 UTC.
+     *
      * @return time message was received or the timestamp in the message, or
-     *           -1 if this is a permanent (non-timing-out message)
+     * -1 if this is a permanent (non-timing-out message)
      */
     public long getTimestamp() {
         return timestamp;
@@ -655,6 +675,7 @@ outerloop:
 
     /**
      * Report if this AX25Message contains weather information.
+     *
      * @return boolean true if weather information in this AX25Message
      */
     abstract public boolean hasWeather();
@@ -662,6 +683,7 @@ outerloop:
     /**
      * Report if this AX25Message contains position data. The default implementation
      * returns false; position-reporting subclasses are expected to override this.
+     *
      * @return boolean true if message contains position information
      */
     public boolean hasPosition() {
@@ -672,6 +694,7 @@ outerloop:
      * Change the timestamp of this message. Intended only for use by the
      * Transmitter class when creating a time-stamped duplicate of a
      * periodically-repeated APRS Message.
+     *
      * @param timestamp new time in Java milliseconds since epoch
      */
     public void setTimestamp(long timestamp) {
@@ -681,6 +704,7 @@ outerloop:
     /**
      * Set the originating callsign for this AX25Message. This should only be called on SendableMessages
      * to initialize them before transmission.
+     *
      * @param originatingCallsign String of the originating station callsign of this message
      */
     public void setOriginatingCallsign(String originatingCallsign) {
@@ -689,6 +713,7 @@ outerloop:
 
     /**
      * Get the callsign of the station that originated this message (not of any Tx-Igate relay).
+     *
      * @return String callsign
      */
     public String getOriginatingCallsign() {
@@ -697,6 +722,7 @@ outerloop:
 
     /**
      * Get the destination address oeiginally specified bv the station that originated this message.
+     *
      * @return String callsign
      */
     public String getOriginatingDest() {
@@ -706,6 +732,7 @@ outerloop:
     /**
      * Get the timestamp this AX25Message was received in milliseconds since
      * 1 Jan 1970 UTC.
+     *
      * @return time message was received
      */
     public long getRcptTime() {
@@ -716,6 +743,7 @@ outerloop:
      * Change the receive time of this message. Intended only for use by the
      * Transmitter class when creating a time-stamped duplicate of a
      * periodically-repeated APRS Message.
+     *
      * @param rcptTime new time in Java milliseconds since epoch
      */
     public void setRcptTime(long rcptTime) {
@@ -724,6 +752,7 @@ outerloop:
 
     /**
      * Test if this message was flagged as invalid.
+     *
      * @return boolean true if this message is marked as invalid
      */
     public boolean isInvalid() {
@@ -732,6 +761,7 @@ outerloop:
 
     /**
      * Mark if this message is invalid or not.
+     *
      * @param invalid boolean true if message should be considered invalid or incorrect syntax
      */
     public void setInvalid(boolean invalid) {
@@ -741,6 +771,7 @@ outerloop:
     /**
      * Report the traffic-handling precedence for this message instance.
      * Expected to be overridden by subclasses that have precedence fields.
+     *
      * @return Precedence level for this AX25Message
      */
     public Precedence getPrecedence() {
@@ -755,7 +786,7 @@ outerloop:
      */
     public AX25Message dup() {
         try {
-            return (AX25Message)super.clone();    //To change body of overridden methods use File | Settings | File Templates.
+            return (AX25Message) super.clone();    //To change body of overridden methods use File | Settings | File Templates.
         } catch (CloneNotSupportedException e) {
             throw new InternalError("unable to clone " + getClass().getName());
         }
@@ -763,12 +794,13 @@ outerloop:
 
     /**
      * Store an extracted data element in the Message.
-     * @param key Enum that identifies the particular data item
+     *
+     * @param key   Enum that identifies the particular data item
      * @param value the data value
-     * @param <K> any enum subclass
-     * @param <V> any Java object class
+     * @param <K>   any enum subclass
+     * @param <V>   any Java object class
      */
-    public <K extends Enum, V>void storeExtension(K key, V value) {
+    public <K extends Enum, V> void storeExtension(K key, V value) {
         Map<Enum, Object> extensions1;
         if ((extensions1 = extensions) == null && value != null) {
             extensions = extensions1 = new LinkedHashMap<>(8, 1.0F);
@@ -785,6 +817,7 @@ outerloop:
 
     /**
      * Get a reference to the extension map that should not be modified.
+     *
      * @return Map of extension data element (may be an empty Map)
      */
     public Map<Enum, Object> getReadOnlyExtensionMap() {
@@ -797,6 +830,7 @@ outerloop:
 
     /**
      * Get a particular extension value from this message.
+     *
      * @param key Enum instance identifying the desired extension
      * @return value for that extension, or null if no value stored
      */
@@ -810,6 +844,7 @@ outerloop:
     static final Set<ProtocolFamily> RAW_AX25_ONLY = Collections.singleton(ProtocolFamily.RAW_AX25);
     /**
      * A read-only protocol set that includes both APRS and OpenTRAC.
+     *
      * @see #getProtocols()
      */
     protected static final Set<ProtocolFamily> APRS_AND_OPENTRAC = Collections.unmodifiableSet(EnumSet.of(ProtocolFamily.APRS, ProtocolFamily.OPENTRAC));
@@ -817,6 +852,7 @@ outerloop:
     /**
      * Get the protocol family or families that this message corresponds to, so
      * ports that don't support all protocols will not forward inappropriate packets.
+     *
      * @return array of supported ProtocolFamily enums
      */
     public Set<ProtocolFamily> getProtocols() {
@@ -871,6 +907,7 @@ outerloop:
 
     /**
      * Test if this message was sent directly (without any relay station).
+     *
      * @return boolean true if direct, false if not
      */
     public boolean isDirect() {
@@ -885,7 +922,7 @@ outerloop:
      * compiling and evaluating regular expression patterns to do it, thereby
      * saving chunks of transient heap (and probably some CPU time as well).
      *
-     * @param line the String to split at occurrences of the separator
+     * @param line      the String to split at occurrences of the separator
      * @param separator the String delimiting substrings of the line
      * @return array of Strings split at the various points the separator appears
      */
@@ -901,7 +938,7 @@ outerloop:
             numHits++;
             lastFoundPos = pos + 1;
         }
-        String[] answer = new String[numHits+1];
+        String[] answer = new String[numHits + 1];
         if (numHits == 0) {
             answer[0] = line;
         } else {

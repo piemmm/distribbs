@@ -18,11 +18,11 @@ package org.ka2ddo.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
-import java.util.ArrayList;
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.DataInput;
 import java.net.ProtocolException;
+import java.util.ArrayList;
 
 /**
  * This class encapsulates and encodes one X.25 XID group. This is used to handle
@@ -37,12 +37,13 @@ public class XIDGroup {
      * Create an empty XIDGroup with the AX.25 default FI/GI.
      */
     public XIDGroup() {
-        formatIdentifier = (byte)0x82;
-        groupIdentifier = (byte)0x80;
+        formatIdentifier = (byte) 0x82;
+        groupIdentifier = (byte) 0x80;
     }
 
     /**
      * Write the XIDGroup to a byte stream.
+     *
      * @param dos DataOutput to write the XIDGroup to
      * @throws IOException if write fails for any reason
      */
@@ -57,6 +58,7 @@ public class XIDGroup {
 
     /**
      * Get the number of bytes needed to encode the list of XIDParameters in this XIDGroup.
+     *
      * @return byte count
      */
     public int getGroupLength() {
@@ -69,6 +71,7 @@ public class XIDGroup {
 
     /**
      * Read an XIDGroup from an input byte stream.
+     *
      * @param dis DataInput to read the XIDGroup from
      * @return decoded XIDGroup
      * @throws IOException if read fails for any reason

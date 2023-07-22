@@ -4,21 +4,21 @@ import org.prowl.distribbs.eventbus.events.TxRFPacket;
 
 public interface Device {
 
-   public void sendMessage(TxRFPacket packet);
+    public void sendMessage(TxRFPacket packet);
 
-   public int getFrequency();
+    public int getFrequency();
 
-   public double getNoiseFloor();
+    public double getNoiseFloor();
 
-   public double getRSSI();
+    public double getRSSI();
 
-   public int setFrequency(int frequencyHz);
+    public int setFrequency(int frequencyHz);
 
-   public double setDeviation(double deviationHz);
+    public double setDeviation(double deviationHz);
 
-   public int setAFCFilter(int afcHz);
+    public int setAFCFilter(int afcHz);
 
-   public int setDemodFilter(int demodHz);
+    public int setDemodFilter(int demodHz);
 
-   public int setBaud(int baud);
+    public int setBaud(int baud);
 }

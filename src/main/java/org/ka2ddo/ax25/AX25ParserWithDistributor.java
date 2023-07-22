@@ -25,12 +25,14 @@ package org.ka2ddo.ax25;
  * here; this is just the hand-off for the {@link AX25Stack} to send the
  * decoded packets to the protocol-specific distributor, which then handles any
  * casting to subclasses and distribution to registered listeners.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public interface AX25ParserWithDistributor extends AX25Parser {
     /**
      * Send this message (and its associated frame) to the APRS consumers.
-     * @param frame AX25Frame containing the APRS message
+     *
+     * @param frame     AX25Frame containing the APRS message
      * @param parsedMsg AX25Message that was decoded from the frame
      */
     public void processParsedAX25Packet(AX25Frame frame, AX25Message parsedMsg);

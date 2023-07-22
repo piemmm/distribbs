@@ -26,6 +26,7 @@ import java.util.List;
 /**
  * Convert a sequence of incoming ordered I frames from an AX.25 connection into a
  * Java standard input byte stream.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25InputStream extends InputStream {
@@ -36,6 +37,7 @@ class AX25InputStream extends InputStream {
 
     /**
      * Create an AX25InputStream based on the specified AX.25 connection state object
+     *
      * @param connState ConnState object describing the outstanding AX.25 connection
      */
     AX25InputStream(ConnState connState) {
@@ -56,7 +58,7 @@ class AX25InputStream extends InputStream {
      * or an exception is thrown.
      *
      * @return the next byte of data, or <code>-1</code> if the end of the
-     *         stream is reached.
+     * stream is reached.
      * @throws java.io.IOException if an I/O error occurs.
      */
     public int read() throws IOException {
@@ -119,8 +121,8 @@ class AX25InputStream extends InputStream {
      *            at which the data is written.
      * @param len the maximum number of bytes to read.
      * @return the total number of bytes read into the buffer, or
-     *         <code>-1</code> if there is no more data because the end of
-     *         the stream has been reached.
+     * <code>-1</code> if there is no more data because the end of
+     * the stream has been reached.
      * @throws java.io.IOException       If the first byte cannot be read for any reason
      *                                   other than end of file, or if the input stream has been closed, or if
      *                                   some other I/O error occurs.
@@ -181,8 +183,8 @@ class AX25InputStream extends InputStream {
      * </p>
      *
      * @return an estimate of the number of bytes that can be read (or skipped
-     *         over) from this input stream without blocking or {@code 0} when
-     *         it reaches the end of the input stream.
+     * over) from this input stream without blocking or {@code 0} when
+     * it reaches the end of the input stream.
      * @throws java.io.IOException if an I/O error occurs.
      */
     @Override
@@ -199,6 +201,7 @@ class AX25InputStream extends InputStream {
 
     /**
      * Produce a String representation of the object.
+     *
      * @return String describing the stream and its state
      */
     @Override

@@ -1,27 +1,26 @@
 package org.ka2ddo.ax25.io;
 /*
-* Copyright (C) 2011-2019 Andrew Pavlin, KA2DDO
-* This file is part of YAAC (Yet Another APRS Client).
-*
-*  YAAC is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  YAAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  and GNU Lesser General Public License along with YAAC.  If not,
-*  see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2019 Andrew Pavlin, KA2DDO
+ * This file is part of YAAC (Yet Another APRS Client).
+ *
+ *  YAAC is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  YAAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  and GNU Lesser General Public License along with YAAC.  If not,
+ *  see <http://www.gnu.org/licenses/>.
+ */
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -29,8 +28,9 @@ import java.io.OutputStream;
  * This filtering OutputStream adds the KISS protocol escape sequences for the
  * body of a KISS frame. It also calculates G8BPQ's CRC for the frame if needed
  * for MKISS operations.
+ *
  * @author Andrew Pavlin, KA2DDO
-*/
+ */
 public class KissEscapeOutputStream extends OutputStream {
 
 
@@ -60,15 +60,17 @@ public class KissEscapeOutputStream extends OutputStream {
 
     /**
      * Create a KissEscapeOutputStream wrapped around an OutputStream.
+     *
      * @param os OutputStream to receive KISS-encoded frames
      */
     public KissEscapeOutputStream(OutputStream os) {
         this.os = os;
-     }
+    }
 
 
     /**
      * Get the number of bytes passed through this stream (counting escape codes injected by the stream).
+     *
      * @return byte count
      */
     public int getByteCount() {
@@ -85,7 +87,8 @@ public class KissEscapeOutputStream extends OutputStream {
 
     /**
      * Write one byte to the output stream.
-     * @param b byte value to encode
+     *
+     * @param c byte value to encode
      * @throws IOException if wrapped stream throws an IOException
      */
     public void write(int c) throws IOException {
@@ -103,23 +106,24 @@ public class KissEscapeOutputStream extends OutputStream {
             byteCount++;
         }
 
-        g8bpqCrc ^= (byte)b;
+        g8bpqCrc ^= (byte) b;
     }
-
 
 
     /**
      * Write one byte to the output stream.
+     *
      * @param b byte value to encode
      * @throws IOException if wrapped stream throws an IOException
      */
     public void writeRaw(int b) throws IOException {
-            os.write(b);
-            byteCount++;
+        os.write(b);
+        byteCount++;
     }
 
     /**
      * Get the G8BPQ CRC value for the last sent KISS frame.
+     *
      * @return one-byte CRC as used by G8BPQ
      */
     public byte getG8bpqCrc() {

@@ -4,7 +4,7 @@ import java.util.StringTokenizer;
 
 /**
  * Class representing an FBB proposal
- *
+ * <p>
  * FB : Identifies the type of the command (proposal)
  * P : Type of message (P = Private, B = Bulletin).
  * F6FBB : Sender (from field).
@@ -26,7 +26,7 @@ public class FBBProposal {
 
 
     public FBBProposal(String line) {
-        StringTokenizer st = new StringTokenizer(line," ", false);
+        StringTokenizer st = new StringTokenizer(line, " ", false);
         st.nextToken();
         this.type = st.nextToken();
         this.sender = st.nextToken();

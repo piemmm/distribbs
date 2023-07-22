@@ -36,6 +36,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Get a reference to the singleton DigipeatAliasCatalog.
+     *
      * @return the DigipeatAliasCatalog object
      */
     public static DigipeatAliasCatalog getInstance() {
@@ -47,6 +48,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Load the catalog with the factory defaults.
+     *
      * @param aliasNode Preferences node in which to store the catalog entries
      */
     public static void loadDefaults(Preferences aliasNode) {
@@ -58,6 +60,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Get the number of defined digipeat aliases.
+     *
      * @return alias count
      */
     public int getRowCount() {
@@ -74,6 +77,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Add a pre-filled-in digipeat alias to the catalog,
+     *
      * @param dar DigipeatAliasRecord to add
      * @throws IllegalArgumentException if alias already exists in catalog
      */
@@ -86,6 +90,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Deletes the specified alias row from the catalog.
+     *
      * @param rowIndex zero-based index of alias to delete
      */
     public void deleteRow(int rowIndex) {
@@ -94,6 +99,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Get the Nth DigipeatAliasRecord in the catalog.
+     *
      * @param rowIndex zero-based row index
      * @return DigipeatAliasRecord
      */
@@ -104,6 +110,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
     /**
      * Get a Digipeat alias record corresponding to the specified digipeater callsign, if
      * such a record exists.
+     *
      * @param baseCallsign String callsign to search for
      * @return DigipeatAliasRecord describing the authorized alias, or null if no enabled match
      */
@@ -119,6 +126,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
     /**
      * Get a Digipeat alias record corresponding to the specified digipeater callsign, if
      * such a record exists and is enabled.
+     *
      * @param callsign String callsign to search for
      * @return DigipeatAliasRecord describing the authorized alias, or null if no enabled match
      */
@@ -129,7 +137,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
                     (dar.isN_N
                             ? baseCallsign.startsWith(dar.alias) && callsign.getSSID() > 0
                             : (callsign.getSSID() == 0 ? dar.alias.equalsIgnoreCase(baseCallsign) :
-                               dar.alias.equalsIgnoreCase(callsign.toString())))) {
+                            dar.alias.equalsIgnoreCase(callsign.toString())))) {
                 return dar;
             }
         }
@@ -138,6 +146,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
 
     /**
      * Test if this callsign looks like a digipeat New-N alias.
+     *
      * @param relay digipeater AX25Callsign to test
      * @return boolean true if it looks like a New-N alias or other known alias
      */
@@ -175,6 +184,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
     /**
      * Identify what appears to be a regional alias base in the list of known aliases,
      * if one exists.
+     *
      * @return String region code name, or null if no region code defined
      */
     public String getRegionCode() {

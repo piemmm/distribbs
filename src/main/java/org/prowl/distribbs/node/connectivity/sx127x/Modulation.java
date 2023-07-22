@@ -7,17 +7,17 @@ import java.util.Arrays;
  */
 public enum Modulation {
 
-   NONE,
-   LoRa,
-   MSK,
-   FSK,
-   GMSK,
-   GFSK,
-   OOK;
-   
+    NONE,
+    LoRa,
+    MSK,
+    FSK,
+    GMSK,
+    GFSK,
+    OOK;
 
-   public static Modulation findByName(final String name) {
-      return Arrays.stream(values()).filter(value -> value.name().equals(name)).findFirst().orElse(null);
-   }
+
+    public static Modulation findByName(final String name) {
+        return Arrays.stream(values()).filter(value -> value.name().equals(name)).findFirst().orElse(null);
+    }
 
 }

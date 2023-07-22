@@ -1,22 +1,22 @@
 package org.ka2ddo.ax25;
 /*
-* Copyright (C) 2011-2022 Andrew Pavlin, KA2DDO
-* This file is part of YAAC (Yet Another APRS Client).
-*
-*  YAAC is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  YAAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  and GNU Lesser General Public License along with YAAC.  If not,
-*  see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2022 Andrew Pavlin, KA2DDO
+ * This file is part of YAAC (Yet Another APRS Client).
+ *
+ *  YAAC is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  YAAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  and GNU Lesser General Public License along with YAAC.  If not,
+ *  see <http://www.gnu.org/licenses/>.
+ */
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,10 +24,10 @@ import org.apache.commons.logging.LogFactory;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Date;
 
 /**
  * Converts a standard Java output stream of bytes into AX.25 connected-mode I-frames.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25OutputStream extends OutputStream {
@@ -60,7 +60,7 @@ class AX25OutputStream extends OutputStream {
      *                             output stream has been closed.
      */
     public synchronized void write(int b) throws IOException {
-        buf[bufIdx++] = (byte)b;
+        buf[bufIdx++] = (byte) b;
         if (bufIdx >= buf.length) {
             flush();
         }
@@ -103,7 +103,7 @@ class AX25OutputStream extends OutputStream {
 
         // Simply forward to out byte processing to keep things simple.
         for (int i = 0; i < len; i++) {
-            write(b[off+i]);
+            write(b[off + i]);
         }
 
     }
@@ -162,7 +162,7 @@ class AX25OutputStream extends OutputStream {
                 }
 
                 // AX.25 Spec says we can transmit N(R)-1 frames before waiting for an ACK
-                int nextNextVS = (nextVS + 1+(7-connState.stack.maxFrames)) % (f.mod128 ? 128 : 8);
+                int nextNextVS = (nextVS + 1 + (7 - connState.stack.maxFrames)) % (f.mod128 ? 128 : 8);
                 if (connState.transmitWindow[nextNextVS] == null) {
                     break;
                 }
@@ -216,6 +216,7 @@ class AX25OutputStream extends OutputStream {
 
     /**
      * Produce a String representation of the object.
+     *
      * @return String describing the stream and its state
      */
     @Override

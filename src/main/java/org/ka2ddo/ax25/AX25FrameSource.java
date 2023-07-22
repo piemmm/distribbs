@@ -25,6 +25,7 @@ package org.ka2ddo.ax25;
  * object is not required to return the same frame upon multiple queries (due to
  * retransmissions, etc.); this allows for updating beacons with mobile stations,
  * or doing proportional pathing.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public interface AX25FrameSource {
@@ -39,26 +40,28 @@ public interface AX25FrameSource {
      *
      * @param incrementXmtCount indicate whether the transmit counter (used to cycle through
      *                          proportional pathing) should be incremented
-     * @param protocolId indicate the protocol to generate this frame for (not relevant for
-     *                   digipeated frames)
-     * @param senderCallsign String of local callsign sending this message (may be ignored if digipeating
-     *                        a message from another station)
+     * @param protocolId        indicate the protocol to generate this frame for (not relevant for
+     *                          digipeated frames)
+     * @param senderCallsign    String of local callsign sending this message (may be ignored if digipeating
+     *                          a message from another station)
      * @return array of AX25Frame objects to transmit (may be zero-length), or null indicating nothing to transmit in the specified protocol
      */
     AX25Frame[] getFrames(boolean incrementXmtCount, ProtocolFamily protocolId, String senderCallsign);
 
     /**
      * Get number of times frame will be retransmitted before inter-packet delay is increased.
+     *
      * @return transmission count before interval increase
      */
     int getNumTransmitsBeforeDecay();
 
     /**
      * Specify the Connector this message should be transmitted through.
+     *
      * @return a specific Connector instance to transmit through, or null for all
-     *             applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
-     *             this specific packet [such as I-Gate Connectors shouldn't re-transmit
-     *             something received from the I-Gate])
+     * applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
+     * this specific packet [such as I-Gate Connectors shouldn't re-transmit
+     * something received from the I-Gate])
      * @see Connector#CAP_XMT_PACKET_DATA
      */
     Connector getConnector();

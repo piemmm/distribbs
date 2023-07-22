@@ -30,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * This class keeps track of the state of one AX.25 connection-oriented session.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public class ConnState implements AX25FrameSource, Closeable {
@@ -38,6 +39,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Enum identifying the transitional condition of the connection.
+     *
      * @author Andrew Pavlin, KA2DDO
      */
     public enum ConnTransition {
@@ -57,6 +59,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Enumeration specifying the different types of connection-oriented AX.25 sessions.
+     *
      * @author Andrew Pavlin, KA2DDO
      */
     public enum ConnType {
@@ -173,6 +176,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get the current state of this connection.
+     *
      * @return boolean true if connection is up and operating
      */
     public boolean isOpen() {
@@ -181,6 +185,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get the connection windowing type.
+     *
      * @return ConnType enum describing the sliding window mode
      */
     public ConnType getConnType() {
@@ -189,6 +194,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Set the connection windowing type.
+     *
      * @param connType ConnType enum describing the sliding window mode
      */
     public void setConnType(ConnType connType) {
@@ -197,6 +203,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get a Java-style InputStream associated with this connection.
+     *
      * @return InputStream for the connection
      * @throws IOException if session not to or from this station
      */
@@ -213,6 +220,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get a Java-style OutputStream for writing to this connection.
+     *
      * @return OutputStream to this connection
      * @throws IOException if session not to or from this station
      */
@@ -229,6 +237,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get the callsign of the station that originated this connection session.
+     *
      * @return AX25Callsign of originating station
      */
     public AX25Callsign getSrc() {
@@ -237,6 +246,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Get the callsign of the station that received this connection session.
+     *
      * @return AX25Callsign of receiving station
      */
     public AX25Callsign getDst() {
@@ -259,6 +269,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Provide textual description of connection state.
+     *
      * @return String connection state text
      */
     public String getStateOfConn() {
@@ -269,11 +280,12 @@ public class ConnState implements AX25FrameSource, Closeable {
     /**
      * Specify that this transmitted unconnected frame needs a timeout timer in case the appropriate
      * response does not come back.
-     * @param frame AX25Frame that was transmitted and is expecting a response
+     *
+     * @param frame      AX25Frame that was transmitted and is expecting a response
      * @param retryCount int number of times this frame should be retried before giving up on a response
-     *                    and failing whatever condition the frame was trying to set up
+     *                   and failing whatever condition the frame was trying to set up
      */
-    public  void setResendableFrame(AX25Frame frame, int retryCount) {
+    public void setResendableFrame(AX25Frame frame, int retryCount) {
         synchronized (MONITOR) {
             clearResendableFrame();
             frameToResend = frame;
@@ -372,18 +384,19 @@ public class ConnState implements AX25FrameSource, Closeable {
      * Report the Connector this message should be transmitted through.
      *
      * @return a specific Connector instance to transmit through, or null for all
-     *         applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
-     *         this specific packet [such as IGateConnectors shouldn't re-transmit
-     *         something received from the IGate])
+     * applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
+     * this specific packet [such as IGateConnectors shouldn't re-transmit
+     * something received from the IGate])
      * @see org.ka2ddo.ax25.Connector#CAP_XMT_PACKET_DATA
      */
     @Override
     public Connector getConnector() {
-        return (Connector)connector;
+        return (Connector) connector;
     }
 
     /**
      * Set the Connector through which frames for this connected-mode session should be transmitted.
+     *
      * @param connector Connector that is capable of transmitting AX.25 frames
      */
     public void setConnector(TransmittingConnector connector) {
@@ -396,7 +409,7 @@ public class ConnState implements AX25FrameSource, Closeable {
      * method has no effect.
      */
     @Override
-    public void close()  {
+    public void close() {
         synchronized (MONITOR) {
 
             if (isOpen()) {
@@ -446,6 +459,7 @@ public class ConnState implements AX25FrameSource, Closeable {
 
     /**
      * Report the last time this connected-mode session was updated.
+     *
      * @return time (in milliseconds since epoch) of the last update to this session
      */
     public long getLastUpdateInSession() {

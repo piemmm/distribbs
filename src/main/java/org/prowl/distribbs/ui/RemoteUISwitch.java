@@ -9,10 +9,10 @@ import java.io.OutputStream;
 
 /**
  * Switch for different remote client types - at the moment it does not do anything but in the future it may.
- *
+ * <p>
  * Local clients are designed for local use, where the connectivity bandwidth is high (a GUI, high speed VT220 console,
  * etc) and round trip latency is low.
- *
+ * <p>
  * Remote clients are designed for low bandwidth connections (telnet, low baud packet).
  */
 public class RemoteUISwitch {
@@ -20,7 +20,7 @@ public class RemoteUISwitch {
     /**
      * Take a newly connected user and decide what UI they are getting based on if they are new
      * or if they have set something in their preferences.
-     *
+     * <p>
      * Generally we would use terminal answerback functionality (^E) however in TNC land, because most things are
      * newline buffered we are not able to use this as the answerback message does not terminate with a newline.
      *
@@ -29,7 +29,7 @@ public class RemoteUISwitch {
      * @param out
      */
     public static void newUserConnected(User user, InputStream in, OutputStream out) {
-        ClientHandler client = new BBSClientHandler(user,in,out);
+        ClientHandler client = new BBSClientHandler(user, in, out);
         client.start();
     }
 

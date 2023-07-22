@@ -1,31 +1,35 @@
 package org.ka2ddo.util;
 /*
-* Copyright (C) 2011-2021 Andrew Pavlin, KA2DDO
-* This file is part of YAAC (Yet Another APRS Client).
-*
-*  YAAC is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  YAAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  and GNU Lesser General Public License along with YAAC.  If not,
-*  see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2021 Andrew Pavlin, KA2DDO
+ * This file is part of YAAC (Yet Another APRS Client).
+ *
+ *  YAAC is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  YAAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  and GNU Lesser General Public License along with YAAC.  If not,
+ *  see <http://www.gnu.org/licenses/>.
+ */
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * This class provides an alternative to the Java PermGen heap section used for String.intern(),
  * such that applications won't run out of Java PermGen space while still being able to share
  * constant object declarations.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
@@ -86,34 +90,34 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
      * Constructs a new, empty <code>ShareableObjectCache</code> with the given initial
      * capacity and the given load factor.
      *
-     * @param  initialCapacity The initial capacity of the <code>ShareableObjectCache</code>
-     * @param  loadFactor      The load factor of the <code>ShareableObjectCache</code>
+     * @param initialCapacity The initial capacity of the <code>ShareableObjectCache</code>
+     * @param loadFactor      The load factor of the <code>ShareableObjectCache</code>
      * @throws IllegalArgumentException if the initial capacity is negative,
-     *         or if the load factor is nonpositive.
+     *                                  or if the load factor is nonpositive.
      */
     protected ShareableObjectCache(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Initial Capacity: "+
-                                               initialCapacity);
+            throw new IllegalArgumentException("Illegal Initial Capacity: " +
+                    initialCapacity);
         if (initialCapacity > MAXIMUM_CAPACITY)
             initialCapacity = MAXIMUM_CAPACITY;
 
         if (loadFactor <= 0 || Float.isNaN(loadFactor))
-            throw new IllegalArgumentException("Illegal Load factor: "+
-                                               loadFactor);
+            throw new IllegalArgumentException("Illegal Load factor: " +
+                    loadFactor);
         int capacity = 1;
         while (capacity < initialCapacity)
             capacity <<= 1;
         table = new Entry[capacity];
         this.loadFactor = loadFactor;
-        threshold = (int)(capacity * loadFactor);
+        threshold = (int) (capacity * loadFactor);
     }
 
     /**
      * Constructs a new, empty <code>ShareableObjectCache</code> with the given initial
      * capacity and the default load factor (2.0).
      *
-     * @param  initialCapacity The initial capacity of the <code>ShareableObjectCache</code>
+     * @param initialCapacity The initial capacity of the <code>ShareableObjectCache</code>
      * @throws IllegalArgumentException if the initial capacity is negative
      */
     protected ShareableObjectCache(int initialCapacity) {
@@ -126,7 +130,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
      */
     protected ShareableObjectCache() {
         this.loadFactor = DEFAULT_LOAD_FACTOR;
-        threshold = (int)(DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
+        threshold = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
         table = new Entry[DEFAULT_INITIAL_CAPACITY];
     }
 
@@ -136,8 +140,8 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
      * Expunges stale entries from the table.
      */
     private void expungeStaleEntries() {
-	Entry<T> e;
-        while ( (e = (Entry<T>) queue.poll()) != null) {
+        Entry<T> e;
+        while ((e = (Entry<T>) queue.poll()) != null) {
             int h = e.hash;
             int i = h & (table.length - 1);
 
@@ -260,6 +264,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
 
     /**
      * Look for the specified key in the cache.
+     *
      * @param t T hashable object
      * @return cached equal-value of t (or t itself if never listed in cache before)
      */
@@ -294,15 +299,15 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
      * Rehashes the contents of this map into a new array with a
      * larger capacity.  This method is called automatically when the
      * number of keys in this map reaches its threshold.
-     *
+     * <p>
      * If current capacity is MAXIMUM_CAPACITY, this method does not
      * resize the map, but sets threshold to Integer.MAX_VALUE.
      * This has the effect of preventing future calls.
      *
      * @param newCapacity the new capacity, MUST be a power of two;
-     *        must be greater than current capacity unless current
-     *        capacity is MAXIMUM_CAPACITY (in which case value
-     *        is irrelevant).
+     *                    must be greater than current capacity unless current
+     *                    capacity is MAXIMUM_CAPACITY (in which case value
+     *                    is irrelevant).
      */
     void resize(int newCapacity) {
         Entry[] oldTable = table;
@@ -323,7 +328,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
          * unbounded expansion of garbage-filled tables.
          */
         if (size >= threshold / 2) {
-            threshold = (int)(newCapacity * loadFactor);
+            threshold = (int) (newCapacity * loadFactor);
         } else {
             expungeStaleEntries();
             transfer(newTable, oldTable);
@@ -331,7 +336,9 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
         }
     }
 
-    /** Transfers all entries from src to dest tables */
+    /**
+     * Transfers all entries from src to dest tables
+     */
     private void transfer(Entry[] src, Entry[] dest) {
         final int srcLength = src.length;
         final int destMask = dest.length - 1;
@@ -458,8 +465,8 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
               ReferenceQueue<T> queue,
               int hash, Entry<T> next) {
             super(key, queue);
-            this.hash  = hash;
-            this.next  = next;
+            this.hash = hash;
+            this.next = next;
         }
 
         public T getKey() {
@@ -469,7 +476,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
         public boolean equals(Object o) {
             if (!(o instanceof Entry))
                 return false;
-            Entry e = (Entry)o;
+            Entry e = (Entry) o;
             Object k1 = get();
             Object k2 = e.get();
             if (k1 == k2 || (k1 != null && k1.equals(k2))) {
@@ -480,7 +487,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
 
         public int hashCode() {
             Object k = get();
-            return  (k==null ? 0 : k.hashCode());
+            return (k == null ? 0 : k.hashCode());
         }
 
         public String toString() {
@@ -504,7 +511,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
          * Strong reference needed to avoid disappearance of key
          * between nextEntry() and any use of the entry
          */
-	Object currentKey = null;
+        Object currentKey = null;
 
         HashIterator() {
             index = (size() != 0 ? table.length : 0);
@@ -531,7 +538,9 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
             return true;
         }
 
-        /** The common parts of next() across different types of iterators */
+        /**
+         * The common parts of next() across different types of iterators
+         */
         protected Entry<T> nextEntry() {
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();

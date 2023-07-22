@@ -3,9 +3,7 @@ package org.ka2ddo.ax25.io;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.ax25.*;
-import org.prowl.distribbs.utils.Tools;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -321,7 +319,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
             if (detail.indexOf("roken pipe") >= 0 || detail.indexOf(" closed") >= 0 || detail.indexOf(" reset") >= 0) {
                 //       tryToRestartConnection(detail);
             }
-            LOG.error(e.getMessage(),e);
+            LOG.error(e.getMessage(), e);
             return false; // no need for TNC write delay when packet send failed
         }
         //      long now = System.currentTimeMillis();
@@ -526,6 +524,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     /**
      * Set some useful debug information to be included in log messages to identify this connector/stack from others
+     *
      * @param tag
      */
     public void setDebugTag(String tag) {

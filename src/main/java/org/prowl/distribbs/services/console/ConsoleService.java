@@ -1,47 +1,45 @@
 package org.prowl.distribbs.services.console;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 
-import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * ANSI UI implementation using lanterna
  */
 public class ConsoleService extends Service {
 
-   private static final Log          LOG = LogFactory.getLog("ConsoleService");
+    private static final Log LOG = LogFactory.getLog("ConsoleService");
 
-   private boolean stop;
+    private boolean stop;
 
-   private HierarchicalConfiguration config;
+    private HierarchicalConfiguration config;
 
-   public ConsoleService(HierarchicalConfiguration config) {
-      super(config);
-   }
+    public ConsoleService(HierarchicalConfiguration config) {
+        super(config);
+    }
 
-   @Override
-   public void acceptedConnection(User user, InputStream in, OutputStream out) {
-      ConsoleClientHandler client = new ConsoleClientHandler(user, in, out);
-      client.start();
-   }
+    @Override
+    public void acceptedConnection(User user, InputStream in, OutputStream out) {
+        ConsoleClientHandler client = new ConsoleClientHandler(user, in, out);
+        client.start();
+    }
 
-   @Override
-   public String getCallsign() {
-      return null;
-   }
+    @Override
+    public String getCallsign() {
+        return null;
+    }
 
-   public void start() {
+    public void start() {
 
-   }
-   
-   public void stop() {
-      stop = true;
-   }
+    }
+
+    public void stop() {
+        stop = true;
+    }
 }

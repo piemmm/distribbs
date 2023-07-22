@@ -4,15 +4,15 @@ import org.prowl.distribbs.objects.aprs.APRSMessage;
 
 public class NewAPRSMessageEvent extends BaseEvent {
 
-   private APRSMessage message;
+    private APRSMessage message;
 
-   public NewAPRSMessageEvent(APRSMessage message) {
-      super();
-      this.message = message;
-   }
+    public NewAPRSMessageEvent(APRSMessage message) {
+        super();
+        this.message = message;
+    }
 
-   public APRSMessage getMessage() {
-      return message;
-   }
+    public APRSMessage getMessage() {
+        return message;
+    }
 
 }

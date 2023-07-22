@@ -24,6 +24,7 @@ import java.util.prefs.Preferences;
 
 /**
  * This class defines all the parameters for an alias used for digipeating.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
@@ -48,11 +49,13 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
     /**
      * Create an empty DigipeatAliasRecord.
      */
-    public DigipeatAliasRecord() {}
+    public DigipeatAliasRecord() {
+    }
 
     /**
      * Create a DigipeatAliasRecord using string format attributes.
-     * @param alias String name of alias
+     *
+     * @param alias  String name of alias
      * @param params String of comma-separated boolean strings, indicating whether
      *               this is a n-N alias, the alias is enabled, and whether this alias should be traced
      */
@@ -71,15 +74,15 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
     /**
      * Indicates whether some other object is "equal to" this one.
      *
-     * @param   obj   the reference object with which to compare.
-     * @return  <code>true</code> if this object is the same as the obj
-     *          argument; <code>false</code> otherwise.
-     * @see     #hashCode()
+     * @param obj the reference object with which to compare.
+     * @return <code>true</code> if this object is the same as the obj
+     * argument; <code>false</code> otherwise.
+     * @see #hashCode()
      */
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DigipeatAliasRecord) {
-            return alias.equals(((DigipeatAliasRecord)obj).alias);
+            return alias.equals(((DigipeatAliasRecord) obj).alias);
         }
         return false;
     }
@@ -89,8 +92,8 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
      * supported for the benefit of hashtables such as those provided by
      * <code>java.org.ka2ddo.util.Hashtable</code>.
      *
-     * @return  a hash code value for this object.
-     * @see     #equals(java.lang.Object)
+     * @return a hash code value for this object.
+     * @see #equals(java.lang.Object)
      */
     @Override
     public int hashCode() {
@@ -100,7 +103,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
     /**
      * Returns a string representation of the object.
      *
-     * @return  a string representation of the object.
+     * @return a string representation of the object.
      */
     @Override
     public String toString() {
@@ -109,6 +112,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
 
     /**
      * Create a complete alias string, accounting for aliases using the New n-N paradigm.
+     *
      * @return complete alias String
      */
     public String getAliasString() {
@@ -120,12 +124,11 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
      * negative integer, zero, or a positive integer as this object is less
      * than, equal to, or greater than the specified object.
      *
-     * @param   o the object to be compared.
-     * @return  a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
-     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
      * @throws ClassCastException if the specified object's type prevents it
-     *         from being compared to this object.
+     *                            from being compared to this object.
      */
     public int compareTo(DigipeatAliasRecord o) {
         return alias.compareTo(o.alias);
@@ -133,6 +136,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
 
     /**
      * Store this DigipeatAliasRecord in Java Preferences
+     *
      * @param prefs the Preferences node to contain the saved record data
      */
     public void writeToPreferences(Preferences prefs) {
@@ -146,6 +150,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
 
     /**
      * Fill this record from data saved under the alias name in Java Preferences.
+     *
      * @param prefs Preferences node containing the saved data
      */
     public void readFromPreferences(Preferences prefs) {

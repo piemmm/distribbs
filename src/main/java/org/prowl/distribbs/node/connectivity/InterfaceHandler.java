@@ -1,15 +1,15 @@
 package org.prowl.distribbs.node.connectivity;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.services.Service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InterfaceHandler {
 

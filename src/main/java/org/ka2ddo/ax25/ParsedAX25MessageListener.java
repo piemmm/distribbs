@@ -22,6 +22,7 @@ package org.ka2ddo.ax25;
  * This interface defines how a code segment waiting for a response message is
  * informed when the response is received. Such implementors should be registered
  * with the {@link AX25Stack} method {@link AX25Stack#addParsedAX25MessageListener(ParsedAX25MessageListener)}.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 @FunctionalInterface
@@ -31,7 +32,7 @@ public interface ParsedAX25MessageListener {
      *
      * @param pid AX.25 protocol ID
      * @param msg some subclass of AX25Message containing the message contents; the message should have
-     *             an AX25Frame connected to it
+     *            an AX25Frame connected to it
      * @see org.ka2ddo.ax25.AX25Frame
      * @see org.ka2ddo.ax25.AX25Message#ax25Frame
      * @see org.ka2ddo.ax25.AX25Message#getAx25Frame()

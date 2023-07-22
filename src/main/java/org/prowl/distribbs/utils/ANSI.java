@@ -34,6 +34,7 @@ public class ANSI {
 
     /**
      * Convert a string with tokens such as %RED% to ANSI colour codes.
+     *
      * @param stringToDetokenize The string to convert
      * @return The converted string
      */

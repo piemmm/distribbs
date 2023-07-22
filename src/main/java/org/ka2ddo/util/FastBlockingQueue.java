@@ -1,25 +1,28 @@
 package org.ka2ddo.util;
 /*
-* Copyright (C) 2011-2021 Andrew Pavlin, KA2DDO
-* This file is part of YAAC (Yet Another APRS Client).
-*
-*  YAAC is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  YAAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  and GNU Lesser General Public License along with YAAC.  If not,
-*  see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2021 Andrew Pavlin, KA2DDO
+ * This file is part of YAAC (Yet Another APRS Client).
+ *
+ *  YAAC is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  YAAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  and GNU Lesser General Public License along with YAAC.  If not,
+ *  see <http://www.gnu.org/licenses/>.
+ */
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -27,10 +30,11 @@ import java.util.concurrent.TimeUnit;
  * This attempts to make a simpler and faster FIFO queue than ArrayBlockingQueue with
  * no guarantees regarding fairness, minimum execution time, and minimum transient
  * memory allocations. Optimized for single producer and single consumer.
+ *
  * @param <E> data type of queued records
  * @author Andrew Pavlin, KA2DDO
  */
-public class FastBlockingQueue<E> extends AbstractCollection<E> implements BlockingQueue<E>,Serializable {
+public class FastBlockingQueue<E> extends AbstractCollection<E> implements BlockingQueue<E>, Serializable {
     private static final long serialVersionUID = -2643327221955157901L;
     private Object[] queue;
     // removal point
@@ -40,10 +44,11 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
 
     /**
      * Create a FastBlockingQueue with the specified maximum queue backlog.
+     *
      * @param capacity int maximum capacity of queue
      */
     public FastBlockingQueue(int capacity) {
-        queue = new Object[capacity+1];
+        queue = new Object[capacity + 1];
         head = 0;
         tail = 0;
     }
@@ -121,7 +126,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
 
             public E next() {
                 @SuppressWarnings("unchecked")
-                E answer = (E)queue[start];
+                E answer = (E) queue[start];
                 if (answer == null) {
                     throw new NoSuchElementException("empty queue");
                 }
@@ -205,7 +210,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      * Inserts all the non-null elements in the specified array into this queue, waiting
      * if necessary for sufficient space to become available.
      *
-     * @param e the array of elements to add
+     * @param e      the array of elements to add
      * @param length the int length of the array to test (not all of array may be in use)
      * @throws InterruptedException     if interrupted while waiting
      * @throws ClassCastException       if the class of the specified element
@@ -227,7 +232,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
                 int tail = this.tail;
                 queue[tail++] = elem;
                 if (tail >= queue.length) { // have to check queue.length every time, as while blocked in the wait()
-                                            //   someone else might increase the queue capacity
+                    //   someone else might increase the queue capacity
                     tail = 0;
                 }
                 this.tail = tail;
@@ -246,7 +251,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      * @param unit    a <code>TimeUnit</code> determining how to interpret the
      *                <code>timeout</code> parameter
      * @return <code>true</code> if successful, or <code>false</code> if
-     *         the specified waiting time elapses before space is available
+     * the specified waiting time elapses before space is available
      * @throws InterruptedException     if interrupted while waiting
      * @throws ClassCastException       if the class of the specified element
      *                                  prevents it from being added to this queue
@@ -289,7 +294,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
         }
         int head = this.head;
         @SuppressWarnings("unchecked")
-        E answer = (E)queue[head];
+        E answer = (E) queue[head];
         queue[head++] = null;
         if (head >= queue.length) {
             head = 0;
@@ -308,7 +313,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      * @param unit    a <code>TimeUnit</code> determining how to interpret the
      *                <code>timeout</code> parameter
      * @return the head of this queue, or <code>null</code> if the
-     *         specified waiting time elapses before an element is available
+     * specified waiting time elapses before an element is available
      * @throws InterruptedException if interrupted while waiting
      */
     public synchronized E poll(long timeout, TimeUnit unit) throws InterruptedException {
@@ -321,7 +326,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
         }
         int head = this.head;
         @SuppressWarnings("unchecked")
-        E answer = (E)queue[head];
+        E answer = (E) queue[head];
         if (answer != null) {
             queue[head++] = null;
             if (head >= queue.length) {
@@ -381,7 +386,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
         int count = 0;
         int head = this.head;
         final int qLength = queue.length;
-        while ((entry = (E)queue[head]) != null && count < maxElements) {
+        while ((entry = (E) queue[head]) != null && count < maxElements) {
             queue[head++] = null;
             if (head >= qLength) {
                 head = 0;
@@ -406,7 +411,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      * this operation is undefined if the specified array is
      * modified while the operation is in progress.
      *
-     * @param a           the array to transfer elements into
+     * @param a the array to transfer elements into
      * @return the number of elements transferred
      * @throws UnsupportedOperationException if addition of elements
      *                                       is not supported by the specified collection
@@ -425,7 +430,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
         int head = this.head;
         boolean wasFull = head == this.tail;
         final int qLength = queue.length;
-        while (count < maxElements && (entry = (E)queue[head]) != null) {
+        while (count < maxElements && (entry = (E) queue[head]) != null) {
             queue[head++] = null;
             if (head >= qLength) {
                 head = 0;
@@ -450,7 +455,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      *
      * @param e the element to add
      * @return <code>true</code> if the element was added to this queue, else
-     *         <code>false</code>
+     * <code>false</code>
      * @throws ClassCastException       if the class of the specified element
      *                                  prevents it from being added to this queue
      * @throws NullPointerException     if the specified element is null and
@@ -486,7 +491,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      *
      * @param e the element to add
      * @return <code>true</code> if the element was added to this queue, else
-     *         <code>false</code>
+     * <code>false</code>
      * @throws ClassCastException       if the class of the specified element
      *                                  prevents it from being added to this queue
      * @throws NullPointerException     if the specified element is null and
@@ -516,6 +521,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
     /**
      * Add an element to the queue, throwing an exception if the queue is full and has no
      * more room.
+     *
      * @throws IllegalStateException if queue is already full
      */
     @Override
@@ -536,7 +542,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
         Object[] queue = this.queue; // avoid getfield opcode
         int head = this.head;
         @SuppressWarnings("unchecked")
-        E answer = (E)queue[head];
+        E answer = (E) queue[head];
         if (answer != null) {
             queue[head++] = null;
             if (head >= queue.length) {
@@ -555,7 +561,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
      * @return the head of this queue, or <code>null</code> if this queue is empty
      */
     public synchronized E peek() {
-        return (E)queue[head];
+        return (E) queue[head];
     }
 
     /**
@@ -615,6 +621,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
 
     /**
      * Report the total number of queue slots in the queue.
+     *
      * @return maximum backlog capacity of the queue
      */
     public int getCapacity() {
@@ -624,6 +631,7 @@ public class FastBlockingQueue<E> extends AbstractCollection<E> implements Block
     /**
      * Enlarge the queue's backlog capacity. Note this is a no-op if the specified
      * parameter is less than or equal to the current capacity of the queue.
+     *
      * @param capacity the new backlog capacity for the queue
      */
     public synchronized void expandCapacity(int capacity) {

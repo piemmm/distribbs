@@ -20,6 +20,7 @@ package org.ka2ddo.ax25;
 
 /**
  * Define the range over which the tagged packet should be transmitted.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public enum Scope {

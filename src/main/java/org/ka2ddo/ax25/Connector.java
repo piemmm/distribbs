@@ -25,6 +25,7 @@ import java.util.Iterator;
 /**
  * This class defines the generic API for an object that connects a
  * real-time data stream to this application.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 abstract public class Connector {
@@ -32,6 +33,7 @@ abstract public class Connector {
 
     /**
      * Add an object that wants to be informed of incoming raw AX.25 frames.
+     *
      * @param l FrameListener to add
      */
     public static synchronized void addFrameListener(FrameListener l) {
@@ -45,6 +47,7 @@ abstract public class Connector {
 
     /**
      * Remove an object that used to be informed about incoming raw AX.25 frames.
+     *
      * @param l FrameListener to unregister
      */
     public static synchronized void removeFrameListener(FrameListener l) {
@@ -59,7 +62,8 @@ abstract public class Connector {
 
     /**
      * Send an AX.25 frame to all the listeners expecting to process raw frames,
-     * @param frame AX25Frame to process
+     *
+     * @param frame                    AX25Frame to process
      * @param rcptTimeInMsecSinceEpoch time since Unix epoch when frame started arriving
      */
     public static void fireConsumeFrame(AX25Frame frame, long rcptTimeInMsecSinceEpoch) {
@@ -72,9 +76,10 @@ abstract public class Connector {
 
     /**
      * Extract an AX.25 frame from a byte array and send it to all the listeners expecting to process raw frames,
-     * @param buf byte array supposedly containing an AX.25 frame
-     * @param offset zero-based index into byte array where frame starts
-     * @param length number of consecutive bytes in buffer that make up the frame
+     *
+     * @param buf                      byte array supposedly containing an AX.25 frame
+     * @param offset                   zero-based index into byte array where frame starts
+     * @param length                   number of consecutive bytes in buffer that make up the frame
      * @param rcptTimeInMsecSinceEpoch time since Unix epoch when frame started arriving
      * @return the AX25Frame created from the specified bytes, or null if a frame could not be decoded
      */
@@ -146,11 +151,12 @@ abstract public class Connector {
 
         /**
          * Make a deep copy of this PortStats object.
+         *
          * @return duplicate PortStats object with counter values as of the time dup() was called
          */
         public PortStats dup() {
             try {
-                return (PortStats)clone();
+                return (PortStats) clone();
             } catch (CloneNotSupportedException e) {
                 throw new InternalError("unable to clone PortStats");
             }
@@ -164,6 +170,7 @@ abstract public class Connector {
 
     /**
      * Get the current statistics for this PortConnector instance.
+     *
      * @return PortStats for this port.
      */
     public PortStats getStats() {
@@ -174,10 +181,12 @@ abstract public class Connector {
      * Shut down this port connection. Expected to be overridden by sub-classes. Must be
      * idempotent (may be called repeatedly on an already-closed Connector).
      */
-    public void close() {}
+    public void close() {
+    }
 
     /**
      * Clean up a Connector when the object is garbage-collected.
+     *
      * @throws Throwable if any unhandled  problem occurs during cleanup
      */
     @Override
@@ -188,6 +197,7 @@ abstract public class Connector {
 
     /**
      * Reports whether this Connector has an open connection to its port.
+     *
      * @return boolean true if Connector is open
      */
     abstract public boolean isOpen();
@@ -197,6 +207,7 @@ abstract public class Connector {
      * associated with the port (used for transmissions initiated through this port
      * instead of digipeated). By default, returns null. Subclasses are expected
      * to override this.
+     *
      * @return callsign String, or null if no associated callsign
      */
     public String getCallsign() {
@@ -268,6 +279,7 @@ abstract public class Connector {
      * Specify what capabilities a port of this type has. By default,
      * returns a zero bitmask (not capable of anything). Expected to be overridden
      * by subclasses.
+     *
      * @return bitmask of capability flags
      * @see #CAP_RCV_PACKET_DATA
      * @see #CAP_XMT_PACKET_DATA
@@ -290,6 +302,7 @@ abstract public class Connector {
 
     /**
      * Test if this Connector has the specified capability or capabilities.
+     *
      * @param capMask bitmask of capabilities to be tested for
      * @return boolean true if this port has all the specified capabilities in its capability set
      * @see Connector#CAP_ADSB
@@ -314,6 +327,7 @@ abstract public class Connector {
     /**
      * Type of Connector, used in filtering and deciding whether to digipeat or I-gate
      * traffic sourced from this connector.
+     *
      * @author Andrew Pavlin, KA2DDO
      */
     public enum ConnectorType {
@@ -337,6 +351,7 @@ abstract public class Connector {
     /**
      * Report what type of traffic comes from this connector. By default, all
      * Connector subclasses provide realtime data unless they override this method.
+     *
      * @return type of traffic sourced by this incoming Connector
      */
     public ConnectorType getType() {

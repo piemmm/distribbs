@@ -21,22 +21,18 @@ package org.ka2ddo.ax25;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.Map;
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class defines 1 AX.25 packet, as defined by the <a href="https://www.ax25.net/AX25.2.2-Jul%2098-2.pdf" target="ax.25">AX.25 Link Level Protocol specification,
  * version 2.2</a>. Note that the Comparable interface is simply sorting
  * by rcptTime.
- * @version 2.2
+ *
  * @author Andrew Pavlin, KA2DDO
+ * @version 2.2
  */
 public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25Frame> {
     private static final long serialVersionUID = 3107587793401226132L;
@@ -74,6 +70,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     /**
      * Bitmask identifying the frame type and subtype, and windowing position for connection-oriented
      * I and S frames.
+     *
      * @see #getFrameType()
      * @see #getUType()
      * @see #getSType()
@@ -81,12 +78,14 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     public byte ctl;
     /**
      * Extension of ctl when using 128-segment windowing.
+     *
      * @see #ctl
      * @see #mod128
      */
     public byte ctl2;
     /**
      * The one-byte code identifying how to interpret the body of I and UI frames.
+     *
      * @see #PID_X25_PLP
      * @see #PID_VJC_TCPIP
      * @see #PID_VJUC_TCPIP
@@ -129,6 +128,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * SerialVersionUID when rcptTime was of type java.org.ka2ddo.util.Date.
+     *
      * @see #rcptTime
      */
     static final long previousSerialVersionUID = 4260042831169759L;
@@ -137,6 +137,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * Reference to the raw packet itself.
      */
     byte[] rawPacket;
+
     /**
      * Create an empty AX25Frame initialized for a UI frame containing an APRS packet.
      */
@@ -148,6 +149,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the frame PID - remember this is a byte so convert by & 0xFF to stick it in an int.
+     *
      * @return
      */
     public byte getPid() {
@@ -161,9 +163,11 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     public byte[] getRawPacket() {
         return rawPacket;
     }
+
     /**
      * Create a AX25Frame from a byte array presumed to contain an AX.25 protocol sequence.
-     * @param buf byte array to read frame from
+     *
+     * @param buf    byte array to read frame from
      * @param offset zero-based index into the array where the frame starts
      * @param length number of bytes making up the frame
      * @return structured AX25Frame object, or null if byte array doesn't have enough bytes for a frame
@@ -175,16 +179,16 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         // you a 'cmd:' response. For now we ignore the frame. This might also happen if you have sent ascii ctrl chrs that should
         // not have been sent.
         if (length < 15) {
-            if (new String(buf,offset,length).startsWith("cmd:")) {
+            if (new String(buf, offset, length).startsWith("cmd:")) {
                 LOG.warn("KISS remote endpoint entered 'cmd:' mode for unknown reason");
             }
-            LOG.warn("Frame too short! (ignored): length:" + length+" bytes  offset:"+offset+"  buflen:"+buf.length+"  :"+new String(buf,offset,length));
+            LOG.warn("Frame too short! (ignored): length:" + length + " bytes  offset:" + offset + "  buflen:" + buf.length + "  :" + new String(buf, offset, length));
             return null;
         }
 
         AX25Frame f = new AX25Frame();
         f.rawPacket = new byte[length];
-        System.arraycopy(buf,offset,f.rawPacket,0,length);
+        System.arraycopy(buf, offset, f.rawPacket, 0, length);
         f.rcptTime = System.currentTimeMillis();
         f.dest = new AX25Callsign(buf, offset, length);
         offset += 7;
@@ -193,7 +197,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         offset += 7;
         length -= 7;
         initializeCmd(f);
-        if ((buf[offset-1] & 0x01) == 0) {
+        if ((buf[offset - 1] & 0x01) == 0) {
             AX25Callsign[] rptList = new AX25Callsign[OVERSIZED_MAX_DIGIS];
             int numRptrs = 0;
             do {
@@ -201,7 +205,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
                 offset += 7;
                 length -= 7;
                 rptList[numRptrs++] = c; // let it blow up if more than 8 digipeaters
-            } while ((buf[offset-1] & 0x01) == 0);
+            } while ((buf[offset - 1] & 0x01) == 0);
             if (numRptrs == OVERSIZED_MAX_DIGIS) {
                 f.digipeaters = rptList;
             } else if (numRptrs > 0) {
@@ -234,6 +238,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     /**
      * Properly set the isCmd flag of a frame based on the {@link AX25Callsign#h_c} bits in
      * the sender and destination addresses.
+     *
      * @param f AX25Frame to set
      */
     public static void initializeCmd(AX25Frame f) {
@@ -242,13 +247,14 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * The bitmask to extract the frametype bits from the ctl byte of the frame.
+     *
      * @see #ctl
      */
     public static final int MASK_FRAMETYPE = 0x03;
     /**
      * String names for the different AX.25 frame types.
      */
-    private static final String[] FRAMETYPES_S = { "I", "S", "I", "U" };
+    private static final String[] FRAMETYPES_S = {"I", "S", "I", "U"};
     /**
      * Numeric code for information (I) frame type.
      */
@@ -264,6 +270,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Generate a string describing the type of the frame.
+     *
      * @return descriptive String
      */
     public String getFrameTypeString() {
@@ -295,6 +302,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the type of this frame, as stored in the ctl byte.
+     *
      * @return frame type code
      * @see #FRAMETYPE_I
      * @see #FRAMETYPE_S
@@ -310,6 +318,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the transmission sequence number.
+     *
      * @return sequence number
      * @throws IllegalStateException if this is not an I frame
      */
@@ -327,6 +336,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Sets the transmission sequence number.
+     *
      * @param ns sequence number
      * @throws IllegalStateException if this is not an I frame
      */
@@ -334,9 +344,9 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         if ((ctl & 0x01) == FRAMETYPE_I) {
             // I frame
             if (mod128) {
-                ctl = (byte)((ctl & 0x01) | ((ns << 1) & 0xFE));
+                ctl = (byte) ((ctl & 0x01) | ((ns << 1) & 0xFE));
             } else {
-                ctl = (byte)((ctl & 0xF1) | ((ns << 1) & 0x0E));
+                ctl = (byte) ((ctl & 0xF1) | ((ns << 1) & 0x0E));
             }
         } else {
             throw new IllegalStateException("only I frames have NS");
@@ -345,12 +355,13 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the reception sequence number.
+     *
      * @return sequence number
      * @throws IllegalStateException if this is not an I frame
      */
     public int getNR() {
         if (((ctl & 0x01) == FRAMETYPE_I) ||
-            ((ctl & MASK_FRAMETYPE) == FRAMETYPE_S)) {
+                ((ctl & MASK_FRAMETYPE) == FRAMETYPE_S)) {
             if (mod128) {
                 return (ctl2 & 0xFE) >> 1;
             } else {
@@ -362,16 +373,17 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Sets the reception sequence number.
+     *
      * @param nr sequence number
      * @throws IllegalStateException if this is not an I frame
      */
     void setNR(int nr) {
         if (((ctl & 0x01) == FRAMETYPE_I) ||
-            ((ctl & MASK_FRAMETYPE) == FRAMETYPE_S)) {
+                ((ctl & MASK_FRAMETYPE) == FRAMETYPE_S)) {
             if (mod128) {
-                ctl2 = (byte)((ctl2 & 0x01) | ((nr << 1) & 0xFE));
+                ctl2 = (byte) ((ctl2 & 0x01) | ((nr << 1) & 0xFE));
             } else {
-                ctl = (byte)((ctl & 0x1F) | ((nr << 5) & 0xE0));
+                ctl = (byte) ((ctl & 0x1F) | ((nr << 5) & 0xE0));
             }
         } else {
             throw new IllegalStateException("only I or S frames have NR");
@@ -380,6 +392,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Bitmask to extract supervisory (S) frame subtype from the ctl byte.
+     *
      * @see #ctl
      */
     public static final int MASK_STYPE = 0x0C;
@@ -390,34 +403,40 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Unshifted S frame subtype for Receive Ready frame.
+     *
      * @see #MASK_STYPE
      */
     public static final int STYPE_RR = 0x00;
     /**
      * Unshifted S frame subtype for Receive Not Ready frame.
+     *
      * @see #MASK_STYPE
      */
     public static final int STYPE_RNR = 0x04;
     /**
      * Unshifted S frame subtype for Reject frame.
+     *
      * @see #MASK_STYPE
      */
     public static final int STYPE_REJ = 0x08;
     /**
      * Unshifted S frame subtype for Selective Reject frame.
+     *
      * @see #MASK_STYPE
      */
     public static final int STYPE_SREJ = 0x0C;
 
     /**
      * String names of supervisory (S) frame subtypes (indexed after shifting).
+     *
      * @see #MASK_STYPE
      * @see #SHIFT_STYPE
      */
-    private static final String[] STYPES_S = { "RR", "RNR", "REJ", "SREJ" };
+    private static final String[] STYPES_S = {"RR", "RNR", "REJ", "SREJ"};
 
     /**
      * Get the Supervisory frame subtype.
+     *
      * @return S frame subtype (masked but not bit-shifted from its position in ctl bitmask)
      * @see #STYPE_RR
      * @see #STYPE_RNR
@@ -433,6 +452,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Given a string name, get the numeric S-type value for that type of AX.25 frame.
+     *
      * @param sTypeName String name of frame type
      * @return S-type numeric value, or -1 if no match found
      */
@@ -449,6 +469,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get poll bit.
+     *
      * @return boolean state of poll bit
      */
     public boolean getP() {
@@ -474,16 +495,19 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Bitmask to extract unnumbered (U) frame subtype from the ctl byte.
+     *
      * @see #ctl
      */
     public static final int MASK_UTYPE = 0xEC;
     /**
      * Bitmask to extract poll/final bit from unnumbered (U) frame ctl byte, mod 8 format.
+     *
      * @see #ctl
      */
     public static final int MASK_U_P = 0x10;
     /**
      * Bitmask to extract poll/final bit from I/S frame 2nd ctl byte, mod 128 format.
+     *
      * @see #ctl2
      */
     public static final int MASK_U_P128 = 0x01;
@@ -514,11 +538,13 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     public static final int UTYPE_UA = 0x60;
     /**
      * Unshifted U frame subtype for Set Asynchronous Balanced Mode Extended (SABME). Only usable between AX.25 V2.2 stations.
+     *
      * @since 2.2
      */
     public static final int UTYPE_SABME = 0x6C;
     /**
      * Unshifted U frame subtype for obsolete Frame Reject (FRMR).
+     *
      * @deprecated 2.0
      */
     public static final int UTYPE_FRMR = 0x84;
@@ -533,19 +559,21 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * String names of unnumbered (U) frame subtypes (indexed after shifting).
+     *
      * @see #MASK_UTYPE
      * @see #SHIFT_UTYPE
      */
-    private static final String[] UTYPES_S = { "UI", "?1", "?2", "DM", "?4", "?5", "?6", "?7", "?8", "?9", "?10", "SABM",
-         "?12", "?13", "?14", "?15", "DISC", "?17", "?18", "?19", "?20", "?21", "?22", "?23", "UA", "?25", "?26", "SABME", "?28", "?29", "?30", "?31",
-         "?32", "FRMR", "?34", "35?", "?36", "?37", "?38", "?39", "?40", "?41", "?42", "XID", "?44", "?45", "?46", "?47",
-         "?48", "?49", "?50", "?51", "?52", "?53", "?54", "?55", "TEST", "?57", "?58", "?59", "?60", "?61", "?62", "?63" };
+    private static final String[] UTYPES_S = {"UI", "?1", "?2", "DM", "?4", "?5", "?6", "?7", "?8", "?9", "?10", "SABM",
+            "?12", "?13", "?14", "?15", "DISC", "?17", "?18", "?19", "?20", "?21", "?22", "?23", "UA", "?25", "?26", "SABME", "?28", "?29", "?30", "?31",
+            "?32", "FRMR", "?34", "35?", "?36", "?37", "?38", "?39", "?40", "?41", "?42", "XID", "?44", "?45", "?46", "?47",
+            "?48", "?49", "?50", "?51", "?52", "?53", "?54", "?55", "TEST", "?57", "?58", "?59", "?60", "?61", "?62", "?63"};
 
     // unused UTYPE's: 0x04, 0x08, 0x20, 0x24, 0x28, 0x44, 0x48, 0x4C, 0x64, 0x68,
     //  0x80, 0x88, 0x8C, 0xA0, 0xA4, 0xA8, 0xC0, 0xC4, 0xC8, 0xCC, 0xE4, 0xE8, 0xEC
 
     /**
      * Given a string name, get the numeric U-type value for that type of AX.25 frame.
+     *
      * @param uTypeName String name of frame type
      * @return U-type numeric value, or -1 if no match found
      */
@@ -562,6 +590,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get Unordered frame subtype.
+     *
      * @return U frame subtype (masked but not bit-shifted from its position in ctl bitmask)
      * @see #UTYPE_UI
      * @see #UTYPE_DM
@@ -582,70 +611,71 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Hashmap of Information (I) or Unnumbered Information (UI) frame protocol ID to protocol name strings.
+     *
      * @see #pid
      */
-    private static final HashMap<Byte,String> PTYPES_S_hidden = new HashMap<Byte,String>();
+    private static final HashMap<Byte, String> PTYPES_S_hidden = new HashMap<Byte, String>();
 
     /**
      * Protocol ID for CCITT X.25 PLP (also used by the ROSE network).
      */
-    public static final byte PID_X25_PLP = (byte)0x01;
+    public static final byte PID_X25_PLP = (byte) 0x01;
     /**
      * Protocol ID for Van Jacobson compressed TCP/IP packet, per RFC 1144.
      */
-    public static final byte PID_VJC_TCPIP = (byte)0x06;
+    public static final byte PID_VJC_TCPIP = (byte) 0x06;
     /**
      * Protocol ID for Van Jacobson uncompressed TCP/IP packet, per RFC 1144.
      */
-    public static final byte PID_VJUC_TCPIP = (byte)0x07;
+    public static final byte PID_VJUC_TCPIP = (byte) 0x07;
     /**
      * Protocol ID for AX.25 segmentation fragment.
      */
-    public static final byte PID_SEG_FRAG = (byte)0x08;
+    public static final byte PID_SEG_FRAG = (byte) 0x08;
     /**
      * Protocol ID for OpenTRAC.
      */
-    public static final byte PID_OPENTRAC = (byte)0x77;
+    public static final byte PID_OPENTRAC = (byte) 0x77;
     /**
      * Protocol ID for TEXNET datagram.
      */
-    public static final byte PID_TEXNET = (byte)0xC3;
+    public static final byte PID_TEXNET = (byte) 0xC3;
     /**
      * Protocol ID for Link Quality Protocol.
      */
-    public static final byte PID_LQP = (byte)0xC4;
+    public static final byte PID_LQP = (byte) 0xC4;
     /**
      * Protocol ID for Appletalk.
      */
-    public static final byte PID_ATALK = (byte)0xCA;
+    public static final byte PID_ATALK = (byte) 0xCA;
     /**
      * Protocol ID for Appletalk Address Resolution Protocol (ARP).
      */
-    public static final byte PID_AARP = (byte)0xCB;
+    public static final byte PID_AARP = (byte) 0xCB;
     /**
      * Protocol ID for ARPA Internet Protocol.
      */
-    public static final byte PID_IP = (byte)0xCC;
+    public static final byte PID_IP = (byte) 0xCC;
     /**
      * Protocol ID for ARPA Internet Address Resolution Protocol (ARP).
      */
-    public static final byte PID_IARP = (byte)0xCD;
+    public static final byte PID_IARP = (byte) 0xCD;
     /**
      * Protocol ID for FlexNet.
      */
-    public static final byte PID_FLEXNET = (byte)0xCE;
+    public static final byte PID_FLEXNET = (byte) 0xCE;
     /**
      * Protocol ID for NET/ROM.
      */
-    public static final byte PID_NETROM = (byte)0xCF;
+    public static final byte PID_NETROM = (byte) 0xCF;
     /**
      * Protocol ID for no level 3 protocol (also used for APRS).
      */
-    public static final byte PID_NOLVL3 = (byte)0xF0;
+    public static final byte PID_NOLVL3 = (byte) 0xF0;
     /**
      * Protocol ID for escape code indicating second byte of PID (not supported).
      */
-    public static final byte PID_ESCAPE = (byte)0xFF;
+    public static final byte PID_ESCAPE = (byte) 0xFF;
 
     static {
         PTYPES_S_hidden.put(PID_X25_PLP, "X.25-PLP");
@@ -664,14 +694,17 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
         PTYPES_S_hidden.put(PID_NOLVL3, "No_LVL3");
         PTYPES_S_hidden.put(PID_ESCAPE, "-escape-");
     }
+
     /**
      * Hashmap of Information (I) or Unnumbered Information (UI) frame protocol ID to protocol name strings.
+     *
      * @see #pid
      */
-    public static final Map<Byte,String> PTYPES_S = Collections.unmodifiableMap(PTYPES_S_hidden);
+    public static final Map<Byte, String> PTYPES_S = Collections.unmodifiableMap(PTYPES_S_hidden);
 
     /**
      * Transmit this AX25Frame to an output byte stream.
+     *
      * @param os OutputStream to write the frame to
      * @throws IOException if writing fails
      */
@@ -703,6 +736,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Create a deep copy of this frame.
+     *
      * @return duplicate AX25Frame instance
      */
     public AX25Frame dup() {
@@ -719,6 +753,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * Create a deep copy of this frame, excluding the body. This is useful for digipeating
      * messages received from APRS-IS, because it skips making a copy of the message body
      * that will immediately be discarded as part of the 3rd-party re-packaging.
+     *
      * @return almost-duplicate AX25Frame instance
      */
     public AX25Frame dupOnlyHeader() {
@@ -746,12 +781,13 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the frames associated with this FrameSource (in this case, itself).
+     *
      * @param incrementXmtCount indicate whether the transmit counter (used to cycle through
      *                          proportional pathing) should be incremented
-     * @param protocolId indicate the protocol to generate this frame for (not relevant for
-     *                     digipeated frames)
-     * @param senderCallsign local sending callsign (ignored if frame already has
-     *                           the callsign filled in)
+     * @param protocolId        indicate the protocol to generate this frame for (not relevant for
+     *                          digipeated frames)
+     * @param senderCallsign    local sending callsign (ignored if frame already has
+     *                          the callsign filled in)
      * @return one-element array point at this frame
      */
     public AX25Frame[] getFrames(boolean incrementXmtCount, ProtocolFamily protocolId, String senderCallsign) {
@@ -768,6 +804,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get number of times frame will be retransmitted before inter-packet delay is increased.
+     *
      * @return transmission count before interval increase
      */
     public int getNumTransmitsBeforeDecay() {
@@ -776,10 +813,11 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Specify the Connector this message should be transmitted through.
+     *
      * @return a specific Connector instance to transmit through, or null for all
-     *             applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
-     *             this specific packet [such as IGateConnectors shouldn't re-transmit
-     *             something received from the IGate])
+     * applicable ports (Connector.CAP_XMT_PACKET_DATA and not rejecting
+     * this specific packet [such as IGateConnectors shouldn't re-transmit
+     * something received from the IGate])
      * @see Connector#CAP_XMT_PACKET_DATA
      */
     public Connector getConnector() {
@@ -791,6 +829,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * the last character, all letters uppercase). Note this will automatically strip off the SSID
      * (if any) before testing. Note this is safe for empty strings, and will properly report them
      * as not being a valid real-station callsign,
+     *
      * @param callsign String callsign to test
      * @return boolean true if callsign looks like real
      */
@@ -831,6 +870,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the first actual digipeated digipeater station callsign in the digipeater sequence.
+     *
      * @param digipeaters array of AX25Callsigns for digipeating a message
      * @return String of first real callsign in sequence, or empty String if no actual digipeater callsign
      */
@@ -852,8 +892,9 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Get the Nth digipeated digipeater station callsign in the digipeater sequence.
+     *
      * @param digipeaters array of AX25Callsigns for digipeating a message
-     * @param index zero-based index of digipeater to report
+     * @param index       zero-based index of digipeater to report
      * @return String of callsign in sequence, or null if run out of repeated aliases
      */
     public static String getNthDigi(AX25Callsign[] digipeaters, int index) {
@@ -870,6 +911,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Find the last callsign through which a frame has been digipeated.
+     *
      * @param digipeaters array of digipeater callsigns
      * @return String callsign of last digipeater entry that is marked as used, or empty String if none used
      */
@@ -898,7 +940,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     public Boolean isRf(int maxDigis) {
         Boolean answer = null;
         if ((sourcePort != null &&
-                        (sourcePort.hasCapability(Connector.CAP_IGATE) || !sourcePort.hasCapability(Connector.CAP_RF)))) {
+                (sourcePort.hasCapability(Connector.CAP_IGATE) || !sourcePort.hasCapability(Connector.CAP_RF)))) {
             answer = Boolean.FALSE;
         } else if (digipeaters != null) {
             int numDigis = 0;
@@ -933,6 +975,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Test if this message was sent directly (without any relay station).
+     *
      * @return boolean true if direct, false if not
      */
     public boolean isDirect() {
@@ -941,6 +984,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Set the command bits in the sender and destination fields.
+     *
      * @param isCmd boolean true if this is a command frame, false if a response
      */
     public void setCmd(boolean isCmd) {
@@ -960,6 +1004,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Return a String representing this AX25Frame object.
+     *
      * @return descriptive String
      */
     @Override
@@ -969,6 +1014,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Produce an ASCIIfied version of frame body.
+     *
      * @return String version of frame body
      */
     public String getAsciiFrame() {
@@ -978,20 +1024,19 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
             if (chi < 0x1F) {
                 chi |= 0x2400;
             }
-            chArray[i] = (char)chi;
+            chArray[i] = (char) chi;
         }
         return new String(chArray);
     }
 
     /**
      * Get the raw frame body, unaltered.
+     *
      * @return a raw byte frame body
      */
     public byte[] getByteFrame() {
         return body;
     }
-
-
 
 
     /**
@@ -1033,7 +1078,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
                 int bodyStart = 0;
                 AX25Message parsedAX25Msg;
                 if ((parsedAX25Msg = this.parsedAX25Msg) != null && parsedAX25Msg.thirdParty != null) {
-                    bodyStart = parsedAX25Msg.thirdParty.length()+1; // assuming 3rd-party header is always ASCII
+                    bodyStart = parsedAX25Msg.thirdParty.length() + 1; // assuming 3rd-party header is always ASCII
                 }
                 for (int i = bodyStart; i < bodyLen; i++) {
                     a += body[i] & 0xFF;
@@ -1055,12 +1100,11 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * negative integer, zero, or a positive integer as this object is less
      * than, equal to, or greater than the specified object.
      *
-     * @param   o the object to be compared.
-     * @return  a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
-     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
      * @throws ClassCastException if the specified object's type prevents it
-     *         from being compared to this object.
+     *                            from being compared to this object.
      */
     public int compareTo(AX25Frame o) {
         return Long.signum(rcptTime - o.rcptTime);
@@ -1071,11 +1115,11 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      *
      * @param obj the reference object with which to compare.
      * @return {@code true} if this object is the same as the obj
-     *         argument; {@code false} otherwise.
+     * argument; {@code false} otherwise.
      */
     @Override
     public boolean equals(Object obj) {
-        return (obj instanceof AX25Frame) && isDuplicate((AX25Frame)obj);
+        return (obj instanceof AX25Frame) && isDuplicate((AX25Frame) obj);
     }
 
     /**
@@ -1092,6 +1136,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     /**
      * Test if this frame has the same contents (at least as regards duplicate checking)
      * as the provided older frame.
+     *
      * @param other AX25Frame to compare payloads with
      * @return boolean true if this frame should be treated as a duplicate for digipeating purposes
      */
@@ -1107,6 +1152,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Estimate the number of bits needed to transmit this frame over RF in AX.25 standard physical layer (HDLC).
+     *
      * @return bit count estimate
      */
     public int getEstimatedBitCount() {
@@ -1133,6 +1179,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
 
     /**
      * Report whether this packet is strictly valid according to the AX.25 protocol specification,
+     *
      * @return boolean true if packet is valid
      */
     public boolean isValid() {
@@ -1184,6 +1231,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
     /**
      * Get the protocol family or families that this message corresponds to, so
      * ports that don't support all protocols will not forward inappropriate packets.
+     *
      * @return array of supported ProtocolFamily enums
      */
     public Set<ProtocolFamily> getProtocols() {

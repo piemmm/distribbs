@@ -41,7 +41,7 @@ public class MainTest {
             // not just this one.
             AX25Callsign defaultCallsign = new AX25Callsign("N0CALL-5");
 
-            connector = new BasicTransmittingConnector(255,7,1200, defaultCallsign, in, out, new ConnectionRequestListener() {
+            connector = new BasicTransmittingConnector(255, 7, 1200, defaultCallsign, in, out, new ConnectionRequestListener() {
 
                 /**
                  * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept
@@ -70,9 +70,9 @@ public class MainTest {
                                     // Get the input stream and handle incoming data in its own thread.
                                     InputStream in = state.getInputStream();
                                     Thread t = new Thread(() -> {
-                                        while(state.isOpen()) {
+                                        while (state.isOpen()) {
                                             try {
-                                                System.out.println("IN:"+in.read());
+                                                System.out.println("IN:" + in.read());
                                             } catch (IOException e) {
                                                 e.printStackTrace();
                                             }
@@ -86,11 +86,14 @@ public class MainTest {
                                     OutputStream out = state.getOutputStream();
                                     out.write("You have connected1!\r".getBytes());
                                     out.flush();
-                                    try {Thread.sleep(1000); } catch(InterruptedException e) { }
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                    }
 
                                     // This is how we disconnect the remote node!
                                     state.close();
-                                } catch(Exception e) {
+                                } catch (Exception e) {
                                     e.printStackTrace();
                                 }
 
@@ -123,11 +126,6 @@ public class MainTest {
             });
 
 
-
-
-
-
-
         } catch (Throwable e) {
             e.printStackTrace();
             System.exit(1);
@@ -135,8 +133,6 @@ public class MainTest {
 
 
     }
-
-
 
 
 }

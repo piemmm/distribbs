@@ -41,6 +41,7 @@ public class FrameState {
 
     /**
      * Create a FrameState for the specified time, not yet digipeated.
+     *
      * @param now time of frame in milliseconds since Jan 1 1970 UTC
      */
     public FrameState(long now) {
@@ -49,6 +50,7 @@ public class FrameState {
 
     /**
      * Report a description of this FrameState object.
+     *
      * @return descriptive String
      */
     @Override

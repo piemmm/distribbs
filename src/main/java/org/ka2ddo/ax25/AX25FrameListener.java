@@ -21,6 +21,7 @@ package org.ka2ddo.ax25;
 /**
  * This interface defines a listener for decoded AX.25 frames as freshly
  * received from an input port.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 @FunctionalInterface
@@ -28,7 +29,8 @@ public interface AX25FrameListener {
     /**
      * Receive an incoming frame from the specified input Connector. Note that
      * the frame will not have any decoded AX25Message associated with it yet.
-     * @param frame AX25Frame that was received
+     *
+     * @param frame     AX25Frame that was received
      * @param connector Connector that was the source of the frame.
      */
     void consumeAX25Frame(AX25Frame frame, Connector connector);

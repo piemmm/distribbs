@@ -7,13 +7,10 @@ import org.ka2ddo.ax25.*;
 import org.ka2ddo.ax25.io.BasicTransmittingConnector;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
-import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.HeardNode;
-import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.Interface;
-import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
@@ -25,9 +22,6 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Implements a KISS type passthrough on a fifo file so that things like
@@ -102,7 +96,7 @@ public class KISSviaTCP extends Interface {
                 LOG.info("Connected to kiss service at: " + address + ":" + port);
                 break;
             } catch (ConnectException e) {
-                LOG.warn("Delaying 30s due to unable to connect to "+ address + ":" + port +": "+ e.getMessage());
+                LOG.warn("Delaying 30s due to unable to connect to " + address + ":" + port + ": " + e.getMessage());
                 Tools.delay(30000);
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
@@ -111,7 +105,7 @@ public class KISSviaTCP extends Interface {
         }
 
         if (in == null || out == null) {
-            LOG.error("Unable to connect to kiss service at: " + address + ":" + port +" - this connector is stopping.");
+            LOG.error("Unable to connect to kiss service at: " + address + ":" + port + " - this connector is stopping.");
             return;
         }
 
@@ -132,9 +126,9 @@ public class KISSviaTCP extends Interface {
             @Override
             public boolean acceptInbound(ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
 
-                LOG.info("Incoming connection request from " + originator + " to " + state.getDst()+" ("+serviceList.size()+" registered services to check...)");
+                LOG.info("Incoming connection request from " + originator + " to " + state.getDst() + " (" + serviceList.size() + " registered services to check...)");
 
-                for (Service service: serviceList) {
+                for (Service service : serviceList) {
                     if (service.getCallsign() != null && state.getDst().toString().equalsIgnoreCase(service.getCallsign())) {
                         LOG.info("Accepting connection request from " + originator + " to " + state.getDst() + " for service " + service.getName());
                         setupConnectionListener(service, state, originator, port);
@@ -172,6 +166,7 @@ public class KISSviaTCP extends Interface {
 
     /**
      * A connection has been accepted therefore we will set it up and also a listener to handle state changes
+     *
      * @param state
      * @param originator
      * @param port

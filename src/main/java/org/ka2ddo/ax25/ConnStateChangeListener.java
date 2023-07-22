@@ -27,8 +27,9 @@ public interface ConnStateChangeListener {
     /**
      * Report that the row containing the specified pair of callsigns has been updated.
      * This is expected to be called from a thread other than the AWT dispatch thread.
+     *
      * @param sender AX25Callsign of originator of session
-     * @param dest AX25Callsign of recipient of session
+     * @param dest   AX25Callsign of recipient of session
      */
     public void updateConnStateRow(AX25Callsign sender, AX25Callsign dest);
 

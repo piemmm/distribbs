@@ -1,22 +1,22 @@
 package org.ka2ddo.util;
 /*
-* Copyright (C) 2011-2020 Andrew Pavlin, KA2DDO
-* This file is part of YAAC (Yet Another APRS Client).
-*
-*  YAAC is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU Lesser General Public License as published by
-*  the Free Software Foundation, either version 3 of the License, or
-*  (at your option) any later version.
-*
-*  YAAC is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  and GNU Lesser General Public License along with YAAC.  If not,
-*  see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2020 Andrew Pavlin, KA2DDO
+ * This file is part of YAAC (Yet Another APRS Client).
+ *
+ *  YAAC is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  YAAC is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  and GNU Lesser General Public License along with YAAC.  If not,
+ *  see <http://www.gnu.org/licenses/>.
+ */
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +24,7 @@ import java.util.Collections;
 /**
  * This class implements a timer whose tasks' delivery times can be adjusted while they are enqueued, and
  * the task objects can be reused after they have been timed out or cancelled.
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public final class ReschedulableTimer extends Thread {
@@ -33,6 +34,7 @@ public final class ReschedulableTimer extends Thread {
 
     /**
      * Create a ReschedulableTimer queue.
+     *
      * @param name thread name String to assign to this timer (must not be null or empty)
      */
     public ReschedulableTimer(String name) {
@@ -40,7 +42,7 @@ public final class ReschedulableTimer extends Thread {
         setDaemon(true);
         start();
     }
-    
+
     synchronized void sched(ReschedulableTimerTask task) {
         final ArrayList<ReschedulableTimerTask> timerQueue = this.timerQueue;
         if (!timerQueue.contains(task)) {
@@ -60,7 +62,7 @@ public final class ReschedulableTimer extends Thread {
             notifyAll();
         }
     }
-    
+
     synchronized void cancel(ReschedulableTimerTask task) {
         final ArrayList<ReschedulableTimerTask> timerQueue = this.timerQueue;
         for (int i = timerQueue.size() - 1; i >= 0; i--) {
@@ -85,7 +87,7 @@ public final class ReschedulableTimer extends Thread {
                     }
                 }
             }
-            
+
             long now = System.currentTimeMillis();
             while (timerQueue.size() > 0) {
                 ReschedulableTimerTask nextTask;
@@ -116,7 +118,7 @@ public final class ReschedulableTimer extends Thread {
 
                 now = System.currentTimeMillis();
             }
-            
+
             synchronized (this) {
                 long howLong = Long.MAX_VALUE;
                 if (timerQueue.size() > 0) {

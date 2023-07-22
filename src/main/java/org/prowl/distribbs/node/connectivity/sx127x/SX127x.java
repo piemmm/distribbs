@@ -1,7 +1,5 @@
 package org.prowl.distribbs.node.connectivity.sx127x;
 
-import java.io.IOException;
-
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -9,211 +7,212 @@ import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.RFConnector;
 
+import java.io.IOException;
+
 /**
  * Implements an interface using the SX127x sx1276, sx1278, etc) series of chips
  * which support several different modulations including LoRa, GMSK, GFSK, MSK,
  * FSK(rtty etc), OOK(cw-ish), as well as being capable of being directly driven
  * to tx several other modulation types
- * 
+ * <p>
  * Data to send is compressed before it is sent, and decompressed in any rx
  * events when required.
  */
 public class SX127x extends RFConnector {
 
-   private static final Log          LOG  = LogFactory.getLog("SX127x");
+    private static final Log LOG = LogFactory.getLog("SX127x");
 
-   private HierarchicalConfiguration config;
+    private HierarchicalConfiguration config;
 
-   private Device                    device;
+    private Device device;
 
-   /**
-    * Should we announce?
-    */
-   private boolean                   announce;
+    /**
+     * Should we announce?
+     */
+    private boolean announce;
 
-   /**
-    * Announce period in minutes if no tx activity from us(absolute minimum 15
-    * minutes)
-    */
-   private int                       announcePeriod;
+    /**
+     * Announce period in minutes if no tx activity from us(absolute minimum 15
+     * minutes)
+     */
+    private int announcePeriod;
 
-   /**
-    * Our modulation mode
-    */
-   private Modulation                modulation;
+    /**
+     * Our modulation mode
+     */
+    private Modulation modulation;
 
-   /**
-    * The slot we are controlling Slot 0 = 144MHz, Slot 1 = 433MHz
-    */
-   private int                       slot = 0;
+    /**
+     * The slot we are controlling Slot 0 = 144MHz, Slot 1 = 433MHz
+     */
+    private int slot = 0;
 
-   /**
-    * Our state holder for connections
-    * 
-    * @param config
-    */
-   private PacketEngine              packetEngine;
-   
-   private long txCompressedByteCount = 1;
-   private long txUncompressedByteCount = 1;
-   private long rxCompressedByteCount = 1;
-   private long rxUncompressedByteCount = 1;
+    /**
+     * Our state holder for connections
+     *
+     * @param config
+     */
+    private PacketEngine packetEngine;
 
-   public SX127x(HierarchicalConfiguration config) {
-      this.config = config;
-   }
+    private long txCompressedByteCount = 1;
+    private long txUncompressedByteCount = 1;
+    private long rxCompressedByteCount = 1;
+    private long rxUncompressedByteCount = 1;
 
-   public void start() throws IOException {
-      slot = config.getInt("slot", 0);
-      int frequency = config.getInt("frequency", 0);
-      int deviation = config.getInt("deviation", 2600);
-      int baud = config.getInt("baud",4800);
+    public SX127x(HierarchicalConfiguration config) {
+        this.config = config;
+    }
 
-      announce = config.getBoolean("announce");
-      announcePeriod = config.getInt("announcePeriod");
-      modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
+    public void start() throws IOException {
+        slot = config.getInt("slot", 0);
+        int frequency = config.getInt("frequency", 0);
+        int deviation = config.getInt("deviation", 2600);
+        int baud = config.getInt("baud", 4800);
 
-      // Perform validation of config
+        announce = config.getBoolean("announce");
+        announcePeriod = config.getInt("announcePeriod");
+        modulation = Modulation.findByName(config.getString("modulation", Modulation.MSK.name()));
 
-      packetEngine = new PacketEngine(this);
-      if (Modulation.LoRa.equals(modulation)) {
-         device = new LoRaDevice(this, slot, frequency, deviation, baud);
-      } else if (Modulation.MSK.equals(modulation)) {
-         device = new MSKDevice(this, slot, frequency, deviation, baud);
-      } else if (Modulation.GFSK.equals(modulation)) {
-         device = new FSKDevice(this, slot, frequency, deviation, baud);
-      } else {
-         // Not a known modulation.
-         throw new IOException("Unknown modulation:" + config.getString("modulation"));
-      }
+        // Perform validation of config
 
-   }
+        packetEngine = new PacketEngine(this);
+        if (Modulation.LoRa.equals(modulation)) {
+            device = new LoRaDevice(this, slot, frequency, deviation, baud);
+        } else if (Modulation.MSK.equals(modulation)) {
+            device = new MSKDevice(this, slot, frequency, deviation, baud);
+        } else if (Modulation.GFSK.equals(modulation)) {
+            device = new FSKDevice(this, slot, frequency, deviation, baud);
+        } else {
+            // Not a known modulation.
+            throw new IOException("Unknown modulation:" + config.getString("modulation"));
+        }
 
-   public void stop() {
+    }
 
-   }
+    public void stop() {
 
-   public boolean isAnnounce() {
-      return announce;
-   }
+    }
 
-   public int getAnnouncePeriod() {
-      return announcePeriod;
-   }
+    public boolean isAnnounce() {
+        return announce;
+    }
 
-   public Modulation getModulation() {
-      return modulation;
-   }
+    public int getAnnouncePeriod() {
+        return announcePeriod;
+    }
 
-   public PacketEngine getPacketEngine() {
-      return packetEngine;
-   }
+    public Modulation getModulation() {
+        return modulation;
+    }
 
-   public boolean isRF() {
-      return true;
-   }
+    public PacketEngine getPacketEngine() {
+        return packetEngine;
+    }
 
-   @Override
-   public boolean canSend() {
-      return true;
-   }
+    public boolean isRF() {
+        return true;
+    }
 
-   @Override
-   public boolean sendPacket(TxRFPacket packet) {
-      packet.setConnector(this);
-      if (device == null || packet == null)
-         return false;
+    @Override
+    public boolean canSend() {
+        return true;
+    }
 
-      device.sendMessage(packet);
-      return true;
-   }
+    @Override
+    public boolean sendPacket(TxRFPacket packet) {
+        packet.setConnector(this);
+        if (device == null || packet == null)
+            return false;
 
-   public String getName() {
-      if (modulation != null) {
-         return getClass().getSimpleName() + "-" + modulation.name();
-      }
-      return getClass().getSimpleName();
-   }
+        device.sendMessage(packet);
+        return true;
+    }
 
-   public int getFrequency() {
-      if (device == null) {
-         return 0;
-      }
-      return device.getFrequency();
-   }
+    public String getName() {
+        if (modulation != null) {
+            return getClass().getSimpleName() + "-" + modulation.name();
+        }
+        return getClass().getSimpleName();
+    }
 
-   public double getNoiseFloor() {
-      if (device == null) {
-         return 0;
-      }
-      return device.getNoiseFloor();
-   }
+    public int getFrequency() {
+        if (device == null) {
+            return 0;
+        }
+        return device.getFrequency();
+    }
 
-   public double getRSSI() {
-      if (device == null) {
-         return 0;
-      }
-      return device.getRSSI();
-   }
+    public double getNoiseFloor() {
+        if (device == null) {
+            return 0;
+        }
+        return device.getNoiseFloor();
+    }
 
-   @Override
-   public int getSlot() {
-      return slot;
-   }
+    public double getRSSI() {
+        if (device == null) {
+            return 0;
+        }
+        return device.getRSSI();
+    }
 
-   @Override
-   public long getTxCompressedByteCount() {
-      return txCompressedByteCount;
-   }
+    @Override
+    public int getSlot() {
+        return slot;
+    }
 
-   @Override
-   public long getTxUncompressedByteCount() {
-      // TODO Auto-generated method stub
-      return txUncompressedByteCount;
-   }
+    @Override
+    public long getTxCompressedByteCount() {
+        return txCompressedByteCount;
+    }
 
-   @Override
-   public long getRxCompressedByteCount() {
-      // TODO Auto-generated method stub
-      return rxCompressedByteCount;
-   }
+    @Override
+    public long getTxUncompressedByteCount() {
+        // TODO Auto-generated method stub
+        return txUncompressedByteCount;
+    }
 
-   @Override
-   public long getRxUncompressedByteCount() {
-      // TODO Auto-generated method stub
-      return rxUncompressedByteCount;
-   }
-   
-   protected void addRxStats(long compressedByteCount, long uncompressedByteCount) {
-      rxCompressedByteCount+= compressedByteCount;
-      rxUncompressedByteCount = uncompressedByteCount;
-   }
-  
-   protected void addTxStats(long compressedByteCount, long uncompressedByteCount) {
-      txCompressedByteCount+= compressedByteCount;
-      txUncompressedByteCount = uncompressedByteCount;
-   }
+    @Override
+    public long getRxCompressedByteCount() {
+        // TODO Auto-generated method stub
+        return rxCompressedByteCount;
+    }
 
-   @Override
-   public double setDeviation(double deviationHz) {
-       return device.setDeviation(deviationHz);
-   }
+    @Override
+    public long getRxUncompressedByteCount() {
+        // TODO Auto-generated method stub
+        return rxUncompressedByteCount;
+    }
 
-   @Override
-   public int setAFCFilter(int afcHz) {
-       return device.setAFCFilter(afcHz);
-   }
+    protected void addRxStats(long compressedByteCount, long uncompressedByteCount) {
+        rxCompressedByteCount += compressedByteCount;
+        rxUncompressedByteCount = uncompressedByteCount;
+    }
 
-   @Override
-   public int setDemodFilter(int demodHz) {
-       return device.setDemodFilter(demodHz);
-   }
+    protected void addTxStats(long compressedByteCount, long uncompressedByteCount) {
+        txCompressedByteCount += compressedByteCount;
+        txUncompressedByteCount = uncompressedByteCount;
+    }
 
-   @Override
-   public int setBaud(int baud) {
-       return device.setBaud(baud);
-   }
-   
-   
+    @Override
+    public double setDeviation(double deviationHz) {
+        return device.setDeviation(deviationHz);
+    }
+
+    @Override
+    public int setAFCFilter(int afcHz) {
+        return device.setAFCFilter(afcHz);
+    }
+
+    @Override
+    public int setDemodFilter(int demodHz) {
+        return device.setDemodFilter(demodHz);
+    }
+
+    @Override
+    public int setBaud(int baud) {
+        return device.setBaud(baud);
+    }
+
 
 }

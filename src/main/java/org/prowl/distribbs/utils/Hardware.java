@@ -1,189 +1,179 @@
 package org.prowl.distribbs.utils;
 
-import java.io.IOException;
-import java.util.concurrent.Semaphore;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.DistriBBS;
-
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalInput;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.Pin;
-import com.pi4j.io.gpio.PinPullResistance;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
+import com.pi4j.io.gpio.*;
 import com.pi4j.io.i2c.I2CDevice;
 import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
 import com.pi4j.io.spi.SpiMode;
-import com.pi4j.system.SystemInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 /**
  * Single class to access the hardware
  */
 public enum Hardware {
 
-   INSTANCE;
+    INSTANCE;
 
-   private final Log            LOG          = LogFactory.getLog("Hardware");
+    private final Log LOG = LogFactory.getLog("Hardware");
 
-   private float                MAX_CPU_TEMP = 75f;
+    private float MAX_CPU_TEMP = 75f;
 
-   private final Semaphore      spiLock      = new Semaphore(1, true);
-   private SpiDevice            spi;
+    private final Semaphore spiLock = new Semaphore(1, true);
+    private SpiDevice spi;
 
-   private Pin                  dio0         = RaspiPin.GPIO_07;
-   private Pin                  dio1         = RaspiPin.GPIO_03;
+    private Pin dio0 = RaspiPin.GPIO_07;
+    private Pin dio1 = RaspiPin.GPIO_03;
 
-   private Pin                  ss0          = RaspiPin.GPIO_06;
-   private Pin                  ss1          = RaspiPin.GPIO_02;
+    private Pin ss0 = RaspiPin.GPIO_06;
+    private Pin ss1 = RaspiPin.GPIO_02;
 
-   private Pin                  reset        = RaspiPin.GPIO_00;
+    private Pin reset = RaspiPin.GPIO_00;
 
-   private Pin                  fan1         = RaspiPin.GPIO_27;
-   private Pin                  fan2         = RaspiPin.GPIO_24;
+    private Pin fan1 = RaspiPin.GPIO_27;
+    private Pin fan2 = RaspiPin.GPIO_24;
 
-   private GpioController       gpio;
-   private GpioPinDigitalInput  gpioDio0;
-   private GpioPinDigitalInput  gpioDio1;
-   private GpioPinDigitalOutput gpioSS0;
-   private GpioPinDigitalOutput gpioSS1;
-   private GpioPinDigitalOutput gpioRst;
+    private GpioController gpio;
+    private GpioPinDigitalInput gpioDio0;
+    private GpioPinDigitalInput gpioDio1;
+    private GpioPinDigitalOutput gpioSS0;
+    private GpioPinDigitalOutput gpioSS1;
+    private GpioPinDigitalOutput gpioRst;
 
-   private GpioPinDigitalOutput gpioFan1;
-   private GpioPinDigitalOutput gpioFan2;
+    private GpioPinDigitalOutput gpioFan1;
+    private GpioPinDigitalOutput gpioFan2;
 
-   private Hardware() {
-      try {
-         spi = SpiFactory.getInstance(SpiChannel.CS0, 2_000_000, SpiMode.MODE_0);
+    private Hardware() {
+        try {
+            spi = SpiFactory.getInstance(SpiChannel.CS0, 2_000_000, SpiMode.MODE_0);
 
-         gpio = GpioFactory.getInstance();
+            gpio = GpioFactory.getInstance();
 
-         // Interrupt setup 0
-         gpioDio0 = gpio.provisionDigitalInputPin(dio0, PinPullResistance.PULL_DOWN);
-         gpioDio0.setShutdownOptions(true);
+            // Interrupt setup 0
+            gpioDio0 = gpio.provisionDigitalInputPin(dio0, PinPullResistance.PULL_DOWN);
+            gpioDio0.setShutdownOptions(true);
 
-         // Interrupt setup 1
-         gpioDio1 = gpio.provisionDigitalInputPin(dio1, PinPullResistance.PULL_DOWN);
-         gpioDio1.setShutdownOptions(true);
+            // Interrupt setup 1
+            gpioDio1 = gpio.provisionDigitalInputPin(dio1, PinPullResistance.PULL_DOWN);
+            gpioDio1.setShutdownOptions(true);
 
-         // Select pin 0
-         gpioSS0 = gpio.provisionDigitalOutputPin(ss0, PinState.HIGH);
-         gpioSS0.setShutdownOptions(true, PinState.HIGH);
-         gpioSS0.high();
+            // Select pin 0
+            gpioSS0 = gpio.provisionDigitalOutputPin(ss0, PinState.HIGH);
+            gpioSS0.setShutdownOptions(true, PinState.HIGH);
+            gpioSS0.high();
 
-         // Select pin 1
-         gpioSS1 = gpio.provisionDigitalOutputPin(ss1, PinState.HIGH);
-         gpioSS1.setShutdownOptions(true, PinState.HIGH);
-         gpioSS1.high();
+            // Select pin 1
+            gpioSS1 = gpio.provisionDigitalOutputPin(ss1, PinState.HIGH);
+            gpioSS1.setShutdownOptions(true, PinState.HIGH);
+            gpioSS1.high();
 
-         // Fan 1, default ON until temp code turns off
-         gpioFan1 = gpio.provisionDigitalOutputPin(fan1, PinState.HIGH);
-         gpioFan1.setShutdownOptions(true, PinState.HIGH);
-         gpioFan1.high();
+            // Fan 1, default ON until temp code turns off
+            gpioFan1 = gpio.provisionDigitalOutputPin(fan1, PinState.HIGH);
+            gpioFan1.setShutdownOptions(true, PinState.HIGH);
+            gpioFan1.high();
 
-         // Fan 2, default ON until temp code turns off
-         gpioFan2 = gpio.provisionDigitalOutputPin(fan2, PinState.HIGH);
-         gpioFan2.setShutdownOptions(true, PinState.HIGH);
-         gpioFan2.high();
+            // Fan 2, default ON until temp code turns off
+            gpioFan2 = gpio.provisionDigitalOutputPin(fan2, PinState.HIGH);
+            gpioFan2.setShutdownOptions(true, PinState.HIGH);
+            gpioFan2.high();
 
-         // Reset (default being reset until we're ready). This also is commoned with the
-         // RF modules reset pin.
-         gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
-         gpioRst.setShutdownOptions(true, PinState.LOW); // If the VM exits or something quits us, we make sure the SX modules can't
-                                                         // transmit
-         gpioRst.low();
-         resetAll();
+            // Reset (default being reset until we're ready). This also is commoned with the
+            // RF modules reset pin.
+            gpioRst = gpio.provisionDigitalOutputPin(reset, PinState.HIGH);
+            gpioRst.setShutdownOptions(true, PinState.LOW); // If the VM exits or something quits us, we make sure the SX modules can't
+            // transmit
+            gpioRst.low();
+            resetAll();
 
-         makeThermalMonitor();
+            makeThermalMonitor();
 
-      } catch (IOException e) {
-         LOG.error(e.getMessage(), e);
-      }
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+        }
 
-   }
+    }
 
-   public I2CDevice getI2CDevice(int addr) throws IOException, I2CFactory.UnsupportedBusNumberException {
-      return I2CFactory.getInstance(1).getDevice(addr);
-   }
+    public I2CDevice getI2CDevice(int addr) throws IOException, I2CFactory.UnsupportedBusNumberException {
+        return I2CFactory.getInstance(1).getDevice(addr);
+    }
 
-   public final Semaphore getSPILock() {
-      return spiLock;
-   }
+    public final Semaphore getSPILock() {
+        return spiLock;
+    }
 
-   public final SpiDevice getSPI() {
-      return spi;
-   }
+    public final SpiDevice getSPI() {
+        return spi;
+    }
 
-   public GpioPinDigitalOutput getGpioSS0() {
-      return gpioSS0;
-   }
+    public GpioPinDigitalOutput getGpioSS0() {
+        return gpioSS0;
+    }
 
-   public GpioPinDigitalOutput getGpioSS1() {
-      return gpioSS1;
-   }
+    public GpioPinDigitalOutput getGpioSS1() {
+        return gpioSS1;
+    }
 
-   public void resetAll() {
-      LOG.debug("Reset issued to devices");
-      try {
-         Thread.sleep(50);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.low();
-      try {
-         Thread.sleep(150);
-      } catch (InterruptedException e) {
-      }
-      gpioRst.high();
-      try {
-         Thread.sleep(150);
-      } catch (InterruptedException e) {
-      }
-   }
+    public void resetAll() {
+        LOG.debug("Reset issued to devices");
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+        }
+        gpioRst.low();
+        try {
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+        }
+        gpioRst.high();
+        try {
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+        }
+    }
 
-   /**
-    * Simple fan controller for making sure the pi cpu doesn't get too close to
-    * it's thermal limits.
-    */
-   public void makeThermalMonitor() {
+    /**
+     * Simple fan controller for making sure the pi cpu doesn't get too close to
+     * it's thermal limits.
+     */
+    public void makeThermalMonitor() {
 
-      Thread thread = new Thread() {
-         public void run() {
-            LOG.info("Thermal monitor starting");
-            while (true) {
-               try {
-                  Thread.sleep(10000);
-               } catch (InterruptedException e) {
-               }
-               try {
-                  float currentTemp = 0;// SystemInfo.getCpuTemperature();
-                  LOG.debug("CPU thermals:" +currentTemp);
-                  if (currentTemp > MAX_CPU_TEMP) {
-                     gpioFan1.high();
-                     gpioFan2.high();
-                  } else if (currentTemp < MAX_CPU_TEMP - 5) {
-                     gpioFan1.low();
-                     gpioFan2.low();
-                  }
-               } catch (UnsupportedOperationException e) {
-                  LOG.warn("CPU Does not support temperature measurement");
-                  break;
-              // } catch (InterruptedException e) {
-               } catch (Throwable e) {
-                  e.printStackTrace();
-               }
+        Thread thread = new Thread() {
+            public void run() {
+                LOG.info("Thermal monitor starting");
+                while (true) {
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                    }
+                    try {
+                        float currentTemp = 0;// SystemInfo.getCpuTemperature();
+                        LOG.debug("CPU thermals:" + currentTemp);
+                        if (currentTemp > MAX_CPU_TEMP) {
+                            gpioFan1.high();
+                            gpioFan2.high();
+                        } else if (currentTemp < MAX_CPU_TEMP - 5) {
+                            gpioFan1.low();
+                            gpioFan2.low();
+                        }
+                    } catch (UnsupportedOperationException e) {
+                        LOG.warn("CPU Does not support temperature measurement");
+                        break;
+                        // } catch (InterruptedException e) {
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
+                LOG.info("Thermal monitor exiting");
             }
-            LOG.info("Thermal monitor exiting");
-         }
-      };
+        };
 
-      thread.start();
+        thread.start();
 
-   }
+    }
 
 }

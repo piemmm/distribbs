@@ -20,13 +20,14 @@ package org.ka2ddo.ax25;
 
 import org.ka2ddo.util.StringCache;
 
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Comparator;
 
 /**
  * This class defines a single AX.25 callsign (address).
+ *
  * @author Andrew Pavlin, KA2DDO
  */
 public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, Serializable {
@@ -59,10 +60,12 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Construct an empty but assumed-valid callsign.
      */
-    public AX25Callsign() {}
+    public AX25Callsign() {
+    }
 
     /**
      * Construct a AX25Callsign from the string representation of the callsign.
+     *
      * @param textCallsign String to parse into an AX.25-compliant callsign
      */
     public AX25Callsign(String textCallsign) {
@@ -92,8 +95,8 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
             } else {
                 valid = validateCallsign(textCallsign, 0, pos);
             }
-            if (pos+1 < (length = textCallsign.length())) {
-                for (int i = pos+1; i < length; i++) {
+            if (pos + 1 < (length = textCallsign.length())) {
+                for (int i = pos + 1; i < length; i++) {
                     char ch;
                     if ((ch = textCallsign.charAt(i)) < '0' || ch > '9') {
                         valid = false;
@@ -120,9 +123,10 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Construct a AX25Callsign from the specified sub-string representation of the callsign.
+     *
      * @param textCallsign String to parse into an AX.25-compliant callsign
-     * @param startPos int position in string where callsign starts
-     * @param endPos int position in string where callsign ends
+     * @param startPos     int position in string where callsign starts
+     * @param endPos       int position in string where callsign ends
      */
     public AX25Callsign(String textCallsign, int startPos, int endPos) {
         int pos = textCallsign.indexOf('-', startPos);
@@ -149,7 +153,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
             } else {
                 valid = validateCallsign(textCallsign, startPos, pos);
             }
-            for (int i = pos+1; i < endPos; i++) {
+            for (int i = pos + 1; i < endPos; i++) {
                 char ch = textCallsign.charAt(i);
                 if (ch < '0' || ch > '9') {
                     valid = false;
@@ -173,8 +177,9 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Construct a AX25Callsign from the specified part of the byte array of text containing the callsign.
-     * @param startPos int position in byte array where callsign starts
-     * @param endPos int position in byte array where callsign ends
+     *
+     * @param startPos     int position in byte array where callsign starts
+     * @param endPos       int position in byte array where callsign ends
      * @param byteCallsign byte array of ASCII text to parse into an AX.25-compliant callsign
      */
     public AX25Callsign(int startPos, int endPos, byte[] byteCallsign) {
@@ -200,15 +205,15 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 //                    throw new IllegalArgumentException("callsign " + textCallsign + " too long");
                 valid = false;
             }
-            for (int i = pos+1; i < endPos; i++) {
-                char ch = (char)byteCallsign[i];
+            for (int i = pos + 1; i < endPos; i++) {
+                char ch = (char) byteCallsign[i];
                 if (ch < '0' || ch > '9') {
                     valid = false;
                     break;
                 }
             }
             if (valid) {
-                int tmpSsid = Integer.parseInt(new String(byteCallsign, 0, pos+1, endPos - pos - 1));
+                int tmpSsid = Integer.parseInt(new String(byteCallsign, 0, pos + 1, endPos - pos - 1));
                 if (tmpSsid < 0 || tmpSsid > 15) {
 //                    throw new IllegalArgumentException("out-of-range SSID=" + tmpSsid);
                     valid = false;
@@ -225,12 +230,13 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * Extract an AX.25 callsign from an AX.25 frame byte array in network byte order. This
      * variant properly handles all the control bits and the fact that the ASCII characters are
      * shifted left one bit according to the AX.25 protocol specification.
-     * @param buf byte array containing the AX.25-encoded callsign
+     *
+     * @param buf    byte array containing the AX.25-encoded callsign
      * @param offset index into the array where the callsign begins
      * @param length bytes remaining in the array after the offset
      * @throws IndexOutOfBoundsException if not enough bytes left in the array to contain an AX.25 callsign
-     * @throws IllegalArgumentException if the callsign has an invalid format, such as embedded whitespace in
-     *             the middle of a callsign with following non-blank characters
+     * @throws IllegalArgumentException  if the callsign has an invalid format, such as embedded whitespace in
+     *                                   the middle of a callsign with following non-blank characters
      */
     public AX25Callsign(byte[] buf, int offset, int length) throws IndexOutOfBoundsException, IllegalArgumentException {
         if (length < 7 || buf.length - offset < length) {
@@ -258,8 +264,8 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
         callsign = StringCache.intern(new String(b, 0, len));
         int b6 = buf[offset + 6];
         h_c = (b6 & 0x80) != 0;
-        reserved = (byte)((b6 & 0x60) >> 5);
-        ssid = (byte)((b6 & 0x1E) >> 1);
+        reserved = (byte) ((b6 & 0x60) >> 5);
+        ssid = (byte) ((b6 & 0x1E) >> 1);
         last = (b6 & 0x01) != 0;
     }
 
@@ -279,6 +285,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * the last character, all letters uppercase). Note this will automatically strip off the SSID
      * (if any) before testing. Note this is safe for empty strings, and will properly report them
      * as not being a valid real-station callsign,
+     *
      * @param callsign String callsign to test
      * @return boolean true if callsign looks like real
      */
@@ -322,6 +329,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * the last character, all letters uppercase), and an AX.25-legal SSID.
      * Note this is safe for empty strings, and will properly report them
      * as not being a valid real-station callsign,
+     *
      * @param callsign String callsign to test
      * @return boolean true if callsign looks like real
      */
@@ -335,7 +343,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
         if (hyphenPos > 0 && hyphenPos < lastCharPos) {
             lastCharPos = hyphenPos - 1;
             try {
-                ssid = Integer.parseInt(callsign.substring(hyphenPos+1));
+                ssid = Integer.parseInt(callsign.substring(hyphenPos + 1));
             } catch (NumberFormatException e) {
                 return false; // if a SSID can't be decoded, it's not legal for AX.25 digipeaters
             }
@@ -366,6 +374,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * uppercase ASCII letters except for the last character, which must be a digit between 1 and 7,
      * and the SSID must be less than or equal to the number corresponding to that digit (i.e.,
      * WIDE1-7 is not valid).
+     *
      * @return boolean true if this callsign looks like a New n-N digipeat alias
      */
     public boolean isNewNParadigmAlias() {
@@ -395,6 +404,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * uppercase ASCII letters except for the last character, which must be a digit between 1 and 7,
      * and the SSID (if present) must be less than or equal to the number corresponding to that digit (i.e.,
      * WIDE1-7 is not valid).
+     *
      * @param callsign String supposedly containing an AX.25 callsign
      * @return boolean true if this callsign looks like a New n-N digipeat alias
      */
@@ -406,13 +416,13 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
         if (hyphenPos > 0 && hyphenPos < lastCharPos) {
             lastCharPos = hyphenPos - 1;
             try {
-                ssid = Integer.parseInt(callsign.substring(hyphenPos+1));
+                ssid = Integer.parseInt(callsign.substring(hyphenPos + 1));
             } catch (NumberFormatException e) {
                 // ignore
             }
         } else /*if (-1 == hyphenPos)*/ {
             if ((hyphenPos = callsign.lastIndexOf(' ', lastCharPos)) > 0 &&
-                hyphenPos < lastCharPos) {
+                    hyphenPos < lastCharPos) {
                 return false; // D-star gateway names can't be digipeat aliases
             }
         }
@@ -435,6 +445,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Test if the parameter appears to be an old paradign digipeat alias. Such callsigns are all
      * uppercase ASCII letters.
+     *
      * @param callsign String supposedly containing an AX.25 callsign
      * @return boolean true if this callsign looks like an old digipeat alias
      */
@@ -444,6 +455,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Test if some other object is the same as this AX25Callsign.
+     *
      * @param o Object to compare against this callsign
      * @return boolean true if o is a AX25Callsign with the same value
      */
@@ -460,7 +472,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Returns a hash code for this callsign.
      *
-     * @return  a hash code value for this object.
+     * @return a hash code value for this object.
      */
     @Override
     public int hashCode() {
@@ -470,6 +482,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Return a String representing this AX25Callsign object.
+     *
      * @return descriptive String
      */
     @Override
@@ -494,6 +507,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Return a String representing this AX25Frame object, with an additional note if the reserved field in the SSID byte
      * is not the default value.
+     *
      * @return descriptive String
      */
     public String toAnnotatedString() {
@@ -511,17 +525,16 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * as a tie-breaker. Note that lowercase is not supposed to be used in
      * a callsign, but this comparator ignores it.
      *
-     * @param   o the object to be compared.
-     * @return  a negative integer, zero, or a positive integer as this object
-     *		is less than, equal to, or greater than the specified object.
-     *
+     * @param o the object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object
+     * is less than, equal to, or greater than the specified object.
      * @throws ClassCastException if the specified object's type prevents it
-     *         from being compared to this object.
+     *                            from being compared to this object.
      */
     public int compareTo(AX25Callsign o) {
         int diff = String.CASE_INSENSITIVE_ORDER.compare(callsign, o.callsign);
         if (0 == diff && valid == o.valid) {
-            diff = ((int)ssid & 0xFF) - ((int)o.ssid & 0xFF);
+            diff = ((int) ssid & 0xFF) - ((int) o.ssid & 0xFF);
 /*
             if (0 == diff) {
                 // already-repeated callsigns go first
@@ -535,13 +548,14 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * A Comparator to use for callsigns when it is more efficient than using the
      * Comparable interface to AX25Callsign.
+     *
      * @see #compareTo(AX25Callsign)
      */
     public static final Comparator<AX25Callsign> CALLSIGN_COMPARATOR = new Comparator<AX25Callsign>() {
         public int compare(AX25Callsign o1, AX25Callsign o2) {
             int diff = o1.callsign.compareToIgnoreCase(o2.callsign);
             if (0 == diff && o1.valid == o2.valid) {
-                diff = ((int)o1.ssid & 0xFF) - ((int)o2.ssid & 0xFF);
+                diff = ((int) o1.ssid & 0xFF) - ((int) o2.ssid & 0xFF);
             }
             return diff;
         }
@@ -549,7 +563,8 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Encode this AX25Callsign into binary radio transmission format on a stream.
-     * @param os the OutputStream to write the binary encoding to
+     *
+     * @param os   the OutputStream to write the binary encoding to
      * @param last boolean true if this callsign should have the last bit set in
      *             its last byte to indicate there will be no following callsigns
      *             according to the AX.25 protocol specification
@@ -562,10 +577,10 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
         }
 */
         int i = 0;
-        for ( ; i < Math.min(callsign.length(), 6); i++) {
-            os.write(((int)callsign.charAt(i) & 0x7F) << 1);
+        for (; i < Math.min(callsign.length(), 6); i++) {
+            os.write(((int) callsign.charAt(i) & 0x7F) << 1);
         }
-        for ( ; i < 6; i++) {
+        for (; i < 6; i++) {
             os.write(0x40); // space shifted left 1
         }
         os.write((ssid << 1) | ((reserved & 3) << 5) | (h_c ? 0x80 : 0) | (last ? 1 : 0));
@@ -574,18 +589,19 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Return the callsign as the actual byte sequence that would be transmitted
      * over the air (without HDLC bit-stuffing).
+     *
      * @return byte array of the callsign
      */
     public byte[] toByteArray() {
         byte[] answer = new byte[7];
         int i = 0;
-        for ( ; i < Math.min(callsign.length(), 6); i++) {
-            answer[i] = (byte)(((int)callsign.charAt(i) & 0x7F) << 1);
+        for (; i < Math.min(callsign.length(), 6); i++) {
+            answer[i] = (byte) (((int) callsign.charAt(i) & 0x7F) << 1);
         }
-        for ( ; i < 6; i++) {
+        for (; i < 6; i++) {
             answer[i] = (0x40); // space shifted left 1
         }
-        answer[6] = (byte)((ssid << 1) | ((reserved & 3) << 5) | (h_c ? 0x80 : 0) | (last ? 1 : 0));
+        answer[6] = (byte) ((ssid << 1) | ((reserved & 3) << 5) | (h_c ? 0x80 : 0) | (last ? 1 : 0));
         return answer;
     }
 
@@ -593,6 +609,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      * Return the AX.25 packing of the 7th byte of the callsign. Used to support the optimized
      * checksum computation in AX25Frame so as to avoid malloc'ing a byte array by using the
      * toByteArray() method.
+     *
      * @return 8-bit value for encoded 7th byte of wire-format AX.25 callsign
      * @see org.ka2ddo.ax25.AX25Frame#getChecksum()
      * @see #toByteArray()
@@ -604,7 +621,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Creates and returns a copy of this object.
      *
-     * @return     a clone of this instance.
+     * @return a clone of this instance.
      */
     @Override
     public Object clone() {
@@ -613,6 +630,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Create a shallow clone of this AX25Callsign, discarding any cached toString() value.
+     *
      * @return a copy AX25Callsign
      */
     public AX25Callsign dup() {
@@ -629,6 +647,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Gets the base callsign (without the AX.25 SSID extension). Note that the extension may
      * be included in this string if the overall callsign does not comply with AX.25 requirements.
+     *
      * @return String of the base callsign name
      */
     public String getBaseCallsign() {
@@ -638,6 +657,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
     /**
      * Return the numeric SSID associated with this callsign. Will be zero if the overall callsign
      * does not comply with AX.25 requirements.
+     *
      * @return numeric SSID in the range 0 to 15
      */
     public int getSSID() {
@@ -646,6 +666,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Specify the numeric SSID associated with this callsign.
+     *
      * @param ssid numeric SSID in the range 0 to 15
      */
     public void setSSID(int ssid) {
@@ -653,7 +674,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
             if (ssid < 0 || ssid > 15) {
                 throw new IllegalArgumentException("out-of-range SSID value=" + ssid);
             }
-            this.ssid = (byte)ssid;
+            this.ssid = (byte) ssid;
             cachedToString = null;
         }
     }
@@ -670,6 +691,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Report if the hasBeenRepeated flag in the callsign is set.
+     *
      * @return boolean true if the hasBeenRepeated bit is set
      */
     public boolean hasBeenRepeated() {
@@ -678,6 +700,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Get the reserved bits of the 7th byte of the callsign (per the AX.25 specification).
+     *
      * @return the value of the reserved bits
      */
     public byte getReserved() {
@@ -686,14 +709,16 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Set the reserved bits of the 7th byte of the callsign (per the AX.25 specification).
+     *
      * @param reserved the new value of the reserved bits (masked to the range 0 to 3)
      */
     public void setReserved(byte reserved) {
-        this.reserved = (byte)(reserved & 3);
+        this.reserved = (byte) (reserved & 3);
     }
 
     /**
      * Indicates if this callsign has valid syntax to be transmitted in the header of an AX.25 frame.
+     *
      * @return boolean true if callsign is legal for AX.25 frame transmission
      */
     public boolean isValid() {
@@ -702,6 +727,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Get the current default value for the reserved bits of the AX25 callsign SSID byte.
+     *
      * @return current default RR bit value
      */
     public static byte getDefaultReserved() {
@@ -710,9 +736,10 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
 
     /**
      * Set the default value for the reserved bits of newly generated AX25 callsign SSID byte.
+     *
      * @param defaultReserved current default RR bit value
      */
     public static void setDefaultReserved(byte defaultReserved) {
-        AX25Callsign.defaultReserved = (byte)(defaultReserved & 3);
+        AX25Callsign.defaultReserved = (byte) (defaultReserved & 3);
     }
 }

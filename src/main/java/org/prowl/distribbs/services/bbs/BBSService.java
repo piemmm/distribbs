@@ -6,8 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 
-import com.googlecode.lanterna.terminal.ansi.TelnetTerminalServer;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -16,7 +14,7 @@ import java.io.OutputStream;
  */
 public class BBSService extends Service {
 
-    private static final Log          LOG = LogFactory.getLog("BBSService");
+    private static final Log LOG = LogFactory.getLog("BBSService");
 
     private boolean stop;
 
@@ -28,7 +26,7 @@ public class BBSService extends Service {
     public BBSService(HierarchicalConfiguration config) {
         super(config);
         callsign = config.getString("callsign");
-        bbsAddress  = config.getString("bbsAddress");
+        bbsAddress = config.getString("bbsAddress");
     }
 
     public void acceptedConnection(User user, InputStream in, OutputStream out) {
@@ -36,7 +34,8 @@ public class BBSService extends Service {
         client.start();
     }
 
-    public void start() {}
+    public void start() {
+    }
 
     public void stop() {
         stop = true;
