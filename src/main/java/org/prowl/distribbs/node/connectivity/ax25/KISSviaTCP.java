@@ -42,6 +42,7 @@ public class KISSviaTCP extends Interface {
     private int maxFrames;
     private int baudRate;
     private int frequency;
+    private int retries;
 
     private BasicTransmittingConnector connector;
     private HierarchicalConfiguration config;
@@ -70,6 +71,7 @@ public class KISSviaTCP extends Interface {
         baudRate = config.getInt("channelBaudRate", 1200);
         maxFrames = config.getInt("maxFrames", 3);
         frequency = config.getInt("frequency", 0);
+        retries = config.getInt("retries", 6);
 
         // Check the slot is obtainable.
         if (port < 1) {
@@ -113,7 +115,7 @@ public class KISSviaTCP extends Interface {
         // not just this one.
         AX25Callsign defaultCallsign = new AX25Callsign(defaultOutgoingCallsign);
 
-        connector = new BasicTransmittingConnector(pacLen, maxFrames, baudRate, defaultCallsign, in, out, new ConnectionRequestListener() {
+        connector = new BasicTransmittingConnector(pacLen, maxFrames, baudRate, retries, defaultCallsign, in, out, new ConnectionRequestListener() {
             /**
              * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept
              * if we are interested in the callsign being sent a connection request.

@@ -41,7 +41,7 @@ public class MainTest {
             // not just this one.
             AX25Callsign defaultCallsign = new AX25Callsign("N0CALL-5");
 
-            connector = new BasicTransmittingConnector(255, 7, 1200, defaultCallsign, in, out, new ConnectionRequestListener() {
+            connector = new BasicTransmittingConnector(255, 7, 1200, 6,defaultCallsign, in, out, new ConnectionRequestListener() {
 
                 /**
                  * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept

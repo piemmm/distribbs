@@ -112,7 +112,7 @@ public class PacketTools {
 
 
         for (Capability c : node.getCapabilities()) {
-            LOG.info("Node: " + node.getCallsign() + " supports " + c.getService().getName());
+            LOG.debug("Node: " + node.getCallsign() + " supports " + c.getService().getName());
         }
 
     }

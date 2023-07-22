@@ -189,7 +189,7 @@ class AX25OutputStream extends OutputStream {
                     f.setNR(connState.vr);
 
                     LOG.debug("sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                    connState.setResendableFrame(f, 3); // Make sure we resend it if we have no ack
+                    connState.setResendableFrame(f, connState.stack.getTransmitting().getRetransmitCount()); // Make sure we resend it if we have no ack
                     connState.connector.sendFrame(f);
 
                 } else {

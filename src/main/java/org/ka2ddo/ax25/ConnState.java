@@ -295,11 +295,12 @@ public class ConnState implements AX25FrameSource, Closeable {
                 public void run() {
                     // if the connection is no longer open, don't bother
                     if (transition == ConnTransition.LINK_DOWN) {
+                        LOG.debug("T1 timeout on " + ConnState.this + " but connection is down, so it will be ignored");
                         cancel();  // also cancel the timer
                         return;
                     }
 
-                    LOG.debug("T1 timeout on " + ConnState.this);
+                    LOG.debug("T1 timeout on " + ConnState.this+" retriesRemaining="+retriesRemaining);
                     if (retriesRemaining-- > 0) {
                         if (localRcvBlocked) {
                             stack.transmitRNR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);

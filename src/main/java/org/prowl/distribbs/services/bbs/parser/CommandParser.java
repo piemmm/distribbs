@@ -237,7 +237,7 @@ public class CommandParser {
 
         List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
         int port = 0;
-        write(ANSI.UNDERLINE + ANSI.BOLD + "Port  Driver          Freq/IP      Noise Floor  Compress(tx/rx)" + ANSI.NORMAL + CR);
+        write(ANSI.UNDERLINE + ANSI.BOLD + "Int   Driver          Freq/IP      Noise Floor  Compress(tx/rx)" + ANSI.NORMAL + CR);
 
         for (Interface connector : connectors) {
 
@@ -267,7 +267,7 @@ public class CommandParser {
         if (nodes.size() == 0) {
             write("No nodes heard" + CR);
         } else {
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Port Callsign  Freq/IP      Last Heard             RSSI Capabilities" + ANSI.NORMAL + CR);
+            write(ANSI.UNDERLINE + ANSI.BOLD + "Int  Callsign  Freq/IP      Last Heard             RSSI Capabilities" + ANSI.NORMAL + CR);
 
             for (Node node : nodes) {
                 String rssi = "-" + node.getRSSI() + " dBm";
@@ -292,7 +292,7 @@ public class CommandParser {
         if (nodes.size() == 0) {
             write("No nearby nodes unheard yet" + CR);
         } else {
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Port Callsign  Freq/IP      Last UnHeard       CanReach" + ANSI.NORMAL + CR);
+            write(ANSI.UNDERLINE + ANSI.BOLD + "Int  Callsign  Freq/IP      Last UnHeard       CanReach" + ANSI.NORMAL + CR);
 
             for (Node node : nodes) {
                 String rssi = "-" + node.getRSSI() + " dBm";
