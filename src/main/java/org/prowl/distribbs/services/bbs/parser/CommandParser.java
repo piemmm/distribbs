@@ -3,6 +3,7 @@ package org.prowl.distribbs.services.bbs.parser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.annotations.Commandable;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.core.Capability;
@@ -12,63 +13,91 @@ import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.services.bbs.BBSClientHandler;
+import org.prowl.distribbs.services.bbs.parser.commands.Command;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.ANSI;
 import org.prowl.distribbs.utils.Tools;
 import org.prowl.distribbs.utils.UnTokenize;
+import org.reflections.Reflections;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class CommandParser {
     private static final Log LOG = LogFactory.getLog("CommandParser");
 
+    // The end character for the BBS prompt
     public static final String PROMPT = ">";
-    public static final String INCORRECT_ARGS = "Incorrect number of arguments for command!";
-    public static final String INVALID_ARGUMENT = "Invalid data supplied for command!";
-    public static final String PORT_UNSUPPORTED = "Operation unsupported on this port";
 
     // Carriage return
-    private static final String CR = "\r";
+    public static final String CR = "\r";
+
+    // Commands that are available
+    private static final Set<Class<?>> ALL_COMMANDS = new Reflections("org.prowl.distribbs.services.bbs.parser.commands").getTypesAnnotatedWith(Commandable.class);
+
+    // Command classes that help keep this class cleaner
+    private final List<Command> commands = new ArrayList<>();
 
     // Client we are parsing for
-    private BBSClientHandler client;
-    // Storage for messages
-    private Storage storage;
+    private final BBSClientHandler client;
+
     // Default to command mode.
     private Mode mode = Mode.CMD;
 
-    // Utility variables related to some commands
-    private int listMessagesStartingPoint = 0;                                   // Used for list messages command
-    private List<Message> currentListMessages;                               // Used for list messages command
-
-
     public CommandParser(BBSClientHandler client) {
         this.client = client;
-        storage = DistriBBS.INSTANCE.getStorage();
-
+        // Storage for messages
+        Storage storage = DistriBBS.INSTANCE.getStorage();
+        makeCommands();
     }
 
+    /**
+     * Instantiate all the available commands in the CommandItem enum - this lets others add commands as external jars
+     * without having to modify this class by using the @Commandable annotation in their command class.
+     *
+     * @throws IOException
+     */
+    public void makeCommands() {
+        for (Class<?> cl : ALL_COMMANDS) {
+            try {
+                Object instance = cl.getDeclaredConstructor(new Class[0]).newInstance();
+                if (instance instanceof Command) {
+                    // Setup the command
+                    Command command = (Command) instance;
+                    command.setClient(client, this);
+                    commands.add(command);
+                } else {
+                    // This isn't a commandable class!
+                    LOG.fatal("Class is not a command: " + cl);
+                    System.exit(1);
+                }
+            } catch (Exception e) {
+                LOG.error("Unable to instantiate command: " + cl, e);
+            }
+        }
+    }
 
     public void parse(String c) throws IOException {
-
         if (mode == Mode.CMD || mode == Mode.MESSAGE_LIST_PAGINATION || mode == Mode.MESSAGE_READ_PAGINATION) {
-            String[] arguments = c.split(" ");
+            String[] arguments = c.split(" "); // Arguments[0] is the command used.
 
-            // if (c.length() > 0) {
-            Command command = Command.findByName(arguments[0].toUpperCase(Locale.ENGLISH));
-            if (command != null) {
-                doCommand(command, arguments);
-            } else {
+            // If the command matches, then we will send the command. It is up to the command to check the mode we are
+            // in and act accordingly.
+            boolean commandExecuted = false;
+            for (Command command: commands) {
+                String[] supportedCommands = command.getCommandNames();
+                for (String supportedCommand: supportedCommands) {
+                    if (supportedCommand.equalsIgnoreCase(arguments[0])) {
+                        commandExecuted = command.doCommand(arguments) | commandExecuted;
+                    }
+                }
+            }
+            if (!commandExecuted && arguments[0].length() > 0) {
                 unknownCommand();
             }
-
-            // }
-
             sendPrompt();
         }
     }
@@ -82,265 +111,12 @@ public class CommandParser {
         }
     }
 
-    /**
-     * Do the command.
-     *
-     * @param command
-     * @param arguments
-     */
-    public void doCommand(Command command, String[] arguments) throws IOException {
-
-        if (mode == Mode.MESSAGE_LIST_PAGINATION) {
-            // List messages commands
-            switch (command) {
-                case A:
-                case ABORT:
-                    write(ANSI.BOLD + Messages.get("abortMessageList") + ANSI.NORMAL + CR);
-                    mode = Mode.CMD;
-                    break;
-                case R:
-                case READ:
-                    readMessage(arguments);
-                    break;
-                default:
-                    sendMessageList(currentListMessages);
-            }
-        } else if (mode == Mode.CMD) {
-            // Normal commands
-            switch (command) {
-                case H:
-                case HELP:
-                    showHelp(arguments);
-                    break;
-                case MH:
-                case MHEARD:
-                case HEARD:
-                    showHeard();
-                    break;
-                case UNHEARD:
-                case UH:
-                    showUnHeard();
-                    break;
-                case B:
-                case BYE:
-                case END:
-                case LOGOFF:
-                case LOGOUT:
-                case EXIT:
-                case QUIT:
-                    logout();
-                    break;
-                case PORTS:
-                    showPorts();
-                    break;
-                case LIST:
-                case L:
-                    listMessages(arguments);
-                    break;
-                case CC:
-                    colourToggle();
-                    break;
-                case ENTER_KEY:
-                    break;
-                default:
-                    unknownCommand();
-            }
-        } else {
-            LOG.warn("Unknown mode: " + mode);
-            unknownCommand();
-        }
+    public void setMode(Mode mode) {
+        this.mode = mode;
     }
 
-    public void readMessage(String[] arguments) {
-
-    }
-
-    public void listMessages(String[] arguments) throws IOException {
-        listMessagesStartingPoint = 0;
-        List<Message> messages = storage.getNewsMessagesInOrder(null);
-        if (messages.size() == 0) {
-            write(CR);
-            write("No messages in BBS yet" + CR);
-        } else {
-            write(CR);
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Msg#   TSLD  Size To     @Route  From    Date/Time Subject" + ANSI.NORMAL + CR);
-            currentListMessages = messages; // Store filtered list for pagination sending
-            sendMessageList(currentListMessages);
-        }
-
-    }
-
-    public void sendMessageList(List<Message> messages) throws IOException {
-        SimpleDateFormat sdf = new SimpleDateFormat("ddMM/hhmm");
-        NumberFormat nf = NumberFormat.getInstance();
-        nf.setMaximumFractionDigits(0);
-        nf.setMinimumFractionDigits(0);
-        nf.setGroupingUsed(false);
-
-        int messageSentCounter = 0;
-        if (listMessagesStartingPoint != 0) {
-            //    write(CR);
-        }
-        for (int i = listMessagesStartingPoint; i < messages.size(); i++) {
-            Message message = messages.get(i);
-
-            write((StringUtils.rightPad(nf.format(message.getMessageNumber()), 6) + // MessageId
-                    StringUtils.rightPad("", 6) +  // TSLD
-                    StringUtils.leftPad(nf.format(message.getBody().length), 5) + " " + // Size
-                    StringUtils.rightPad(message.getGroup(), 7) +  // To
-                    StringUtils.rightPad(message.getRoute(), 8) + // @route
-                    StringUtils.rightPad(message.getFrom(), 8) + // from
-                    StringUtils.rightPad(sdf.format(message.getDate()), 10) + // date/time
-                    StringUtils.rightPad(message.getSubject(), 50)).trim() + CR);
-
-            if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
-                mode = Mode.MESSAGE_LIST_PAGINATION;
-                listMessagesStartingPoint += messageSentCounter;
-                break;
-            }
-        }
-    }
-
-    public void colourToggle() throws IOException {
-        client.setColourEnabled(!client.getColourEnabled());
-        if (client.getColourEnabled()) {
-            write(Messages.get("colourEnabled") + CR);
-        } else {
-            write(Messages.get("colourDisabled") + CR);
-        }
-    }
-
-
-    public void logout() throws IOException {
-        client.send(CR);
-        client.send(Messages.get("userDisconnecting") + CR);
-        client.flush();
-        client.close();
-    }
-
-
-    public void showHelp(String[] arguments) throws IOException {
-        client.send(CR);
-        client.send("No help yet" + CR);
-    }
-
-    public void showPorts() throws IOException {
-        write(CR);
-
-        NumberFormat nf = NumberFormat.getInstance();
-        nf.setMaximumFractionDigits(4);
-        nf.setMinimumFractionDigits(3);
-
-        NumberFormat nfb = NumberFormat.getInstance();
-        nfb.setMaximumFractionDigits(1);
-        nfb.setMinimumFractionDigits(1);
-
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
-        int port = 0;
-        write(ANSI.UNDERLINE + ANSI.BOLD + "Int   Driver          Freq/IP      Noise Floor  Compress(tx/rx)" + ANSI.NORMAL + CR);
-
-        for (Interface connector : connectors) {
-
-            String noiseFloor = "-";
-            if (connector.getNoiseFloor() != Double.MAX_VALUE) {
-                noiseFloor = "-" + nfb.format(connector.getNoiseFloor()) + " dBm";
-            }
-
-            String freq = Tools.getNiceFrequency(connector.getFrequency());
-            String compressRatio = "-";
-            if (connector.getRxUncompressedByteCount() + connector.getTxCompressedByteCount() != 0) {
-                compressRatio = nf.format(((double) connector.getTxUncompressedByteCount() / (double) connector.getTxCompressedByteCount())) + "/" + nf.format(((double) connector.getRxUncompressedByteCount() / (double) connector.getRxCompressedByteCount()));
-            }
-
-            write(port + "     " + StringUtils.rightPad(connector.getName(), 16) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(noiseFloor, 13) + compressRatio + CR);
-            port++;
-        }
-    }
-
-    public void showHeard() throws IOException {
-        write(CR);
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
-
-        MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
-        List<Node> nodes = heard.listHeard();
-        if (nodes.size() == 0) {
-            write("No nodes heard" + CR);
-        } else {
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Int  Callsign  Freq/IP      Last Heard             RSSI Capabilities" + ANSI.NORMAL + CR);
-
-            for (Node node : nodes) {
-                String rssi = "-" + node.getRSSI() + " dBm";
-                if (node.getRSSI() == Double.MAX_VALUE) {
-                    rssi = "-  ";
-                }
-
-                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
-
-                write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + StringUtils.leftPad(rssi, 9) + " " + StringUtils.rightPad(listCapabilities(node), 14) + CR);
-            }
-        }
-    }
-
-    public void showUnHeard() throws IOException {
-        write(CR);
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
-
-        MHeard heard = DistriBBS.INSTANCE.getStatistics().getUnHeard();
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
-        List<Node> nodes = heard.listHeard();
-        if (nodes.size() == 0) {
-            write("No nearby nodes unheard yet" + CR);
-        } else {
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Int  Callsign  Freq/IP      Last UnHeard       CanReach" + ANSI.NORMAL + CR);
-
-            for (Node node : nodes) {
-                String rssi = "-" + node.getRSSI() + " dBm";
-                if (node.getRSSI() == Double.MAX_VALUE) {
-                    rssi = "-  ";
-                }
-
-                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
-
-                write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18)  + " " + StringUtils.rightPad(canReach(node), 14) + CR);
-            }
-        }
-    }
-
-    /**
-     * Returns a string list of capability names this node has been seen to perform.
-     *
-     * @param node
-     * @return
-     */
-    public String listCapabilities(Node node) {
-        StringBuilder sb = new StringBuilder();
-        for (Capability c : node.getCapabilities()) {
-            sb.append(c.getService().getName());
-            sb.append(",");
-        }
-        if (sb.length() > 0) {
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
-    }
-
-    /**
-     *Returns a nice string of callsigns that can reach this node.
-     *
-     * @param node
-     * @return
-     */
-    public String canReach(Node node) {
-        StringBuilder sb = new StringBuilder();
-        for (Node n : node.getCanReachNodes()) {
-            sb.append(n.getCallsign());
-            sb.append(",");
-        }
-        if (sb.length() > 0) {
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
+    public Mode getMode() {
+        return mode;
     }
 
     public void unknownCommand() throws IOException {
@@ -352,7 +128,6 @@ public class CommandParser {
         return ANSI.BOLD_YELLOW + UnTokenize.str(name) + ANSI.BOLD_WHITE + PROMPT + ANSI.NORMAL + " ";
     }
 
-
     /**
      * Convenience method to write and not detokenize a string
      *
@@ -362,7 +137,6 @@ public class CommandParser {
     public void write(String s) throws IOException {
         client.send(s);
     }
-
 
     /**
      * Convenience method to write a detokenized string

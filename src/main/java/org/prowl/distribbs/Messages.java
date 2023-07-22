@@ -1,5 +1,7 @@
 package org.prowl.distribbs;
 
+import org.prowl.distribbs.utils.Tools;
+
 import java.util.ResourceBundle;
 
 public final class Messages {

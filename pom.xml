@@ -24,6 +24,13 @@
 			<version>32.0.0-jre</version>
 		</dependency>
 
+		<!-- Reflections, for finding classes in the classpath -->
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.10.2</version>
+		</dependency>
+
 		<!-- Pi's GPIO library to talk to various hardware bits -->
 		<dependency>
 			<groupId>com.pi4j</groupId>
