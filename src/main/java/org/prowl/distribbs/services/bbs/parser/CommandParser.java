@@ -195,7 +195,7 @@ public class CommandParser {
 
             if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
                 mode = Mode.MESSAGE_LIST_PAGINATION;
-                listMessagesStartingPoint = +messageSentCounter;
+                listMessagesStartingPoint += messageSentCounter;
                 break;
             }
         }
