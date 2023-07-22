@@ -50,7 +50,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
      */
     public AX25Callsign defaultCallsign;
 
-    private InputStream in;
+    private final InputStream in;
     KissEscapeOutputStream kos;
 
 
@@ -225,11 +225,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 //            }
 //        }
 
-        if (getCallsign() != null && destCallsign.equalsIgnoreCase(getCallsign())) {
-            return true;
-        }
-
-        return false;
+        return getCallsign() != null && destCallsign.equalsIgnoreCase(getCallsign());
     }
 
     /**
@@ -276,7 +272,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                             boolean sentSuccessfully = sendFrame(entry, now, frame, p);
                             incrementXmitCount &= !sentSuccessfully;
                         } else {
-                            System.out.println(new Date().toString() + ": received null frame from " + entry);
+                            System.out.println(new Date() + ": received null frame from " + entry);
                         }
                     }
                 }
@@ -311,7 +307,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 stats.numXmtBytes += byteCount;
                 stats.numXmtFrames++;
             }
-            LOG.debug("Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame.toString() + "  asciiFrame:" + frame.getAsciiFrame());
+            LOG.debug("Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame + "  asciiFrame:" + frame.getAsciiFrame());
         } catch (Exception e) {
             //  fireTransmitting(false);
             //  fireFailed();
@@ -384,7 +380,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                                                 rcvBuf[wEnd++] = (byte) newData;
                                             } else {
                                                 // some kind of protocol error, so reset and start over
-                                                System.out.println(new Date().toString() + ": receive buffer overflow, must be mode garbling, reset protocol");
+                                                LOG.debug("receive buffer overflow, must be mode garbling, reset protocol");
                                                 wEnd = 0;
                                                 //  fireReceiving(false);
                                                 curState = KissEscapeOutputStream.RcvState.IDLE;
@@ -421,7 +417,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 }
             } catch (Throwable e) {
                 //    stats.numBadRcvFrames++;
-                System.out.println(new Date().toString() + ": unhandled exception in KissOverTcpConnector");
+                LOG.error("unhandled exception in KissOverTcpConnector:"+e.getMessage(), e);
                 e.printStackTrace(System.out);
                 // discard this frame
                 curState = KissEscapeOutputStream.RcvState.IDLE;
@@ -515,7 +511,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                     }
                 }
             } finally {
-                System.out.println(new Date().toString() + ": terminating TransmitterThread");
+                LOG.info("terminating TransmitterThread");
             }
         });
         tx.start();

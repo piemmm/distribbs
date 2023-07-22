@@ -120,7 +120,7 @@ public class AX25Stack implements FrameListener, Runnable {
         }
 
         // Attempt to configure timers appropriately based on the transmitting configuration.
-        long candidateSpeed = maxFrames * pacLen * 40000l / baudRateInBitsPerSecond;
+        long candidateSpeed = maxFrames * pacLen * 40000L / baudRateInBitsPerSecond;
 
         // Make sure we don't go below a sensible minimum or maximum(to prevent stalled connections)
         WAIT_FOR_ACK_T1_TIMER = Math.max(candidateSpeed, WAIT_FOR_ACK_T1_TIMER_MINIMUM);
@@ -308,7 +308,7 @@ public class AX25Stack implements FrameListener, Runnable {
         try {
             FastBlockingQueue<AX25Frame> frameParserQueue;
             if (!(frameParserQueue = this.frameParserQueue).offer(frame)) {
-                LOG.warn("AX25Stack parser queue filled up, parsing thread can't keep up from " + Thread.currentThread().toString());
+                LOG.warn("AX25Stack parser queue filled up, parsing thread can't keep up from " + Thread.currentThread());
                 frameParserQueue.put(frame);
             }
             int sz;
@@ -708,7 +708,7 @@ public class AX25Stack implements FrameListener, Runnable {
                             sb.append(" ");
                             //TODO: do something with the XID response
                         }
-                        LOG.debug("recv xid addressed to " + frame.dest + " XID:" + sb.toString());
+                        LOG.debug("recv xid addressed to " + frame.dest + " XID:" + sb);
 
                     } catch (IOException e) {
                         LOG.error(e.getMessage(), e);
@@ -1104,7 +1104,7 @@ public class AX25Stack implements FrameListener, Runnable {
             ((TransmittingConnector) connector).sendFrame(resp);
             LOG.debug("sending U UA" + (finish ? " F" : "") + " to " + resp.dest);
         } catch (IOException e) {
-            LOG.error("unable to send UA frame to " + remote.toString(), e);
+            LOG.error("unable to send UA frame to " + remote, e);
         }
     }
 
@@ -1131,7 +1131,7 @@ public class AX25Stack implements FrameListener, Runnable {
                 connector.sendFrame(resp);
                 LOG.debug("sending U DISC" + (poll ? " P" : "") + " to " + resp.dest);
             } catch (IOException e) {
-                LOG.error("unable to send DISC frame to " + remote.toString(), e);
+                LOG.error("unable to send DISC frame to " + remote, e);
             }
         } else {
             transmitting.queue(resp);
@@ -1161,7 +1161,7 @@ public class AX25Stack implements FrameListener, Runnable {
             ((TransmittingConnector) connector).sendFrame(resp);
             LOG.debug("sending U DM" + (finish ? " F" : "") + " to " + resp.dest);
         } catch (IOException e) {
-            LOG.error("unable to send DM frame to " + remote.toString(), e);
+            LOG.error("unable to send DM frame to " + remote, e);
 
         }
     }
@@ -1209,7 +1209,7 @@ public class AX25Stack implements FrameListener, Runnable {
             ((TransmittingConnector) connector).sendFrame(resp);
             LOG.debug("sending S RR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (Exception e) {
-            LOG.error("unable to send RR frame to " + remote.toString(), e);
+            LOG.error("unable to send RR frame to " + remote, e);
         }
     }
 
@@ -1256,7 +1256,7 @@ public class AX25Stack implements FrameListener, Runnable {
             ((TransmittingConnector) connector).sendFrame(resp);
             LOG.debug("sending S RNR" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (Exception e) {
-            LOG.error("unable to send RR frame to " + remote.toString(), e);
+            LOG.error("unable to send RR frame to " + remote, e);
         }
     }
 
@@ -1287,7 +1287,7 @@ public class AX25Stack implements FrameListener, Runnable {
             ((TransmittingConnector) connector).sendFrame(resp);
             LOG.debug("sending S REJ" + (poll ? " P" : "") + " NR=" + state.vr + " to " + resp.dest);
         } catch (IOException e) {
-            LOG.error("unable to send REJ frame to " + remote.toString(), e);
+            LOG.error("unable to send REJ frame to " + remote, e);
         }
     }
 

@@ -495,10 +495,10 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
                 return s;
             } else {
                 if (isRealCallsign(callsign)) {
-                    return cachedToString = StringCache.intern(new StringBuilder(callsign.length() + 3).append(callsign).append('-').append(ssid).toString());
+                    return cachedToString = StringCache.intern(callsign + '-' + ssid);
                 } else {
                     // if it looks like a Mic-E destination, don't clutter the cache
-                    return cachedToString = new StringBuilder(callsign.length() + 3).append(callsign).append('-').append(ssid).toString();
+                    return cachedToString = callsign + '-' + ssid;
                 }
             }
         }

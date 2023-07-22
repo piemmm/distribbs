@@ -31,7 +31,7 @@ public interface ConnectionEstablishmentListener {
      * @param sessionIdentifier identifier of the particular connection
      * @param conn              the ConnState object from which communications streams can be obtained
      */
-    public void connectionEstablished(Object sessionIdentifier, ConnState conn);
+    void connectionEstablished(Object sessionIdentifier, ConnState conn);
 
     /**
      * Report that the requested connection could not be established.
@@ -39,7 +39,7 @@ public interface ConnectionEstablishmentListener {
      * @param sessionIdentifier identifier of the particular connection
      * @param reason            object explaining why the connection could not be established
      */
-    public void connectionNotEstablished(Object sessionIdentifier, Object reason);
+    void connectionNotEstablished(Object sessionIdentifier, Object reason);
 
     /**
      * Report that the established connection was shut down normally.
@@ -47,7 +47,7 @@ public interface ConnectionEstablishmentListener {
      * @param sessionIdentifier identifier of the particular connection
      * @param fromOtherEnd      boolean true if other end initiated the close
      */
-    public void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd);
+    void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd);
 
     /**
      * Report that the established connection was closed abnormally.
@@ -55,5 +55,5 @@ public interface ConnectionEstablishmentListener {
      * @param sessionIdentifier identifier of the particular connection
      * @param reason            object explaining why the connection was lost
      */
-    public void connectionLost(Object sessionIdentifier, Object reason);
+    void connectionLost(Object sessionIdentifier, Object reason);
 }

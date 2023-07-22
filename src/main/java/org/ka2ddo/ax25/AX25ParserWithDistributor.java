@@ -35,5 +35,5 @@ public interface AX25ParserWithDistributor extends AX25Parser {
      * @param frame     AX25Frame containing the APRS message
      * @param parsedMsg AX25Message that was decoded from the frame
      */
-    public void processParsedAX25Packet(AX25Frame frame, AX25Message parsedMsg);
+    void processParsedAX25Packet(AX25Frame frame, AX25Message parsedMsg);
 }

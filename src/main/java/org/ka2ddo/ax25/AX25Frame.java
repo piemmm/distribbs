@@ -876,7 +876,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      */
     public static String getFirstDigi(AX25Callsign[] digipeaters) {
         String first = "";
-        if (digipeaters != null && digipeaters.length > 0) {
+        if (digipeaters != null) {
             for (AX25Callsign r : digipeaters) {
                 if (!r.hasBeenRepeated()) {
                     break;
@@ -917,7 +917,7 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      */
     public static String getLastDigi(AX25Callsign[] digipeaters) {
         String last = "";
-        if (digipeaters != null && digipeaters.length > 0) {
+        if (digipeaters != null) {
             for (AX25Callsign r : digipeaters) {
                 if (!r.hasBeenRepeated()) {
                     break;
@@ -1210,18 +1210,14 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
                     if (PTYPES_S_hidden.get(pid) == null) {
                         return false;
                     }
-                    if (body == null || body.length == 0 || body.length > 256) {
-                        return false;
-                    }
+                    return body != null && body.length != 0 && body.length <= 256;
                 }
             } else if (getFrameType() == FRAMETYPE_I) {
                 // recognized protocol?
                 if (PTYPES_S_hidden.get(pid) == null) {
                     return false;
                 }
-                if (body == null || body.length == 0 || body.length > 256) {
-                    return false;
-                }
+                return body != null && body.length != 0 && body.length <= 256;
             }
             return true;
         }

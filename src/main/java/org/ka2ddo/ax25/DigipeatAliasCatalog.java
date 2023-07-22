@@ -159,7 +159,7 @@ public class DigipeatAliasCatalog implements Iterable<DigipeatAliasRecord> {
                 int rLen = baseCallsign.length();
                 int aLen = dar.alias.length();
                 if (rLen == aLen &&
-                        baseCallsign.startsWith(dar.alias, 0)) {
+                        baseCallsign.startsWith(dar.alias)) {
                     char ch1 = baseCallsign.charAt(aLen - 1);
                     if (ch1 > '0' && ch1 <= '7') {
                         return true;

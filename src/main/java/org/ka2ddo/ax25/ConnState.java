@@ -264,7 +264,7 @@ public class ConnState implements AX25FrameSource, Closeable {
     }
 
     String paramString() {
-        return "" + src + "->" + dst + ',' + getStateOfConn();
+        return src + "->" + dst + ',' + getStateOfConn();
     }
 
     /**
@@ -273,7 +273,7 @@ public class ConnState implements AX25FrameSource, Closeable {
      * @return String connection state text
      */
     public String getStateOfConn() {
-        return "" + connType + ',' + transition + ",vr=" + vr + ",vs=" + vs + ",va=" + va
+        return String.valueOf(connType) + ',' + transition + ",vr=" + vr + ",vs=" + vs + ",va=" + va
                 + (localRcvBlocked ? ",rcvBlock" : "") + (xmtToRemoteBlocked ? ",xmtBlock" : "");
     }
 

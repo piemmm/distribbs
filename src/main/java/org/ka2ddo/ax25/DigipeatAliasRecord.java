@@ -140,7 +140,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
      * @param prefs the Preferences node to contain the saved record data
      */
     public void writeToPreferences(Preferences prefs) {
-        prefs.put(alias, "" + isN_N + ',' + enabled + ',' + isTraced);
+        prefs.put(alias, String.valueOf(isN_N) + ',' + enabled + ',' + isTraced);
         try {
             prefs.flush();
         } catch (BackingStoreException e) {
