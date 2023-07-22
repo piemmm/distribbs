@@ -430,7 +430,7 @@ public class AX25Stack implements FrameListener, Runnable {
      * @param connector Connector that received the frame
      * @param frame AX25Frame to process
      */
-    public synchronized void  consumeFrameNow(Connector connector, AX25Frame frame) {
+    public synchronized void consumeFrameNow(Connector connector, AX25Frame frame) {
         boolean toMe = isLocalDest(frame.dest);
         boolean msgReported = false;
 

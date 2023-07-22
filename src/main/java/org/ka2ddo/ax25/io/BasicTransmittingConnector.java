@@ -1,7 +1,11 @@
 package org.ka2ddo.ax25.io;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.ax25.*;
+import org.prowl.distribbs.utils.Tools;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,6 +16,9 @@ import java.util.Date;
 import java.util.List;
 
 public class BasicTransmittingConnector extends Connector implements TransmittingConnector, Transmitting {
+    private static final Log LOG = LogFactory.getLog("BasicTransmittingConnector");
+
+
     private final byte[] rcvBuf = new byte[4096];
     public static final int PROTOCOL_AX25 = 4;
     private final AX25Stack stack;
@@ -39,21 +46,20 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     /**
      * This is the default callsign this connector will use for transmitting things like UI frames.
-     *
+     * <p>
      * It is seperate to the {@link ConnectionRequestListener}.acceptInbound() method which will allow you to
      * listen and respond to other callsigns (or ssids)
      */
     public AX25Callsign defaultCallsign;
 
     private InputStream in;
-    private OutputStream out;
-    private KissEscapeOutputStream kos;
+    KissEscapeOutputStream kos;
+
 
     public BasicTransmittingConnector(int pacLen, int maxFrames, int baudRateInBits, AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
         this.defaultCallsign = defaultCallsign;
-        this.out = out;
-        kos = new KissEscapeOutputStream(out);
         this.in = in;
+        kos = new KissEscapeOutputStream(out);
         stack = new AX25Stack(pacLen, maxFrames, baudRateInBits);
         startRxThread();
         startTxThread();
@@ -137,11 +143,12 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
 
     /**
      * Return base callsign or if an SSID is set, the callsign with the SSID
+     *
      * @return the default callsign for this connector
      */
     @Override
     public String getCallsign() {
-        return defaultCallsign.getSSID() == 0 ? defaultCallsign.getBaseCallsign() : defaultCallsign.getBaseCallsign()+"-"+defaultCallsign.getSSID();
+        return defaultCallsign.getSSID() == 0 ? defaultCallsign.getBaseCallsign() : defaultCallsign.getBaseCallsign() + "-" + defaultCallsign.getSSID();
     }
 
     @Override
@@ -295,16 +302,18 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 frame.sender = new AX25Callsign(p.getCallsign());
                 frame.sender.h_c = !frame.dest.h_c;
             }
-            kos.resetByteCount();
-            out.write(KissEscapeOutputStream.FEND);
-            kos.write(getKISSDeviceIDInCorrectBitsFromConfig()); // data frame to selected TNC port (KISS device ID)
-            frame.write(kos);
-            out.write(KissEscapeOutputStream.FEND);
-            out.flush();
-            byteCount = kos.getByteCount();
-            stats.numXmtBytes += byteCount;
-            stats.numXmtFrames++;
-            //    Transmitter.getInstance().logTransmittedPacket(frame);
+            synchronized (frame) {
+                kos.resetByteCount();
+                kos.writeRaw(KissEscapeOutputStream.FEND);
+                kos.write(getKISSDeviceIDInCorrectBitsFromConfig()); // data frame to selected TNC port (KISS device ID)
+                frame.write(kos);
+                kos.writeRaw(KissEscapeOutputStream.FEND);
+                kos.flush();
+                byteCount = kos.getByteCount();
+                stats.numXmtBytes += byteCount;
+                stats.numXmtFrames++;
+            }
+            LOG.debug("Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame.toString() + "  asciiFrame:" + frame.getAsciiFrame());
         } catch (Exception e) {
             //  fireTransmitting(false);
             //  fireFailed();
@@ -312,6 +321,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
             if (detail.indexOf("roken pipe") >= 0 || detail.indexOf(" closed") >= 0 || detail.indexOf(" reset") >= 0) {
                 //       tryToRestartConnection(detail);
             }
+            LOG.error(e.getMessage(),e);
             return false; // no need for TNC write delay when packet send failed
         }
         //      long now = System.currentTimeMillis();
@@ -419,12 +429,15 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 curState = KissEscapeOutputStream.RcvState.IDLE;
             }
         }
+
     }
 
     public void sendDecodedKissFrameToParser() {
         AX25Frame frame = AX25Frame.decodeFrame(rcvBuf, 1, wEnd - 1, stack);
-        //System.out.println("rxFrame:" + frame.toString() + " data:" + frame.getAsciiFrame());
-        stack.consumeFrameNow(this, frame);
+        // Frame will be null if it was invalid, so we will ignore it.
+        if (frame != null) {
+            stack.consumeFrameNow(this, frame);
+        }
     }
 
     public void startRxThread() {
@@ -520,4 +533,5 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
     }
 
 }
+
 

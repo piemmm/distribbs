@@ -27,7 +27,7 @@ import java.io.IOException;
  * port.
  * @author Andrew Pavlin, KA2DDO
  */
-public interface TransmittingConnector {
+public interface TransmittingConnector  {
     /**
      * Reports whether this Connector has an open connection to its port.
      * @return boolean true if Connector is open

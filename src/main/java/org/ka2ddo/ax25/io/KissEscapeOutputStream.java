@@ -18,6 +18,9 @@ package org.ka2ddo.ax25.io;
 *  see <http://www.gnu.org/licenses/>.
 */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,6 +32,11 @@ import java.io.OutputStream;
  * @author Andrew Pavlin, KA2DDO
 */
 public class KissEscapeOutputStream extends OutputStream {
+
+
+    private static final Log LOG = LogFactory.getLog("KissEscapeOutputStream");
+
+
     /**
      * Byte value for end-of-frame flag byte in KISS protocol.
      */
@@ -80,7 +88,8 @@ public class KissEscapeOutputStream extends OutputStream {
      * @param b byte value to encode
      * @throws IOException if wrapped stream throws an IOException
      */
-    public void write(int b) throws IOException {
+    public void write(int c) throws IOException {
+        int b = c & 0xFF;
         if (b == FEND) {
             os.write(FESC);
             os.write(TFEND);
@@ -95,6 +104,18 @@ public class KissEscapeOutputStream extends OutputStream {
         }
 
         g8bpqCrc ^= (byte)b;
+    }
+
+
+
+    /**
+     * Write one byte to the output stream.
+     * @param b byte value to encode
+     * @throws IOException if wrapped stream throws an IOException
+     */
+    public void writeRaw(int b) throws IOException {
+            os.write(b);
+            byteCount++;
     }
 
     /**

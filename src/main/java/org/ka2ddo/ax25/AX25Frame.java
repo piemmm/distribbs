@@ -18,6 +18,9 @@ package org.ka2ddo.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Arrays;
@@ -37,6 +40,10 @@ import java.util.Set;
  */
 public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25Frame> {
     private static final long serialVersionUID = 3107587793401226132L;
+
+    private static final Log LOG = LogFactory.getLog("AX25Frame");
+
+
     /**
      * Maximum number of digipeat addresses allowed in an AX.25 frame, according to the AX.25 spec.
      */
@@ -162,7 +169,16 @@ public class AX25Frame implements Serializable, AX25FrameSource, Comparable<AX25
      * @return structured AX25Frame object, or null if byte array doesn't have enough bytes for a frame
      */
     public static AX25Frame decodeFrame(byte[] buf, int offset, int length, AX25Stack stack) {
+        //LOG.warn("Frame decode length:" + length+" bytes  offset:"+offset+"  buflen:"+buf.length);
+
+        // This can happen if for some reason the KISS escaping breaks and you end up with direwolf getting upset and sending
+        // you a 'cmd:' response. For now we ignore the frame. This might also happen if you have sent ascii ctrl chrs that should
+        // not have been sent.
         if (length < 15) {
+            if (new String(buf,offset,length).startsWith("cmd:")) {
+                LOG.warn("KISS remote endpoint entered 'cmd:' mode for unknown reason");
+            }
+            LOG.warn("Frame too short! (ignored): length:" + length+" bytes  offset:"+offset+"  buflen:"+buf.length+"  :"+new String(buf,offset,length));
             return null;
         }
 

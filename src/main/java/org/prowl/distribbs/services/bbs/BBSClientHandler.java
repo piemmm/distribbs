@@ -86,6 +86,10 @@ public class BBSClientHandler implements ClientHandler {
      * @throws IOException
      */
     public void send(String data) throws IOException {
+
+
+        data = data.replaceAll("[^\\x04-\\xFF]", "?");
+
         // Strip colour if needed.
         if (colourEnabled) {
             data = ANSI.convertTokensToANSIColours(data);
@@ -93,6 +97,8 @@ public class BBSClientHandler implements ClientHandler {
             data = ANSI.stripAnsiCodes(data);
             data = ANSI.stripKnownColourTokens(data);
         }
+
+
 
         out.write(data.getBytes());
     }

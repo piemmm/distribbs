@@ -75,7 +75,7 @@ public class CommandParser {
 
    public void sendPrompt() throws IOException {
       try {
-         write(getPrompt());
+         write(CR+getPrompt());
          client.flush();
       } catch(EOFException e) {
          // Connection has gone
@@ -175,7 +175,7 @@ public class CommandParser {
 
       int messageSentCounter = 0;
       if (listMessagesStartingPoint != 0) {
-         write(CR);
+     //    write(CR);
       }
       for (int i = listMessagesStartingPoint; i < messages.size(); i++) {
          Message message = messages.get(i);
@@ -191,7 +191,7 @@ public class CommandParser {
 
          if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
             mode = Mode.MESSAGE_LIST_PAGINATION;
-            listMessagesStartingPoint = messageSentCounter;
+            listMessagesStartingPoint =+ messageSentCounter;
             break;
          }
       }

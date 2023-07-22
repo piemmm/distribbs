@@ -144,6 +144,8 @@ public class ConnState implements AX25FrameSource, Closeable {
     AX25InputStream in = null;
     AX25OutputStream out = null;
 
+    private static final Object MONITOR = new Object();
+
     ConnState(AX25Callsign src, AX25Callsign dst, AX25Stack stack) {
         this.src = src;
         this.dst = dst;
@@ -154,16 +156,19 @@ public class ConnState implements AX25FrameSource, Closeable {
      * Reset the windowing sequence counters and flags.
      */
     void reset() {
-        vr = 0;
-        vs = 0;
-        va = 0;
-        localRcvBlocked = false;
-        xmtToRemoteBlocked = false;
-        if (transmitWindow != null) {
-            for (int i = transmitWindow.length - 1; i >= 0; i--) {
-                transmitWindow[i] = null;
+        synchronized (MONITOR) {
+            vr = 0;
+            vs = 0;
+            va = 0;
+            localRcvBlocked = false;
+            xmtToRemoteBlocked = false;
+            if (transmitWindow != null) {
+                for (int i = transmitWindow.length - 1; i >= 0; i--) {
+                    transmitWindow[i] = null;
+                }
             }
         }
+
     }
 
     /**
@@ -268,41 +273,43 @@ public class ConnState implements AX25FrameSource, Closeable {
      * @param retryCount int number of times this frame should be retried before giving up on a response
      *                    and failing whatever condition the frame was trying to set up
      */
-    public void setResendableFrame(AX25Frame frame, int retryCount) {
-        clearResendableFrame();
-        frameToResend = frame;
-        retriesRemaining = retryCount;
-        t1TimerTask = new ReschedulableTimerTask() {
-            @Override
-            public void run() {
-                // if the connection is no longer open, don't bother
-                if (transition == ConnTransition.LINK_DOWN) {
-                    cancel();  // also cancel the timer
-                    return;
-                }
+    public  void setResendableFrame(AX25Frame frame, int retryCount) {
+        synchronized (MONITOR) {
+            clearResendableFrame();
+            frameToResend = frame;
+            retriesRemaining = retryCount;
+            t1TimerTask = new ReschedulableTimerTask() {
+                @Override
+                public void run() {
+                    // if the connection is no longer open, don't bother
+                    if (transition == ConnTransition.LINK_DOWN) {
+                        cancel();  // also cancel the timer
+                        return;
+                    }
 
-                   LOG.debug("T1 timeout on " + ConnState.this);
-                if (retriesRemaining-- > 0) {
-                    if (localRcvBlocked) {
-                        stack.transmitRNR((Connector)connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
-                    } else {
-                        stack.transmitRR((Connector)connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
-                    }
-                } else {
-                    if (listener != null) {
-                        if (transition == ConnTransition.LINK_UP) {
-                            listener.connectionNotEstablished(sessionIdentifier, new TimeoutException("no response from " + dst));
+                    LOG.debug("T1 timeout on " + ConnState.this);
+                    if (retriesRemaining-- > 0) {
+                        if (localRcvBlocked) {
+                            stack.transmitRNR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
                         } else {
-                            listener.connectionLost(sessionIdentifier, new TimeoutException("no response from " + dst));
+                            stack.transmitRR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
                         }
+                    } else {
+                        if (listener != null) {
+                            if (transition == ConnTransition.LINK_UP) {
+                                listener.connectionNotEstablished(sessionIdentifier, new TimeoutException("no response from " + dst));
+                            } else {
+                                listener.connectionLost(sessionIdentifier, new TimeoutException("no response from " + dst));
+                            }
+                        }
+                        close();
+                        cancel();
+                        stack.removeConnState(ConnState.this);
                     }
-                    close();
-                    cancel();
-                    stack.removeConnState(ConnState.this);
                 }
-            }
-        };
-        t1TimerTask.resched(stack.getRetransTimer(), stack.getWaitForAckT1Timer(), stack.getWaitForAckT1Timer());
+            };
+            t1TimerTask.resched(stack.getRetransTimer(), stack.getWaitForAckT1Timer(), stack.getWaitForAckT1Timer());
+        }
     }
 
     /**
@@ -310,12 +317,14 @@ public class ConnState implements AX25FrameSource, Closeable {
      * for the frame, or timing out for the last retry attempt and giving up.
      */
     public void clearResendableFrame() {
-        if (t1TimerTask != null) {
-            t1TimerTask.cancel();
-            t1TimerTask = null;
+        synchronized (MONITOR) {
+            if (t1TimerTask != null) {
+                t1TimerTask.cancel();
+                t1TimerTask = null;
+            }
+            frameToResend = null;
+            retriesRemaining = 0;
         }
-        frameToResend = null;
-        retriesRemaining = 0;
     }
 
     /**
@@ -332,18 +341,21 @@ public class ConnState implements AX25FrameSource, Closeable {
      */
     @Override
     public AX25Frame[] getFrames(boolean incrementXmtCount, ProtocolFamily protocolId, String senderCallsign) {
-        if (protocolId == ProtocolFamily.RAW_AX25 && frameToResend != null && retriesRemaining > 0) {
-            if (incrementXmtCount) {
-                retriesRemaining--;
+        synchronized (MONITOR) {
+
+            if (protocolId == ProtocolFamily.RAW_AX25 && frameToResend != null && retriesRemaining > 0) {
+                if (incrementXmtCount) {
+                    retriesRemaining--;
+                }
+                AX25Frame[] answer = new AX25Frame[]{frameToResend};
+                if (retriesRemaining <= 0) {
+                    frameToResend = null;
+                    retriesRemaining = 0;
+                }
+                return answer;
             }
-            AX25Frame[] answer = new AX25Frame[]{frameToResend};
-            if (retriesRemaining <= 0) {
-                frameToResend = null;
-                retriesRemaining = 0;
-            }
-            return answer;
+            return NO_FRAMES;
         }
-        return NO_FRAMES;
     }
 
     /**
@@ -385,47 +397,50 @@ public class ConnState implements AX25FrameSource, Closeable {
      */
     @Override
     public void close()  {
-        if (isOpen()) {
-            AX25Frame closeFrame = null;
-            if (in != null) {
-                try {
-                    in.close();
-                    in = null;
-                } catch (IOException e) {
-                    e.printStackTrace(System.out);
+        synchronized (MONITOR) {
+
+            if (isOpen()) {
+                AX25Frame closeFrame = null;
+                if (in != null) {
+                    try {
+                        in.close();
+                        in = null;
+                    } catch (IOException e) {
+                        e.printStackTrace(System.out);
+                    }
                 }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                    out = null;
-                } catch (IOException e) {
-                    e.printStackTrace(System.out);
+                if (out != null) {
+                    try {
+                        out.close();
+                        out = null;
+                    } catch (IOException e) {
+                        e.printStackTrace(System.out);
+                    }
                 }
-            }
-            if (stack.isLocalDest(src)) {
-                LOG.debug("ConnState.close(): closing open connection we initiated");
-                closeFrame = stack.transmitDISC(connector, src, dst, via, false);
-                transition = ConnTransition.LINK_DOWN;
-            } else if (stack.isLocalDest(dst)) {
-                closeFrame = stack.transmitDISC(connector, dst, src, stack.reverseDigipeaters(via), false);
-                transition = ConnTransition.LINK_DOWN;
-            }
-            if (closeFrame != null) {
-                setResendableFrame(closeFrame, 10);
+                if (stack.isLocalDest(src)) {
+                    LOG.debug("ConnState.close(): closing open connection we initiated");
+                    closeFrame = stack.transmitDISC(connector, src, dst, via, false);
+                    transition = ConnTransition.LINK_DOWN;
+                } else if (stack.isLocalDest(dst)) {
+                    closeFrame = stack.transmitDISC(connector, dst, src, stack.reverseDigipeaters(via), false);
+                    transition = ConnTransition.LINK_DOWN;
+                }
+                if (closeFrame != null) {
+                    setResendableFrame(closeFrame, 10);
+                } else {
+                    stack.removeConnState(this);
+                    stack.fireConnStateAddedOrRemoved();
+                }
+                if (listener != null) {
+                    listener.connectionClosed(sessionIdentifier, false);
+                }
             } else {
+                LOG.debug("ConnState.close(): cancelling incompletely opened connection");
+                transition = ConnTransition.STEADY;
+                connType = ConnType.CLOSED;
                 stack.removeConnState(this);
                 stack.fireConnStateAddedOrRemoved();
             }
-            if (listener != null) {
-                listener.connectionClosed(sessionIdentifier, false);
-            }
-        } else {
-            LOG.debug("ConnState.close(): cancelling incompletely opened connection");
-            transition = ConnTransition.STEADY;
-            connType = ConnType.CLOSED;
-            stack.removeConnState(this);
-            stack.fireConnStateAddedOrRemoved();
         }
     }
 
