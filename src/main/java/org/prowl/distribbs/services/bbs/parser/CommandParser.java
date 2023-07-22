@@ -117,6 +117,10 @@ public class CommandParser {
                 case HEARD:
                     showHeard();
                     break;
+                case UNHEARD:
+                case UH:
+                    showUnHeard();
+                    break;
                 case B:
                 case BYE:
                 case END:
@@ -271,9 +275,34 @@ public class CommandParser {
                     rssi = "-  ";
                 }
 
-                String freq = Tools.getNiceFrequency(node.getConnector().getFrequency());
+                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
 
-                write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getConnector())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + StringUtils.leftPad(rssi, 9) + " " + StringUtils.rightPad(listCapabilities(node), 14) + CR);
+                write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + StringUtils.leftPad(rssi, 9) + " " + StringUtils.rightPad(listCapabilities(node), 14) + CR);
+            }
+        }
+    }
+
+    public void showUnHeard() throws IOException {
+        write(CR);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
+
+        MHeard heard = DistriBBS.INSTANCE.getStatistics().getUnHeard();
+        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+        List<Node> nodes = heard.listHeard();
+        if (nodes.size() == 0) {
+            write("No nearby nodes unheard yet" + CR);
+        } else {
+            write(ANSI.UNDERLINE + ANSI.BOLD + "Port Callsign  Freq/IP      Last UnHeard       CanReach" + ANSI.NORMAL + CR);
+
+            for (Node node : nodes) {
+                String rssi = "-" + node.getRSSI() + " dBm";
+                if (node.getRSSI() == Double.MAX_VALUE) {
+                    rssi = "-  ";
+                }
+
+                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
+
+                write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18)  + " " + StringUtils.rightPad(canReach(node), 14) + CR);
             }
         }
     }
@@ -288,6 +317,24 @@ public class CommandParser {
         StringBuilder sb = new StringBuilder();
         for (Capability c : node.getCapabilities()) {
             sb.append(c.getService().getName());
+            sb.append(",");
+        }
+        if (sb.length() > 0) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+
+    /**
+     *Returns a nice string of callsigns that can reach this node.
+     *
+     * @param node
+     * @return
+     */
+    public String canReach(Node node) {
+        StringBuilder sb = new StringBuilder();
+        for (Node n : node.getCanReachNodes()) {
+            sb.append(n.getCallsign());
             sb.append(",");
         }
         if (sb.length() > 0) {

@@ -1,5 +1,6 @@
 package org.prowl.distribbs.core;
 
+import org.ka2ddo.ax25.AX25Frame;
 import org.prowl.distribbs.node.connectivity.Interface;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class Node {
     /**
      * Reference to the connector the device was heard on
      */
-    private Interface connector;
+    private Interface anInterface;
 
     /**
      * The node callsign
@@ -27,7 +28,25 @@ public class Node {
      */
     private long lastHeard;
 
+    /**
+     * Destination alias/callsign/ui/etc
+     */
+    private String destination;
+
+    /**
+     * A list of capabilities this node has been seen to advertise or use
+     */
     private List<Capability> capabilities = new ArrayList<>();
+
+    /**
+     * A list of callsigns that have been seen to be able to converse with this node
+     */
+    private List<Node> canReach = new ArrayList<>();
+
+    /**
+     * Actual frame received - may be null if not applicable
+     */
+    private AX25Frame frame;
 
     /**
      * Enum represenging the station type
@@ -60,24 +79,27 @@ public class Node {
      */
     private double rssi = Double.MAX_VALUE;
 
-    public Node(Interface connector, String callsign, long lastHeard, double rssi) {
+    public Node(Interface anInterface, String callsign, long lastHeard, double rssi, String destination) {
         this.callsign = callsign;
         this.lastHeard = lastHeard;
         this.rssi = rssi;
-        this.connector = connector;
+        this.anInterface = anInterface;
+        this.destination = destination;
     }
 
     /**
      * Create a node object, no signal strength information present
      *
-     * @param connector
+     * @param anInterface
      * @param callsign
      * @param lastHeard
      */
-    public Node(Interface connector, String callsign, long lastHeard) {
+    public Node(Interface anInterface, String callsign, long lastHeard, String destination, AX25Frame frame) {
         this.callsign = callsign;
         this.lastHeard = lastHeard;
-        this.connector = connector;
+        this.anInterface = anInterface;
+        this.destination = destination;
+        this.frame = frame;
     }
 
     /**
@@ -89,8 +111,9 @@ public class Node {
         this.callsign = toCopy.callsign;
         this.lastHeard = toCopy.lastHeard;
         this.rssi = toCopy.rssi;
-        this.connector = toCopy.getConnector();
+        this.anInterface = toCopy.getInterface();
         this.capabilities = new ArrayList<>(toCopy.capabilities);
+        this.destination = toCopy.destination;
     }
 
     /**
@@ -106,6 +129,23 @@ public class Node {
             }
         }
         capabilities.add(capability);
+    }
+
+    /**
+     * Add a node that has been seen to be able to reach this node and converse with it
+     *
+     * @param node  The node that can reach this one
+     */
+    public void addCanReachNodeOrReplace(Node node) {
+        canReach.remove(node);
+        canReach.add(node);
+    }
+
+    /**
+     * @return a copy of the array list containing current nodes that can reach this one
+     */
+    public List<Node> getCanReachNodes() {
+        return new ArrayList<>(canReach);
     }
 
     /**
@@ -131,12 +171,12 @@ public class Node {
         return rssi;
     }
 
-    public Interface getConnector() {
-        return connector;
+    public Interface getInterface() {
+        return anInterface;
     }
 
-    public void setConnector(Interface connector) {
-        this.connector = connector;
+    public void setAnInterface(Interface anInterface) {
+        this.anInterface = anInterface;
     }
 
     public double getRssi() {
@@ -147,12 +187,20 @@ public class Node {
         this.rssi = rssi;
     }
 
+    public String getDestination() {
+        return destination;
+    }
+
+    public AX25Frame getFrame() {
+        return frame;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((callsign == null) ? 0 : callsign.hashCode());
-        result = prime * result + ((connector == null) ? 0 : connector.hashCode());
+        result = prime * result + ((anInterface == null) ? 0 : anInterface.hashCode());
         return result;
     }
 
@@ -170,10 +218,10 @@ public class Node {
                 return false;
         } else if (!callsign.equals(other.callsign))
             return false;
-        if (connector == null) {
-            if (other.connector != null)
+        if (anInterface == null) {
+            if (other.anInterface != null)
                 return false;
-        } else if (!connector.equals(other.connector))
+        } else if (!anInterface.equals(other.anInterface))
             return false;
         return true;
     }

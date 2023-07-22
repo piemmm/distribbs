@@ -9,7 +9,7 @@ import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.eventbus.events.HeardNode;
+import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
 import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
@@ -151,13 +151,13 @@ public class KISSviaTCP extends Interface {
             public void consumeAX25Frame(AX25Frame frame, org.ka2ddo.ax25.Connector connector) {
                 // Create a node to represent what we've seen - we'll merge this in things like
                 // mheard lists if there is another node there so that capability lists can grow
-                Node node = new Node(KISSviaTCP.this, frame.sender.toString(), frame.rcptTime);
+                Node node = new Node(KISSviaTCP.this, frame.sender.toString(), frame.rcptTime, frame.dest.toString(), frame);
 
                 // Determine the nodes capabilities from the frame type and add this to the node
                 PacketTools.determineCapabilities(node, frame);
 
                 // Fire off to anything that wants to know about nodes heard
-                ServerBus.INSTANCE.post(new HeardNode(node));
+                ServerBus.INSTANCE.post(new HeardNodeEvent(node));
             }
         });
 

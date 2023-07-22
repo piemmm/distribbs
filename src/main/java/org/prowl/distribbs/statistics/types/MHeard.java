@@ -5,24 +5,28 @@ import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.eventbus.events.HeardNode;
+import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
+import org.prowl.distribbs.utils.Tools;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class MHeard {
 
-    private final LinkedList<Node> heardList;
+    protected final List<Node> heardList;
 
     public MHeard() {
-        heardList = new LinkedList<Node>();
+        heardList = Collections.synchronizedList(new LinkedList<Node>());
         ServerBus.INSTANCE.register(this);
     }
 
     public List<Node> listHeard() {
-        return new ArrayList<Node>(heardList);
+        synchronized (heardList) {
+            return new ArrayList<Node>(heardList);
+        }
     }
 
     public void addToFront(Node heard) {
@@ -32,16 +36,16 @@ public class MHeard {
                 // Update existing node
                 Node oldHeard = heardList.remove(index);
                 updateNode(oldHeard, heard);
-                heardList.addFirst(oldHeard);
+                heardList.add(0,oldHeard);
             } else {
                 // Add new node to list
-                heardList.addFirst(heard);
+                heardList.add(0,heard);
             }
         }
 
         // Keep the list at a max of 200 entries.
         if (heardList.size() > 200) {
-            heardList.removeLast();
+            heardList.remove(heardList.size() - 1);
         }
     }
 
@@ -54,14 +58,19 @@ public class MHeard {
     private void updateNode(Node oldNode, Node newNode) {
         oldNode.setLastHeard(newNode.getLastHeard());
         oldNode.setRssi(newNode.getRSSI());
-        oldNode.setConnector(newNode.getConnector());
+        oldNode.setAnInterface(newNode.getInterface());
         for (Capability c : newNode.getCapabilities()) {
             oldNode.addCapabilityOrUpdate(c);
         }
     }
 
     @Subscribe
-    public void heardNode(HeardNode heardNode) {
+    public void heardNode(HeardNodeEvent heardNode) {
+        // Quick validation of the callsign.
+        if (!Tools.isValidITUCallsign(heardNode.getNode().getCallsign())) {
+            return;
+        }
+
         // Update the heard list with a copy.
         addToFront(new Node(heardNode.getNode()));
     }
@@ -80,7 +89,7 @@ public class MHeard {
             // Get the packet and decode to a node
             String callsign = PacketTools.decodeFrom(packet.getPacket());
             if (callsign != null) {
-                Node node = new Node(packet.getConnector(), callsign, packet.getRxTime(), packet.getRSSI());
+                Node node = new Node(packet.getConnector(), callsign, packet.getRxTime(), packet.getRSSI(), packet.getDestination());
                 // Update the list
                 addToFront(node);
             }

@@ -10,7 +10,7 @@ public enum Command {
     R,
     READ, // Read message
 
-    B,
+    B, // Bye
     H, // Help text
     HELP, // Help text
     BYE, // Logout (close connection)
@@ -30,6 +30,9 @@ public enum Command {
     MH, // List heard stations
     MHEARD, // List heard stations
     HEARD, // List heard stations
+
+    UNHEARD, // List of nearby nodes we cannot hear
+    UH,// List of nearby nodes we cannot hear
 
     ENTER_KEY; // blank line just enter pressed.
 

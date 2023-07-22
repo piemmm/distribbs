@@ -30,6 +30,14 @@ public class ServiceHandler {
         return null;
     }
 
+    /**
+     * Return a copy array of the current running services.
+     * @return
+     */
+    public List<Service> getServices() {
+        return new ArrayList<>(services);
+    }
+
     public void parseConfiguration() {
 
         // Get a list of user interfaces from the config file
