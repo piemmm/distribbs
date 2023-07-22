@@ -54,8 +54,9 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
     KissEscapeOutputStream kos;
 
 
-    public BasicTransmittingConnector(int pacLen, int maxFrames, int baudRateInBits, AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
+    public BasicTransmittingConnector(int pacLen, int maxFrames, int baudRateInBits, int retransmitCount, AX25Callsign defaultCallsign, InputStream in, OutputStream out, ConnectionRequestListener connectionRequestListener) {
         this.defaultCallsign = defaultCallsign;
+        this.retransmitCount = retransmitCount;
         this.in = in;
         kos = new KissEscapeOutputStream(out);
         stack = new AX25Stack(pacLen, maxFrames, baudRateInBits);
@@ -418,7 +419,6 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
             } catch (Throwable e) {
                 //    stats.numBadRcvFrames++;
                 LOG.error("unhandled exception in KissOverTcpConnector:"+e.getMessage(), e);
-                e.printStackTrace(System.out);
                 // discard this frame
                 curState = KissEscapeOutputStream.RcvState.IDLE;
             }
