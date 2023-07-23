@@ -152,7 +152,7 @@ public enum Hardware {
                     }
                     try {
                         float currentTemp = 0;// SystemInfo.getCpuTemperature();
-                        LOG.debug("CPU thermals:" + currentTemp);
+                        //LOG.debug("CPU thermals:" + currentTemp);
                         if (currentTemp > MAX_CPU_TEMP) {
                             gpioFan1.high();
                             gpioFan2.high();
