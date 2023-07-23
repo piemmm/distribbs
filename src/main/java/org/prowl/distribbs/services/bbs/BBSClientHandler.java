@@ -46,6 +46,7 @@ public class BBSClientHandler implements ClientHandler {
                     }
                 } catch (Exception e) {
                     LOG.error(e.getMessage(), e);
+                    close();
                 }
             });
             t.start();
