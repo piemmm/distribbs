@@ -7,6 +7,7 @@ import com.pi4j.io.spi.SpiChannel;
 import com.pi4j.io.spi.SpiDevice;
 import com.pi4j.io.spi.SpiFactory;
 import com.pi4j.io.spi.SpiMode;
+import com.pi4j.system.SystemInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -147,11 +148,11 @@ public enum Hardware {
                 LOG.info("Thermal monitor starting");
                 while (true) {
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(30000);
                     } catch (InterruptedException e) {
                     }
                     try {
-                        float currentTemp = 0;// SystemInfo.getCpuTemperature();
+                        float currentTemp = SystemInfo.getCpuTemperature();
                         //LOG.debug("CPU thermals:" + currentTemp);
                         if (currentTemp > MAX_CPU_TEMP) {
                             gpioFan1.high();
@@ -161,11 +162,13 @@ public enum Hardware {
                             gpioFan2.low();
                         }
                     } catch (UnsupportedOperationException e) {
-                        LOG.warn("CPU Does not support temperature measurement");
+                        LOG.warn("CPU Does not support temperature measurement:" + e.getMessage());
                         break;
-                        // } catch (InterruptedException e) {
-                    } catch (Throwable e) {
-                        e.printStackTrace();
+                    } catch (IOException e) {
+                        LOG.warn("CPU Does not support temperature measurement:" + e.getMessage());
+                        break;
+                    } catch(Throwable e) {
+                        LOG.error(e.getMessage(), e);
                     }
                 }
                 LOG.info("Thermal monitor exiting");
