@@ -121,8 +121,22 @@
             <services>
                 <service>bbs</service>
             </services>
-
         </interface>
+
+        <!-- AX.25 KISS tnc socket to things like the NinoTNC  -->
+<!--        <interface>-->
+<!--            <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaSerial</type>-->
+<!--            <port>ttyACM0</port>-->
+<!--            <baudRate>57600</baudRate>-->
+<!--            <dataBits>8</dataBits>-->
+<!--            <parity>N</parity>-->
+<!--            <stopBits>1</stopBits>-->
+<!--            <frequency>144700000</frequency>-->
+<!--            <services>-->
+<!--                <service>bbs</service>-->
+<!--            </services>-->
+<!--        </interface>-->
+
 
         <!-- This sync agent talks to an F6FBB BBS using the ASCII style MBL/RLI protocol
         this should be used if your country legally requires plaintext radio comms -->
