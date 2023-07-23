@@ -15,8 +15,8 @@ import java.util.List;
 
 public class BasicTransmittingConnector extends Connector implements TransmittingConnector, Transmitting {
     private static final Log LOG = LogFactory.getLog("BasicTransmittingConnector");
-
-
+    private String debugTag = "";
+    
     private final byte[] rcvBuf = new byte[4096];
     public static final int PROTOCOL_AX25 = 4;
     private final AX25Stack stack;
@@ -308,7 +308,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 stats.numXmtBytes += byteCount;
                 stats.numXmtFrames++;
             }
-            LOG.debug("Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame + "  asciiFrame:" + frame.getAsciiFrame());
+            LOG.debug(debugTag + "Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame + "  asciiFrame:" + frame.getAsciiFrame());
         } catch (Exception e) {
             //  fireTransmitting(false);
             //  fireFailed();
@@ -381,7 +381,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                                                 rcvBuf[wEnd++] = (byte) newData;
                                             } else {
                                                 // some kind of protocol error, so reset and start over
-                                                LOG.debug("receive buffer overflow, must be mode garbling, reset protocol");
+                                                LOG.debug(debugTag + "receive buffer overflow, must be mode garbling, reset protocol");
                                                 wEnd = 0;
                                                 //  fireReceiving(false);
                                                 curState = KissEscapeOutputStream.RcvState.IDLE;
@@ -511,7 +511,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                     }
                 }
             } finally {
-                LOG.info("terminating TransmitterThread");
+                LOG.info(debugTag + "terminating TransmitterThread");
             }
         });
         tx.start();
@@ -524,6 +524,7 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
      * @param tag
      */
     public void setDebugTag(String tag) {
+        this.debugTag = tag;
         stack.setDebugTag(tag);
     }
 
