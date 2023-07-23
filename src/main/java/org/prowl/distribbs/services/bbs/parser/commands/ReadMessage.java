@@ -35,7 +35,7 @@ public class ReadMessage extends Command {
     @Override
     public boolean doCommand(String[] data) throws IOException {
         Mode mode = getMode();
-        if (mode.equals(Mode.CMD) || (mode.equals(Mode.MESSAGE_LIST_PAGINATION) && data[0].equals("r")) ) {
+        if ((mode.equals(Mode.CMD) || mode.equals(Mode.MESSAGE_LIST_PAGINATION)) && data[0].equals("r")) {
             pushModeToStack(mode);
             try {
                 readMessage(Long.parseLong(data[1]));
