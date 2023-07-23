@@ -1,51 +1,82 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.services.bbs.parser.Mode;
-import org.prowl.distribbs.utils.ANSI;
+import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
-@Commandable
+/**
+ * Reads a message on the BBS
+ */
+@BBSCommand
 public class ReadMessage extends Command {
-    private int listMessagesStartingPoint = 0;                                   // Used for list messages command
-    private java.util.List<Message> currentListMessages;                               // Used for list messages command
+
+    // So we can paginate.
+    private int readMessageStartingPoint = 0;
+
+    // The current message being read
+    private Message currentMessage;
+
+    // A 'buffer' of lines we can paginate on.
+    private List<String> messageLines;
+
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
         Mode mode = getMode();
-        if (mode == Mode.CMD) {
-            listMessages();
-        } else if (mode == Mode.MESSAGE_LIST_PAGINATION) {
-            sendMessageList(currentListMessages);
+        if (mode.equals(Mode.CMD) || (mode.equals(Mode.MESSAGE_LIST_PAGINATION) && data[0].equals("r")) ) {
+            pushModeToStack(mode);
+            try {
+                readMessage(Long.parseLong(data[1]));
+            } catch (NumberFormatException e) {
+                write("Invalid message number" + CR);
+            }
+        } else if (mode.equals(Mode.MESSAGE_READ_PAGINATION)) {
+            sendMessage();
         }
         return true;
     }
 
-    public void listMessages() throws IOException {
-        listMessagesStartingPoint = 0;
+
+    public void readMessage(long messageId) throws IOException {
         Storage storage = DistriBBS.INSTANCE.getStorage();
-        java.util.List<Message> messages = storage.getNewsMessagesInOrder(null);
-        if (messages.size() == 0) {
-            write(CR);
-            write("No messages in BBS yet" + CR);
+        Message message = storage.getMessage(messageId);
+        readMessageStartingPoint = 0;
+        messageLines = new ArrayList<>();
+
+        // Get the message and write it to the messageLines array so we can later paginate on it correctly.
+        if (message == null) {
+            write("Message not found" + CR);
         } else {
-            write(CR);
-            write(ANSI.UNDERLINE + ANSI.BOLD + "Msg#   TSLD  Size To     @Route  From    Date/Time Subject" + ANSI.NORMAL + CR);
-            currentListMessages = messages; // Store filtered list for pagination sending
-            sendMessageList(currentListMessages);
+            currentMessage = message;
+            messageLines.add("From: " + message.getFrom());
+            messageLines.add("To: " + message.getGroup());
+            messageLines.add("Subject: " + message.getSubject());
+            messageLines.add("Date: " + message.getDate());
+            messageLines.add("Route: " + message.getRoute());
+            messageLines.add("TSLD: " + message.getTSLD());
+            messageLines.add("Size: " + message.getBody().length);
+            messageLines.add("");
+            StringTokenizer st = new StringTokenizer(PacketTools.textOnly(message.getBody()), "\n\r");
+            while (st.hasMoreTokens()) {
+                messageLines.add(st.nextToken());
+            }
+            sendMessage();
         }
     }
 
-
-
-    public void sendMessageList(java.util.List<Message> messages) throws IOException {
+    public void sendMessage() throws IOException {
         SimpleDateFormat sdf = new SimpleDateFormat("ddMM/hhmm");
         NumberFormat nf = NumberFormat.getInstance();
         nf.setMaximumFractionDigits(0);
@@ -53,32 +84,22 @@ public class ReadMessage extends Command {
         nf.setGroupingUsed(false);
 
         int messageSentCounter = 0;
-        if (listMessagesStartingPoint != 0) {
-            //    write(CR);
-        }
-        for (int i = listMessagesStartingPoint; i < messages.size(); i++) {
-            Message message = messages.get(i);
+        for (int i = readMessageStartingPoint; i < messageLines.size(); i++) {
 
-            write((StringUtils.rightPad(nf.format(message.getMessageNumber()), 6) + // MessageId
-                    StringUtils.rightPad("", 6) +  // TSLD
-                    StringUtils.leftPad(nf.format(message.getBody().length), 5) + " " + // Size
-                    StringUtils.rightPad(message.getGroup(), 7) +  // To
-                    StringUtils.rightPad(message.getRoute(), 8) + // @route
-                    StringUtils.rightPad(message.getFrom(), 8) + // from
-                    StringUtils.rightPad(sdf.format(message.getDate()), 10) + // date/time
-                    StringUtils.rightPad(message.getSubject(), 50)).trim() + CR);
+            write(messageLines.get(i)+CR);
 
             if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
-                setMode(Mode.MESSAGE_LIST_PAGINATION);
-                listMessagesStartingPoint += messageSentCounter;
-                break;
+                setMode(Mode.MESSAGE_READ_PAGINATION);
+                readMessageStartingPoint += messageSentCounter;
+                return;
             }
         }
+        // Reading done, return to previous mode.
+        popModeFromStack();
     }
-
 
     @Override
     public String[] getCommandNames() {
-        return new String[]{"read", "r"};
+        return new String[]{"read", "r", ""};
     }
 }

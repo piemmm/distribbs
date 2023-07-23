@@ -1,9 +1,8 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.node.connectivity.Interface;
@@ -15,12 +14,18 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-@Commandable
+@BBSCommand
 public class MHeard extends Command {
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
-        write(CR);
+
+        // We're only interesteed in comamnd moed.
+        if (!getMode().equals(Mode.CMD)) {
+            return false;
+        }
+
+            write(CR);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
         org.prowl.distribbs.statistics.types.MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
         List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();

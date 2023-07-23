@@ -1,9 +1,8 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
@@ -13,11 +12,17 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.List;
 
-@Commandable
+@BBSCommand
 public class Interfaces extends Command {
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
+
+        // We're only interesteed in comamnd moed.
+        if (!getMode().equals(Mode.CMD)) {
+            return false;
+        }
+
         write(CR);
 
         NumberFormat nf = NumberFormat.getInstance();

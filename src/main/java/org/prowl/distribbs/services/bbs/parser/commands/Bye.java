@@ -1,19 +1,26 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.services.bbs.parser.Mode;
-import org.prowl.distribbs.utils.ANSI;
 
 import java.io.IOException;
 
-@Commandable
+@BBSCommand
 public class Bye extends Command {
+
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
+        // We're only interesteed in comamnd moed - other modes may need use these command words to exit their mode
+        if (getMode().equals(Mode.CMD)) {
+            return false;
+        }
+
         // Possibly save user at this point?
 
+
+        // Now say goodbye and close the connection
         write(CR);
         write(Messages.get("userDisconnecting") + CR);
         client.flush();

@@ -1,29 +1,20 @@
 package org.prowl.distribbs.services.bbs.parser;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.Messages;
-import org.prowl.distribbs.core.Capability;
-import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.eventbus.ServerBus;
-import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.objects.Storage;
-import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.services.bbs.BBSClientHandler;
 import org.prowl.distribbs.services.bbs.parser.commands.Command;
-import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.ANSI;
-import org.prowl.distribbs.utils.Tools;
 import org.prowl.distribbs.utils.UnTokenize;
 import org.reflections.Reflections;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CommandParser {
@@ -36,7 +27,7 @@ public class CommandParser {
     public static final String CR = "\r";
 
     // Commands that are available
-    private static final Set<Class<?>> ALL_COMMANDS = new Reflections("org.prowl.distribbs.services.bbs.parser.commands").getTypesAnnotatedWith(Commandable.class);
+    private static final Set<Class<?>> ALL_COMMANDS = new Reflections("org.prowl.distribbs.services.bbs.parser.commands").getTypesAnnotatedWith(BBSCommand.class);
 
     // Command classes that help keep this class cleaner
     private final List<Command> commands = new ArrayList<>();
@@ -46,6 +37,9 @@ public class CommandParser {
 
     // Default to command mode.
     private Mode mode = Mode.CMD;
+
+    // Stack of modes so we can go back to the previous mode from any command.
+    protected List<Mode> modeStack = new ArrayList<>();
 
     public CommandParser(BBSClientHandler client) {
         this.client = client;
@@ -92,6 +86,10 @@ public class CommandParser {
                 for (String supportedCommand: supportedCommands) {
                     if (supportedCommand.equalsIgnoreCase(arguments[0])) {
                         commandExecuted = command.doCommand(arguments) | commandExecuted;
+                        // Stop when we executed a command.
+                        if (commandExecuted) {
+                            break;
+                        }
                     }
                 }
             }
@@ -124,7 +122,7 @@ public class CommandParser {
     }
 
     public String getPrompt() {
-        String name = Messages.get(mode.name().toLowerCase());
+        String name = Messages.get(mode.toString().toLowerCase());
         return ANSI.BOLD_YELLOW + UnTokenize.str(name) + ANSI.BOLD_WHITE + PROMPT + ANSI.NORMAL + " ";
     }
 
@@ -150,5 +148,19 @@ public class CommandParser {
 
     public void stop() {
         ServerBus.INSTANCE.unregister(this);
+    }
+
+    public void pushModeToStack(Mode mode) {
+        modeStack.add(mode);
+    }
+
+    public Mode popModeFromStack() {
+        if (modeStack.size() > 0) {
+            mode = modeStack.get(modeStack.size() - 1);
+            modeStack.remove(modeStack.size() - 1);
+        } else {
+            mode = Mode.CMD;
+        }
+        return mode;
     }
 }

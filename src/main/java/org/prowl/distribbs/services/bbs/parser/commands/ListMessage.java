@@ -1,7 +1,7 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 
-@Commandable
+@BBSCommand
 public class ListMessage extends Command {
     private int listMessagesStartingPoint = 0;                                   // Used for list messages command
     private java.util.List<Message> currentListMessages;                               // Used for list messages command
@@ -20,10 +20,10 @@ public class ListMessage extends Command {
     @Override
     public boolean doCommand(String[] data) throws IOException {
         Mode mode = getMode();
-        if (mode == Mode.CMD && data[0].length() > 0) {
+        if (mode.equals(Mode.CMD) && data[0].length() > 0) {
             listMessages();
             return true;
-        } else if (mode == Mode.MESSAGE_LIST_PAGINATION && data[0].length() == 0) {
+        } else if (mode.equals(Mode.MESSAGE_LIST_PAGINATION) && data[0].length() == 0) {
             // if we are paginating, and enter was pressed (0 length data[0]), then send the next page
             sendMessageList(currentListMessages);
             return true;
@@ -34,7 +34,7 @@ public class ListMessage extends Command {
     public void listMessages() throws IOException {
         listMessagesStartingPoint = 0;
         Storage storage = DistriBBS.INSTANCE.getStorage();
-        java.util.List<Message> messages = storage.getNewsMessagesInOrder(null);
+        java.util.List<Message> messages = storage.getMessagesInOrder(null);
         if (messages.size() == 0) {
             write(CR);
             write("No messages in BBS yet" + CR);

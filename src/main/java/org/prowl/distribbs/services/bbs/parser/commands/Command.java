@@ -24,6 +24,7 @@ public abstract class Command {
 
     /**
      * Execute the command
+     *
      * @param data
      * @return true if the command was consumed by this class, false if otherwise.
      * @throws IOException
@@ -32,12 +33,14 @@ public abstract class Command {
 
     /**
      * This is the command and it's aliases.
+     *
      * @return The command and it's aliases.
      */
     public abstract String[] getCommandNames();
 
     /**
      * Convenience method to write to the client (no detokenisation of strings)
+     *
      * @param s
      * @throws IOException
      */
@@ -51,5 +54,13 @@ public abstract class Command {
 
     public Mode getMode() {
         return commandParser.getMode();
+    }
+
+    public void popModeFromStack() {
+        commandParser.popModeFromStack();
+    }
+
+    public void pushModeToStack(Mode mode) {
+        commandParser.pushModeToStack(mode);
     }
 }

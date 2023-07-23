@@ -69,7 +69,7 @@ public class Tools {
         }
         StringBuilder sb = new StringBuilder();
         for (int b : binaryContent) {
-            if ((b > 31 && b < 127) || b == 9) {
+            if ((b > 31 && b < 194) || b == 9) {
                 sb.append((char) b);
             }
         }

@@ -1,17 +1,23 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.Messages;
-import org.prowl.distribbs.services.bbs.parser.Mode;
-import org.prowl.distribbs.utils.ANSI;
 
 import java.io.IOException;
 
-@Commandable
+@BBSCommand
 public class ColourToggle extends Command {
 
+    /**
+     * Colour toggle is a special case command and is accessible in any mode.
+     *
+     * @param data
+     * @return
+     * @throws IOException
+     */
     @Override
     public boolean doCommand(String[] data) throws IOException {
+
         client.setColourEnabled(!client.getColourEnabled());
         if (client.getColourEnabled()) {
             write(Messages.get("colourEnabled") + CR);

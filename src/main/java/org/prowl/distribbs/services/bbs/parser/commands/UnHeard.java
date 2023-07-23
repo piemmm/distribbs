@@ -1,10 +1,11 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.ANSI;
 import org.prowl.distribbs.utils.Tools;
@@ -13,11 +14,17 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-@Commandable
+@BBSCommand
 public class UnHeard extends Command {
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
+
+        // We're only interesteed in comamnd moed.
+        if (!getMode().equals(Mode.CMD)) {
+            return false;
+        }
+
         write(CR);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
 

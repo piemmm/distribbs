@@ -1,20 +1,20 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.prowl.annotations.Commandable;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.Messages;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
 
 import java.io.IOException;
 
-@Commandable
+@BBSCommand
 public class Abort extends Command {
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
-        if (getMode() == Mode.MESSAGE_LIST_PAGINATION || getMode() == Mode.MESSAGE_READ_PAGINATION) {
+        if (getMode().equals(Mode.MESSAGE_LIST_PAGINATION) || getMode().equals(Mode.MESSAGE_READ_PAGINATION)) {
             write(ANSI.BOLD + Messages.get("abortMessageList") + ANSI.NORMAL + CR);
-            setMode(Mode.CMD);
+            popModeFromStack();
             return true;
         }
         return false;

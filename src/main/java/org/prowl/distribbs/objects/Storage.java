@@ -1,5 +1,7 @@
 package org.prowl.distribbs.objects;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,6 +13,7 @@ import org.prowl.distribbs.utils.Tools;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Storage class allows objects to be stored on disk to keep things simple.
@@ -29,11 +32,16 @@ public class Storage {
     private static final String NEWS = "news";
     private static final String CHAT = "chat";
     private static final String APRS = "aprs";
-    private static final String MAIL = "mail";
     private static final String USER = "user";
     private static final String QSL = "qsl";
 
     private static long highestMessageIdSeen = -1;
+
+    // Cache of messages
+    private static final Cache<String, Message> BIDMIDToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
+    private static final Cache<Long, Message> messageIdToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
+    private static final Cache<File, Message> messageFileToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
+
 
     public Storage(HierarchicalConfiguration config) {
         this.config = config;
@@ -104,16 +112,6 @@ public class Storage {
         storeData(getUserMessageFile(user.getBaseCallsign()), user.toPacket());
     }
 
-
-//
-//   public File getNewsMessageFile(NewsMessage message) {
-//      String filename = Long.toString(message.getDate()) + "_" + message.getFrom();
-//      File itemDir = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator + timeToSlot(message.getDate()) + File.pathSeparator + message.getGroup());
-//      if (!itemDir.exists()) {
-//         itemDir.mkdirs();
-//      }
-//      return new File(itemDir, filename);
-//   }
 
     public File getNewsMessageFile(Message message) {
         String filename = message.getBID_MID();
@@ -211,85 +209,131 @@ public class Storage {
         }
     }
 
+
     /**
      * Get a list of news group messages going back as far as date X.
      */
-    public File[] listNewsMessages(String group) {
-        ArrayList<File> files = new ArrayList<>();
-        File[] groups = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
-        if (groups != null) {
+    public File[] listMessages(String group) {
+        List<File> files = new ArrayList<>();
+        if (group != null) {
+            // Get for a group
+            File groupFile = new File(locationDir.getAbsolutePath() + File.separator + NEWS, group);
+            getMessageList(files, groupFile);
+        } else {
+            // Get all messages
+            File[] groups = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
             for (File fgroup : groups) {
-                try {
-                    if (fgroup.getName().equals(group) || group == null) {
-                        File[] messages = fgroup.listFiles();
-                        if (messages != null) {
-                            files.addAll(Arrays.asList(messages));
-                        }
-                    }
-                } catch (Throwable e) {
-                    // Ignore the 'not a date' file
-                    LOG.debug("Ignoring file path:" + group, e);
-                }
+                getMessageList(files, fgroup);
             }
         }
+
         return files.toArray(new File[files.size()]);
+    }
+
+    /**
+     * Get a message based on it's messageId
+     * @param messageId
+     * @return
+     */
+    public Message getMessage(long messageId) {
+
+        // Check cache first to avoid disk access
+        Message message = messageIdToMsg.getIfPresent(messageId);
+        if (message != null) {
+            return message;
+        }
+
+        // If not in cache then retrieve from disk
+        List<Message> messages = getMessagesInOrder(null);
+
+        // We could check the cache, but it might have been evicted, so we will check iterate the list anyway
+        for (Message msg : messages) {
+            if (msg.getMessageNumber() == messageId) {
+                message = msg;
+                break;
+            }
+        }
+
+        // Probably re-insert into the cache, just to be sure it wasn't evicted already.
+        if (message != null) {
+            messageIdToMsg.put(message.getMessageNumber(), message);
+        }
+        return message;
+    }
+
+    /**
+     * Get a list of messages for a group and add to the supplied list
+     *
+     * @param files  the list we will append files found to
+     * @param fgroup the group to list files for
+     */
+    private void getMessageList(List<File> files, File fgroup) {
+        try {
+            File[] messages = fgroup.listFiles();
+            if (messages != null) {
+                files.addAll(Arrays.asList(messages));
+            }
+        } catch (Throwable e) {
+            // Ignore the 'not a date' file
+            LOG.debug("Ignoring file path:" + fgroup, e);
+        }
     }
 
     /**
      * Get a list of all news group messages going back as far as date X.
      */
-    public File[] listNewsMessages() {
-        return listNewsMessages(null);
+    public File[] listMessages() {
+        return listMessages(null);
     }
-
-    /**
-     * Get a mail messages for a callsign
-     */
-    public File[] listMailMessages(String callsign, long earliestDate) throws IOException {
-        ArrayList<File> files = new ArrayList<>();
-        File[] groups = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
-        if (groups != null) {
-            for (File group : groups) {
-                try {
-                    File[] messages = group.listFiles();
-                    if (messages != null) {
-                        files.addAll(Arrays.asList(messages));
-                    }
-                } catch (NumberFormatException e) {
-                    LOG.debug("Invalid file:" + e.getMessage() + "  " + group);
-                }
-            }
-        }
-        return files.toArray(new File[files.size()]);
-    }
-
-    /**
-     * Get a mail messages since a date
-     */
-    public File[] listMailMessages(long earliestDate) {
-        ArrayList<File> files = new ArrayList<>();
-        File[] callsigns = new File(locationDir.getAbsolutePath() + File.separator + MAIL).listFiles();
-        if (callsigns != null) {
-            for (File callsign : callsigns) {
-                File[] dates = callsign.listFiles();
-                if (dates != null) {
-                    for (File date : dates) {
-                        try {
-                            if (Long.parseLong(date.getName()) > earliestDate) {
-                                File[] messages = date.listFiles();
-                                if (messages != null) {
-                                    files.addAll(Arrays.asList(messages));
-                                }
-                            }
-                        } catch (NumberFormatException e) {
-                            LOG.debug("Invalid file:" + e.getMessage() + "  " + date);
-                        }
-                    }
-                }
-            }
-        }
-        return files.toArray(new File[files.size()]);
-    }
+//
+//    /**
+//     * Get a mail messages for a callsign
+//     */
+//    public File[] listMailMessages(String callsign, long earliestDate) throws IOException {
+//        ArrayList<File> files = new ArrayList<>();
+//        File[] groups = new File(locationDir.getAbsolutePath() + File.separator + MAIL + File.separator + callsign).listFiles();
+//        if (groups != null) {
+//            for (File group : groups) {
+//                try {
+//                    File[] messages = group.listFiles();
+//                    if (messages != null) {
+//                        files.addAll(Arrays.asList(messages));
+//                    }
+//                } catch (NumberFormatException e) {
+//                    LOG.debug("Invalid file:" + e.getMessage() + "  " + group);
+//                }
+//            }
+//        }
+//        return files.toArray(new File[files.size()]);
+//    }
+//
+//    /**
+//     * Get a mail messages since a date
+//     */
+//    public File[] listMailMessages(long earliestDate) {
+//        ArrayList<File> files = new ArrayList<>();
+//        File[] callsigns = new File(locationDir.getAbsolutePath() + File.separator + MAIL).listFiles();
+//        if (callsigns != null) {
+//            for (File callsign : callsigns) {
+//                File[] dates = callsign.listFiles();
+//                if (dates != null) {
+//                    for (File date : dates) {
+//                        try {
+//                            if (Long.parseLong(date.getName()) > earliestDate) {
+//                                File[] messages = date.listFiles();
+//                                if (messages != null) {
+//                                    files.addAll(Arrays.asList(messages));
+//                                }
+//                            }
+//                        } catch (NumberFormatException e) {
+//                            LOG.debug("Invalid file:" + e.getMessage() + "  " + date);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return files.toArray(new File[files.size()]);
+//    }
 
     /**
      * Get a list of known chat groups
@@ -397,18 +441,33 @@ public class Storage {
 
     /**
      * Retrieve a news message
+     * <p>
+     * Message IDs are immutable, so we can cache the references.
      *
      * @param f
      * @return
      * @throws IOException
      */
     public Message loadNewsMessage(File f) throws IOException {
-        Message message = new Message();
+
+        Message message = messageFileToMsg.getIfPresent(f);
+        if (message != null) {
+            return message;
+        }
+
+        // Otherwise load the message from disk.
+        message  = new Message();
         try {
             message.fromPacket(loadData(f));
         } catch (InvalidMessageException e) {
             throw new IOException(e);
         }
+
+        // Store in cache for quick lookup.
+        BIDMIDToMsg.put(message.getBID_MID(), message);
+        messageIdToMsg.put(message.getMessageNumber(), message);
+        messageFileToMsg.put(f, message);
+
         return message;
     }
 
@@ -502,9 +561,13 @@ public class Storage {
         }
     }
 
-    public List<Message> getNewsMessagesInOrder(String groupName) {
-
-        File[] files = listNewsMessages();
+    /**
+     * Get a list of messages in message id order.
+     * @param groupName the group to list messages for, or null for all groups
+     * @return a list of messages in message id order.
+     */
+    public List<Message> getMessagesInOrder(String groupName) {
+        File[] files = listMessages();
         List<Message> messages = new ArrayList<>();
         for (File file : files) {
             try {
@@ -515,12 +578,13 @@ public class Storage {
             }
         }
 
+        // Sort them in id order
         Collections.sort(messages, new Comparator<Message>() {
             @Override
             public int compare(Message o1, Message o2) {
-                if (o1.getDate() < o2.getDate()) {
+                if (o1.getMessageNumber() < o2.getMessageNumber()) {
                     return 1;
-                } else if (o1.getDate() > o2.getDate()) {
+                } else if (o1.getMessageNumber() > o2.getMessageNumber()) {
                     return -1;
                 }
                 return 0;
@@ -535,24 +599,11 @@ public class Storage {
      * the next one.
      */
     public synchronized long getNextMessageID() {
-
         if (highestMessageIdSeen != -1) {
             return ++highestMessageIdSeen;
         }
         long highest = -1;
-        File[] files = listNewsMessages();
-        for (File f : files) {
-            try {
-                Message message = loadNewsMessage(f);
-                if (highest < message.getMessageNumber()) {
-                    highest = message.getMessageNumber();
-                }
-            } catch (Throwable e) {
-                LOG.error(e.getMessage(), e);
-            }
-        }
-
-        files = listMailMessages(0);
+        File[] files = listMessages();
         for (File f : files) {
             try {
                 Message message = loadNewsMessage(f);
