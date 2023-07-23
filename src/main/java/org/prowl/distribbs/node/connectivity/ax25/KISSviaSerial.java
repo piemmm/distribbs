@@ -25,11 +25,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 /**
- * Implements a KISS type passthrough on a fifo file so that things like
- * ax25-tools can play with it.
- * <p>
- * Data is forwarded and received on the designated rf slot (where an SX1278
- * usually resides)
+ * Implements a KISS type connection with a serial port device
+ *
  */
 public class KISSviaSerial extends Interface {
 
