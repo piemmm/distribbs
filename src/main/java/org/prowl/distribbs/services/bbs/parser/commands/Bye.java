@@ -13,7 +13,7 @@ public class Bye extends Command {
     @Override
     public boolean doCommand(String[] data) throws IOException {
         // We're only interesteed in comamnd moed - other modes may need use these command words to exit their mode
-        if (getMode().equals(Mode.CMD)) {
+        if (!getMode().equals(Mode.CMD)) {
             return false;
         }
 
