@@ -2,6 +2,11 @@ package org.ka2ddo.ax25;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
+import org.prowl.ax25.*;
+import org.prowl.distribbs.ax25.AX25Callsign;
+import org.prowl.distribbs.ax25.AX25Frame;
+import org.prowl.distribbs.ax25.AX25Stack;
+import org.prowl.distribbs.ax25.ConnState;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

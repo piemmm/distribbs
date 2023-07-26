@@ -1,6 +1,6 @@
 package org.prowl.distribbs.core;
 
-import org.ka2ddo.ax25.AX25Frame;
+import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.node.connectivity.Interface;
 
 import java.util.ArrayList;

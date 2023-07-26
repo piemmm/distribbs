@@ -3,7 +3,7 @@ package org.prowl.distribbs.statistics.types;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ka2ddo.ax25.AX25Frame;
+import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.eventbus.events.HeardNodeEvent;

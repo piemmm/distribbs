@@ -3,9 +3,8 @@ package org.prowl.distribbs.node.connectivity.ax25;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ka2ddo.ax25.*;
-import org.ka2ddo.ax25.BasicTransmittingConnector;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.ax25.*;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
@@ -123,7 +122,7 @@ public class KISSviaTCP extends Interface {
              * @return
              */
             @Override
-            public boolean acceptInbound(ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
+            public boolean acceptInbound(ConnState state, AX25Callsign originator, Connector port) {
 
                 LOG.info("Incoming connection request from " + originator + " to " + state.getDst() + " (" + serviceList.size() + " registered services to check...)");
 
@@ -147,7 +146,7 @@ public class KISSviaTCP extends Interface {
         // AX Frame listener for things like mheard lists
         connector.addFrameListener(new AX25FrameListener() {
             @Override
-            public void consumeAX25Frame(AX25Frame frame, org.ka2ddo.ax25.Connector connector) {
+            public void consumeAX25Frame(AX25Frame frame, Connector connector) {
                 // Create a node to represent what we've seen - we'll merge this in things like
                 // mheard lists if there is another node there so that capability lists can grow
                 Node node = new Node(KISSviaTCP.this, frame.sender.toString(), frame.rcptTime, frame.dest.toString(), frame);
@@ -170,7 +169,7 @@ public class KISSviaTCP extends Interface {
      * @param originator
      * @param port
      */
-    public void setupConnectionListener(Service service, ConnState state, AX25Callsign originator, org.ka2ddo.ax25.Connector port) {
+    public void setupConnectionListener(Service service, ConnState state, AX25Callsign originator, Connector port) {
         // If we're going to accept then add a listener so we can keep track of this connection state
         state.listener = new ConnectionEstablishmentListener() {
             @Override

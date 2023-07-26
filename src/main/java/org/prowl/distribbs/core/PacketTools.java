@@ -3,7 +3,7 @@ package org.prowl.distribbs.core;
 import net.sf.marineapi.nmea.util.Position;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ka2ddo.ax25.AX25Frame;
+import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.aprslib.parser.APRSPacket;
 import org.prowl.aprslib.parser.APRSTypes;
 import org.prowl.aprslib.parser.Parser;
