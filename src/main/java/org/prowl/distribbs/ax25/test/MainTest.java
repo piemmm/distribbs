@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 /**
- * A Basic start point for using the library, as a very crude example.
+ * A Basic start point for using the library, as a very crude example to listen for connections
  */
 public class MainTest {
 
