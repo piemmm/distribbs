@@ -773,13 +773,13 @@ public class AX25Stack implements FrameListener, Runnable {
                     int nr = frame.getNR();
                     boolean ackFrames = false;
                     while (state.va != nr) {
-                        state.va = (state.va + 1) % (state.getConnType() == ConnState.ConnType.MOD128 ? 128 : 8);
                         if (state.transmitWindow != null) {
                             if (state.transmitWindow[state.va] != null) {
                                 state.transmitWindow[state.va] = null;
                                 ackFrames = true; //TODO: did we ack the frame we are currently sending?
                             }
                         }
+                        state.va = (state.va + 1) % (state.getConnType() == ConnState.ConnType.MOD128 ? 128 : 8);
                     }
                     if (ackFrames) {
                         state.clearResendableFrame();
