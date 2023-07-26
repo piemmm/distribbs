@@ -1,7 +1,7 @@
 package org.ka2ddo.ax25.test;
 
 import org.ka2ddo.ax25.*;
-import org.ka2ddo.ax25.io.BasicTransmittingConnector;
+import org.ka2ddo.ax25.BasicTransmittingConnector;
 
 import java.io.IOException;
 import java.io.InputStream;

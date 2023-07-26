@@ -5,7 +5,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.ax25.*;
-import org.ka2ddo.ax25.io.BasicTransmittingConnector;
+import org.ka2ddo.ax25.BasicTransmittingConnector;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
@@ -20,9 +20,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.Socket;
 
 /**
  * Implements a KISS type connection with a serial port device
@@ -87,7 +84,7 @@ public class KISSviaSerial extends Interface {
         // Rather than just use the port descriptor, we'll iterate through all the ports so we can at least see
         // what the system has available, so the user is not completely in the dark whe looking at logs.
         SerialPort[] ports = SerialPort.getCommPorts();
-        for (SerialPort testPort: ports) {
+        for (SerialPort testPort : ports) {
             LOG.debug("Found serial port: " + testPort.getSystemPortName());
             if (testPort.getSystemPortName().equals(port)) {
                 LOG.debug(" ** Using serial port: " + testPort.getSystemPortName());
@@ -112,7 +109,6 @@ public class KISSviaSerial extends Interface {
         } else if (parity.equalsIgnoreCase("O")) {
             parityInt = SerialPort.ODD_PARITY;
         }
-
 
 
         serialPort.setBaudRate(serialBaudRate);

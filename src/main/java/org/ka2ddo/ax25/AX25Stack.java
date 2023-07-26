@@ -1557,7 +1557,7 @@ public class AX25Stack implements FrameListener, Runnable {
         }
     }
 
-    private void fireConnStateUpdated(ConnState connState) {
+    void fireConnStateUpdated(ConnState connState) {
         //ArrayList<ConnStateChangeListener> connStateListeners = AX25Stack.connStateListeners;
         for (int i = connStateListeners.size() - 1; i >= 0; i--) {
             try {

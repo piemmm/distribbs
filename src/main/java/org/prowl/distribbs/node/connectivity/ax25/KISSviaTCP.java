@@ -4,7 +4,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ka2ddo.ax25.*;
-import org.ka2ddo.ax25.io.BasicTransmittingConnector;
+import org.ka2ddo.ax25.BasicTransmittingConnector;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
