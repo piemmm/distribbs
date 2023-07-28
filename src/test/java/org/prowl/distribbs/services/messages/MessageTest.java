@@ -9,13 +9,13 @@ import org.prowl.distribbs.objects.messages.Message;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MessageTest  {
+public class MessageTest {
 
-   public static final long   TEST_DATE    = 1234567890l;
-   public static final String TEST_TO      = "G0SGY";
-   public static final String TEST_FROM    = "G0TAI";
+   public static final long TEST_DATE = 1234567890l;
+   public static final String TEST_TO = "G0SGY";
+   public static final String TEST_FROM = "G0TAI";
    public static final String TEST_SUBJECT = "This is a test message subject";
-   public static final String TEST_BODY    = " This is a test message main body text\nwithseveral\nlines\n\n73\n and a leading space";
+   public static final String TEST_BODY = " This is a test message main body text\nwithseveral\nlines\n\n73\n and a leading space";
 
    /**
     * Serialisation test

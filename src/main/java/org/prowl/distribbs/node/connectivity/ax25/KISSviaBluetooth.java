@@ -1,3 +1,5 @@
+// This only works on windows at the moment, and old versions of macos due to native libraries in the bluetooth library needing updating
+
 //package org.prowl.distribbs.node.connectivity.ax25;
 //
 //import org.apache.commons.configuration.HierarchicalConfiguration;

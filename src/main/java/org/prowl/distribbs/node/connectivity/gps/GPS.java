@@ -87,8 +87,7 @@ public class GPS extends Interface {
                         .flowControl(FlowControl.NONE);
                 serial.open(config);
             } catch (Throwable ex) {
-                // Rethrow as IOE
-                LOG.error(e.getMessage(), e);
+                LOG.warn("Unable to open serial port, GPS will not be available");
             }
 
         }

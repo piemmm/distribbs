@@ -18,6 +18,10 @@ package org.prowl.distribbs.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.Tools;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
@@ -30,6 +34,9 @@ import java.util.List;
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25InputStream extends InputStream {
+    private static final Log LOG = LogFactory.getLog("AX25InputStream");
+
+
     List<AX25Frame> frameQueue = new LinkedList<AX25Frame>();
     transient AX25Frame currentFrame = null;
     int frameBodyIndex = 0;
@@ -59,7 +66,7 @@ class AX25InputStream extends InputStream {
      *
      * @return the next byte of data, or <code>-1</code> if the end of the
      * stream is reached.
-     * @throws java.io.IOException if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     public int read() throws IOException {
         synchronized (this) {
@@ -86,6 +93,9 @@ class AX25InputStream extends InputStream {
         } else {
             answer = currentFrame.body[frameBodyIndex++] & 0xFF;
         }
+
+        LOG.debug("READ[byte] called: "+Integer.toString(answer,16));
+
         return answer;
     }
 
@@ -123,14 +133,14 @@ class AX25InputStream extends InputStream {
      * @return the total number of bytes read into the buffer, or
      * <code>-1</code> if there is no more data because the end of
      * the stream has been reached.
-     * @throws java.io.IOException       If the first byte cannot be read for any reason
+     * @throws IOException       If the first byte cannot be read for any reason
      *                                   other than end of file, or if the input stream has been closed, or if
      *                                   some other I/O error occurs.
      * @throws NullPointerException      If <code>b</code> is <code>null</code>.
      * @throws IndexOutOfBoundsException If <code>off</code> is negative,
      *                                   <code>len</code> is negative, or <code>len</code> is greater than
      *                                   <code>b.length - off</code>
-     * @see java.io.InputStream#read()
+     * @see InputStream#read()
      */
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
@@ -158,6 +168,27 @@ class AX25InputStream extends InputStream {
                 currentFrame = frameQueue.remove(0);
             }
         }
+
+//        if (len >= currentFrame.body.length - frameBodyIndex) {
+//            len = currentFrame.body.length - frameBodyIndex;
+//        }
+//        LOG.debug("READ[array] start");
+//        int count = 0;
+//        for (int i = 0; i < len; i++) {
+//            int c = read();
+//            if (c == -1) {
+//                return -1;
+//            }
+//            b[off + i] = (byte) c;
+//            count++;
+//        }
+//
+//        LOG.debug("READ[array] end:"+ Tools.byteArrayToHexString(b));
+//
+//        return count;
+
+
+
         if (len >= currentFrame.body.length - frameBodyIndex) {
             len = currentFrame.body.length - frameBodyIndex;
             System.arraycopy(currentFrame.body, frameBodyIndex, b, off, len);
@@ -167,7 +198,7 @@ class AX25InputStream extends InputStream {
             System.arraycopy(currentFrame.body, frameBodyIndex, b, off, len);
             frameBodyIndex += len;
         }
-        return len;
+return len;
     }
 
     /**
@@ -185,7 +216,7 @@ class AX25InputStream extends InputStream {
      * @return an estimate of the number of bytes that can be read (or skipped
      * over) from this input stream without blocking or {@code 0} when
      * it reaches the end of the input stream.
-     * @throws java.io.IOException if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public int available() throws IOException {

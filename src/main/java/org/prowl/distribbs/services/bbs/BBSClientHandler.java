@@ -1,5 +1,6 @@
 package org.prowl.distribbs.services.bbs;
 
+import org.apache.commons.compress.compressors.deflate.DeflateCompressorOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
@@ -8,8 +9,10 @@ import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.ClientHandler;
 import org.prowl.distribbs.services.bbs.parser.CommandParser;
 import org.prowl.distribbs.utils.ANSI;
+import org.prowl.distribbs.utils.Tools;
 
 import java.io.*;
+import java.util.zip.DeflaterOutputStream;
 
 public class BBSClientHandler implements ClientHandler {
 
@@ -22,6 +25,7 @@ public class BBSClientHandler implements ClientHandler {
     private User user;
     private CommandParser parser;
     private boolean colourEnabled = true;
+    private BufferedReader bin;
 
     public BBSClientHandler(User user, InputStream in, OutputStream out) {
         this.in = in;
@@ -38,11 +42,31 @@ public class BBSClientHandler implements ClientHandler {
             Thread t = new Thread(() -> {
 
                 try {
-                    InputStreamReader reader = new InputStreamReader(in);
-                    BufferedReader bin = new BufferedReader(reader);
-                    String inLine;
-                    while ((inLine = bin.readLine()) != null) {
-                        parser.parse(inLine);
+                    while (in != null) {
+                        StringBuffer inLine = new StringBuffer();
+                        int b;
+                        while (true) {
+                            if (in.available() > 0) {
+                                b = in.read();
+                                if (b == -1) {
+                                    break;
+                                }
+
+                                if (b == 13) {
+                                    parser.parse(inLine.toString());
+                                    inLine.delete(0, inLine.length());
+                                } else {
+                                    inLine.append((char) b);
+                                }
+
+                            } else {
+                                // Crude.
+                                Thread.sleep(100);
+                            }
+
+
+                        }
+
                     }
                 } catch (Exception e) {
                     LOG.error(e.getMessage(), e);
@@ -51,7 +75,13 @@ public class BBSClientHandler implements ClientHandler {
             });
             t.start();
 
-            send("[" + DistriBBS.NAME + "-" + DistriBBS.VERSION + "-" + DistriBBS.INSTANCE.getBBSServices() + "]" + CR);
+            // Send the capabilites header which explains to any client that can interpret it what we are capable of
+            // This should be documented on http://wiki.oarc.something.other.if.it.is.accepted
+            // If the client sees this, and decides to use them then it should send a [OARC <capabilities>] header containing
+            // items previosly seen in our list, to enable them in one go (they take effect immediately)
+            send("[OARC " + DistriBBS.INSTANCE.getStationCapabilities() + "]" + CR);
+
+            // Everything else is just part of our standard welcome message
             send(ANSI.BOLD_CYAN + Messages.get("usesColour") + CR + ANSI.NORMAL + CR);
             send(Messages.get("welcomeNewUser") + CR);
             parser.sendPrompt();
@@ -60,6 +90,10 @@ public class BBSClientHandler implements ClientHandler {
             LOG.error(e.getMessage(), e);
         }
 
+    }
+
+    public void useNewInputStream(InputStream in) {
+        this.in = in;
     }
 
     public void close() {
@@ -88,8 +122,6 @@ public class BBSClientHandler implements ClientHandler {
      * @throws IOException
      */
     public void send(String data) throws IOException {
-
-
         data = data.replaceAll("[^\\x04-\\xFF]", "?");
 
         // Strip colour if needed.
@@ -100,11 +132,23 @@ public class BBSClientHandler implements ClientHandler {
             data = ANSI.stripKnownColourTokens(data);
         }
 
-
         out.write(data.getBytes());
     }
 
     public void flush() throws IOException {
         out.flush();
+    }
+
+
+    public void setOutputStream(OutputStream out) {
+        this.out = out;
+    }
+
+    public InputStream getInputStream() {
+        return in;
+    }
+
+    public OutputStream getOutputStream() {
+        return out;
     }
 }

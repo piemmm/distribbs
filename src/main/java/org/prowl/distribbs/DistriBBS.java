@@ -103,8 +103,8 @@ public enum DistriBBS {
         }
     }
 
-    public String getBBSServices() {
-        return "X";
+    public String getStationCapabilities() {
+        return "AC";
     }
 
     public Config getConfiguration() {

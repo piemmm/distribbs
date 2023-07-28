@@ -1,4 +1,4 @@
-package org.ka2ddo.ax25;
+package org.prowl.distribbs.ax25;
 
 
 import org.prowl.ax25.*;

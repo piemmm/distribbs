@@ -2,7 +2,9 @@ package org.prowl.distribbs.ax25;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.Tools;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -304,10 +306,11 @@ public class BasicTransmittingConnector extends Connector implements Transmittin
                 kos.writeRaw(KissEscapeOutputStream.FEND);
                 kos.flush();
                 byteCount = kos.getByteCount();
+
                 stats.numXmtBytes += byteCount;
                 stats.numXmtFrames++;
             }
-            LOG.debug(debugTag + "Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame + "  asciiFrame:" + frame.getAsciiFrame());
+            LOG.debug(debugTag + "Sent frame: KISSByteCount:" + byteCount + "   frameByteCount:" + frame.getByteFrame().length + "   frame:" + frame + "  asciiFrame:" + frame.getAsciiFrame()+"   hex:"+ Tools.byteArrayToHexString(frame.getByteFrame()));
         } catch (Exception e) {
             //  fireTransmitting(false);
             //  fireFailed();

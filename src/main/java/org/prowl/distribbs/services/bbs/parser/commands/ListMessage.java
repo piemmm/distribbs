@@ -71,7 +71,7 @@ public class ListMessage extends Command {
                     StringUtils.rightPad(sdf.format(message.getDate()), 10) + // date/time
                     StringUtils.rightPad(message.getSubject(), 50)).trim() + CR);
 
-            if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
+            if (++messageSentCounter >= 22) { // todo '10' should be configurable by the user
                 setMode(Mode.MESSAGE_LIST_PAGINATION);
                 listMessagesStartingPoint += messageSentCounter;
                 break;

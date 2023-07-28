@@ -13,11 +13,11 @@ import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
+import org.prowl.distribbs.utils.compression.huffman.BitInputStream;
+import org.prowl.distribbs.utils.compression.huffman.HuffmanDecoder;
+import org.prowl.distribbs.utils.compression.huffman.HuffmanEncoder;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -179,7 +179,7 @@ public class KISSviaTCP extends Interface {
                     // Do inputty and outputty stream stuff here
                     try {
                         User user = DistriBBS.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
-                        InputStream in = state.getInputStream();
+                        InputStream in = new BufferedInputStream(state.getInputStream());
                         OutputStream out = state.getOutputStream();
 
                         // This wrapper provides a simple way to terminate the connection when the outputstream

@@ -7,10 +7,7 @@ import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.KISSFrameEvent;
 import org.prowl.distribbs.utils.Tools;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class KISSClient {
@@ -36,8 +33,8 @@ public class KISSClient {
             try {
 
                 // Get each frame from the client which starts with 0xC0 and ends with 0xC0 with data inbetween.
-                InputStream input = clientSocket.getInputStream();
-                clientOutput = clientSocket.getOutputStream();
+                InputStream input = new BufferedInputStream(clientSocket.getInputStream());
+                clientOutput = new BufferedOutputStream(clientSocket.getOutputStream());
                 ByteArrayOutputStream frame = new ByteArrayOutputStream();
                 while (true) {
                     int ch = input.read();
@@ -50,7 +47,7 @@ public class KISSClient {
                         frame.write(ch);
                         LOG.debug("Frame received from client: " + Tools.byteArrayToHexString(frame.toByteArray()));
                         // Write to all clients.
-                        KISSFrameEvent event = new KISSFrameEvent(frame.toByteArray());
+                        KISSFrameEvent event = new KISSFrameEvent(frame.toByteArray(), this);
                         ServerBus.INSTANCE.post(event);
                         frame.reset();
                         continue;
@@ -82,6 +79,10 @@ public class KISSClient {
         // Send data to the client.
         try {
             synchronized (clientOutput) {
+                if (frame.getSource() == this) {
+                    // Don't send data back to the client that sent it.
+                    return;
+                }
                 LOG.debug("Frame received from another client: " + Tools.byteArrayToHexString(frame.getData()));
                 clientOutput.write(frame.getData());
                 clientOutput.flush();

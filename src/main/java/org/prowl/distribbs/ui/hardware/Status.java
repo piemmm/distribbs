@@ -50,7 +50,7 @@ public class Status {
             start();
         } catch (UnsatisfiedLinkError e) {
             // Probably not running on pi
-            LOG.error(e.getMessage(), e);
+            LOG.warn("Unable to initialise LCD and LEDs, probably not running on a Raspberry Pi");
         }
 
     }

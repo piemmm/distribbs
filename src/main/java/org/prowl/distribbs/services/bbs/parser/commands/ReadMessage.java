@@ -88,7 +88,7 @@ public class ReadMessage extends Command {
 
             write(messageLines.get(i)+CR);
 
-            if (++messageSentCounter >= 10) { // todo '10' should be configurable by the user
+            if (++messageSentCounter >= 22) { // todo '10' should be configurable by the user
                 setMode(Mode.MESSAGE_READ_PAGINATION);
                 readMessageStartingPoint += messageSentCounter;
                 return;
