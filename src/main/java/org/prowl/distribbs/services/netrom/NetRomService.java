@@ -16,9 +16,9 @@ public class NetRomService extends Service {
     private String nodeAlias;
 
     public NetRomService(HierarchicalConfiguration config) {
-            super(config);
-            nodeCallsign = config.getString("callsign");
-            nodeAlias = config.getString("alias");
+        super(config);
+        nodeCallsign = config.getString("callsign");
+        nodeAlias = config.getString("alias");
     }
 
     @Override

@@ -1,8 +1,8 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
@@ -59,6 +59,6 @@ public class Interfaces extends Command {
 
     @Override
     public String[] getCommandNames() {
-        return new String[]{"int","ports","i","interfaces"};
+        return new String[]{"int", "ports", "i", "interfaces"};
     }
 }

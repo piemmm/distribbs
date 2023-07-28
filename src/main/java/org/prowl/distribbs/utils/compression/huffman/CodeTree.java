@@ -98,6 +98,22 @@ public final class CodeTree {
         buildCodeList(root, new ArrayList<Integer>());  // Fill 'codes' with appropriate data
     }
 
+    // Recursive helper function for toString()
+    private static void toString(String prefix, Node node, StringBuilder sb) {
+        if (node instanceof InternalNode) {
+            InternalNode internalNode = (InternalNode) node;
+            toString(prefix + "0", internalNode.leftChild, sb);
+            toString(prefix + "1", internalNode.rightChild, sb);
+        } else if (node instanceof Leaf) {
+            sb.append(String.format("Code %s: Symbol %d%n", prefix, ((Leaf) node).symbol));
+        } else {
+            throw new AssertionError("Illegal node type");
+        }
+    }
+
+
+
+    /*---- Various methods ----*/
 
     // Recursive helper function for the constructor
     private void buildCodeList(Node node, List<Integer> prefix) {
@@ -125,10 +141,6 @@ public final class CodeTree {
         }
     }
 
-
-
-    /*---- Various methods ----*/
-
     /**
      * Returns the Huffman code for the specified symbol, which is a list of 0s and 1s.
      *
@@ -146,7 +158,6 @@ public final class CodeTree {
             return codes.get(symbol);
     }
 
-
     /**
      * Returns a string representation of this code tree,
      * useful for debugging only, and the format is subject to change.
@@ -157,20 +168,6 @@ public final class CodeTree {
         StringBuilder sb = new StringBuilder();
         toString("", root, sb);
         return sb.toString();
-    }
-
-
-    // Recursive helper function for toString()
-    private static void toString(String prefix, Node node, StringBuilder sb) {
-        if (node instanceof InternalNode) {
-            InternalNode internalNode = (InternalNode) node;
-            toString(prefix + "0", internalNode.leftChild, sb);
-            toString(prefix + "1", internalNode.rightChild, sb);
-        } else if (node instanceof Leaf) {
-            sb.append(String.format("Code %s: Symbol %d%n", prefix, ((Leaf) node).symbol));
-        } else {
-            throw new AssertionError("Illegal node type");
-        }
     }
 
 }

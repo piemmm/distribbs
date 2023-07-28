@@ -1,7 +1,7 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.Messages;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 
 import java.io.IOException;
@@ -31,6 +31,6 @@ public class Bye extends Command {
 
     @Override
     public String[] getCommandNames() {
-        return new String[]{"b","q","bye","end","logoff","logout","exit","quit"};
+        return new String[]{"b", "q", "bye", "end", "logoff", "logout", "exit", "quit"};
     }
 }

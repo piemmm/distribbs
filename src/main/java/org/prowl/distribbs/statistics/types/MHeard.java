@@ -36,10 +36,10 @@ public class MHeard {
                 // Update existing node
                 Node oldHeard = heardList.remove(index);
                 updateNode(oldHeard, heard);
-                heardList.add(0,oldHeard);
+                heardList.add(0, oldHeard);
             } else {
                 // Add new node to list
-                heardList.add(0,heard);
+                heardList.add(0, heard);
             }
         }
 

@@ -1,6 +1,5 @@
 package org.prowl.distribbs.services.bbs;
 
-import org.apache.commons.compress.compressors.deflate.DeflateCompressorOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
@@ -9,10 +8,11 @@ import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.ClientHandler;
 import org.prowl.distribbs.services.bbs.parser.CommandParser;
 import org.prowl.distribbs.utils.ANSI;
-import org.prowl.distribbs.utils.Tools;
 
-import java.io.*;
-import java.util.zip.DeflaterOutputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class BBSClientHandler implements ClientHandler {
 
@@ -107,12 +107,12 @@ public class BBSClientHandler implements ClientHandler {
         }
     }
 
-    public void setColourEnabled(boolean enabled) {
-        this.colourEnabled = enabled;
-    }
-
     public boolean getColourEnabled() {
         return colourEnabled;
+    }
+
+    public void setColourEnabled(boolean enabled) {
+        this.colourEnabled = enabled;
     }
 
     /**
@@ -139,16 +139,15 @@ public class BBSClientHandler implements ClientHandler {
         out.flush();
     }
 
-
-    public void setOutputStream(OutputStream out) {
-        this.out = out;
-    }
-
     public InputStream getInputStream() {
         return in;
     }
 
     public OutputStream getOutputStream() {
         return out;
+    }
+
+    public void setOutputStream(OutputStream out) {
+        this.out = out;
     }
 }

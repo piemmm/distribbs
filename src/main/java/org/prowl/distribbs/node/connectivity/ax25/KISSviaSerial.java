@@ -22,7 +22,6 @@ import java.io.OutputStream;
 
 /**
  * Implements a KISS type connection with a serial port device
- *
  */
 public class KISSviaSerial extends Interface {
 

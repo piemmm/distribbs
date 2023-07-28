@@ -73,6 +73,80 @@ public class IPv4 extends Interface {
         return getClass().getSimpleName();
     }
 
+    String getPeerSecret() {
+        return peerSecret;
+    }
+
+    public boolean isAnnounce() {
+        return false;
+    }
+
+    public int getAnnouncePeriod() {
+        return 0;
+    }
+
+    public Modulation getModulation() {
+        return Modulation.NONE;
+    }
+
+    public boolean isRF() {
+        return false;
+    }
+
+    public boolean canSend() {
+        return true;
+    }
+
+    public boolean sendPacket(TxRFPacket packet) {
+        return false;
+    }
+
+    @Override
+    public PacketEngine getPacketEngine() {
+        return null;
+    }
+
+    public double getNoiseFloor() {
+        return 0;
+    }
+
+    public double getRSSI() {
+        return 0;
+    }
+
+    public int getFrequency() {
+        return 0;
+    }
+
+    @Override
+    public int getSlot() {
+        return -1;
+    }
+
+    @Override
+    public long getTxCompressedByteCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public long getTxUncompressedByteCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public long getRxCompressedByteCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public long getRxUncompressedByteCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     private class ListeningThread extends Thread {
 
         private boolean stop;
@@ -134,81 +208,6 @@ public class IPv4 extends Interface {
 
         }
 
-    }
-
-    String getPeerSecret() {
-        return peerSecret;
-    }
-
-    public boolean isAnnounce() {
-        return false;
-    }
-
-    public int getAnnouncePeriod() {
-        return 0;
-    }
-
-    public Modulation getModulation() {
-        return Modulation.NONE;
-    }
-
-    public boolean isRF() {
-        return false;
-    }
-
-    public boolean canSend() {
-        return true;
-    }
-
-    public boolean sendPacket(TxRFPacket packet) {
-        return false;
-    }
-
-    @Override
-    public PacketEngine getPacketEngine() {
-        return null;
-    }
-
-    public double getNoiseFloor() {
-        return 0;
-    }
-
-    public double getRSSI() {
-        return 0;
-    }
-
-    public int getFrequency() {
-        return 0;
-    }
-
-    @Override
-    public int getSlot() {
-        return -1;
-    }
-
-
-    @Override
-    public long getTxCompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getTxUncompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getRxCompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getRxUncompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
 }

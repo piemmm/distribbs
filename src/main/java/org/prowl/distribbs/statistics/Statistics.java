@@ -18,6 +18,7 @@ public class Statistics {
     public MHeard getHeard() {
         return mHeard;
     }
+
     public UnHeard getUnHeard() {
         return unHeard;
     }

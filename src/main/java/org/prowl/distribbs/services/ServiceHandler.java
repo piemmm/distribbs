@@ -32,6 +32,7 @@ public class ServiceHandler {
 
     /**
      * Return a copy array of the current running services.
+     *
      * @return
      */
     public List<Service> getServices() {

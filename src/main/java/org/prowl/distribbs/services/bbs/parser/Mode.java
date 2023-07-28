@@ -7,9 +7,9 @@ import java.util.Objects;
  * This represents the mode of the parser.  The parser can be in different modes depending on the command that was
  * executed, for example message read pagination mode, message list pagination mode, to provide 'continue' prompts to the
  * user
- *
+ * <p>
  * Other modes like can be made for example a 'File BBS' mode that uses different sets of plugin provided commands.
- *
+ * <p>
  * Plugins implementing the @Commandable annotation check the mode to behaving accordingly.  Commands can overload and use the
  * same command name as other commands, but this should be only done when they use their 'own' mode so as not to
  * intefere with app modes.
@@ -29,6 +29,7 @@ public class Mode {
 
     /**
      * Creates a mode object which plugins can also create
+     *
      * @param mode
      */
     public Mode(String mode) {

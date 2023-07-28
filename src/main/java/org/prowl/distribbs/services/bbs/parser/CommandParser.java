@@ -2,9 +2,9 @@ package org.prowl.distribbs.services.bbs.parser;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.Messages;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.services.bbs.BBSClientHandler;
@@ -15,17 +15,16 @@ import org.reflections.Reflections;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class CommandParser {
-    private static final Log LOG = LogFactory.getLog("CommandParser");
-
     // The end character for the BBS prompt
     public static final String PROMPT = ">";
-
     // Carriage return
     public static final String CR = "\r";
-
+    private static final Log LOG = LogFactory.getLog("CommandParser");
     // Commands that are available
     private static final Set<Class<?>> ALL_COMMANDS = new Reflections("org.prowl.distribbs.services.bbs.parser.commands").getTypesAnnotatedWith(BBSCommand.class);
 
@@ -34,12 +33,10 @@ public class CommandParser {
 
     // Client we are parsing for
     private final BBSClientHandler client;
-
-    // Default to command mode.
-    private Mode mode = Mode.CMD;
-
     // Stack of modes so we can go back to the previous mode from any command.
     protected List<Mode> modeStack = new ArrayList<>();
+    // Default to command mode.
+    private Mode mode = Mode.CMD;
 
     public CommandParser(BBSClientHandler client) {
         this.client = client;
@@ -81,9 +78,9 @@ public class CommandParser {
             // If the command matches, then we will send the command. It is up to the command to check the mode we are
             // in and act accordingly.
             boolean commandExecuted = false;
-            for (Command command: commands) {
+            for (Command command : commands) {
                 String[] supportedCommands = command.getCommandNames();
-                for (String supportedCommand: supportedCommands) {
+                for (String supportedCommand : supportedCommands) {
                     if (supportedCommand.equalsIgnoreCase(arguments[0])) {
                         commandExecuted = command.doCommand(arguments) | commandExecuted;
                         // Stop when we executed a command.
@@ -109,12 +106,12 @@ public class CommandParser {
         }
     }
 
-    public void setMode(Mode mode) {
-        this.mode = mode;
-    }
-
     public Mode getMode() {
         return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
     }
 
     public void unknownCommand() throws IOException {

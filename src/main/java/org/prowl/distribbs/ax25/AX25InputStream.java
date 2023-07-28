@@ -20,7 +20,6 @@ package org.prowl.distribbs.ax25;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,12 +34,10 @@ import java.util.List;
  */
 class AX25InputStream extends InputStream {
     private static final Log LOG = LogFactory.getLog("AX25InputStream");
-
-
+    private final ConnState connState;
     List<AX25Frame> frameQueue = new LinkedList<AX25Frame>();
     transient AX25Frame currentFrame = null;
     int frameBodyIndex = 0;
-    private final ConnState connState;
 
     /**
      * Create an AX25InputStream based on the specified AX.25 connection state object
@@ -94,7 +91,7 @@ class AX25InputStream extends InputStream {
             answer = currentFrame.body[frameBodyIndex++] & 0xFF;
         }
 
-        LOG.debug("READ[byte] called: "+Integer.toString(answer,16));
+        LOG.debug("READ[byte] called: " + Integer.toString(answer, 16));
 
         return answer;
     }
@@ -133,7 +130,7 @@ class AX25InputStream extends InputStream {
      * @return the total number of bytes read into the buffer, or
      * <code>-1</code> if there is no more data because the end of
      * the stream has been reached.
-     * @throws IOException       If the first byte cannot be read for any reason
+     * @throws IOException               If the first byte cannot be read for any reason
      *                                   other than end of file, or if the input stream has been closed, or if
      *                                   some other I/O error occurs.
      * @throws NullPointerException      If <code>b</code> is <code>null</code>.
@@ -188,7 +185,6 @@ class AX25InputStream extends InputStream {
 //        return count;
 
 
-
         if (len >= currentFrame.body.length - frameBodyIndex) {
             len = currentFrame.body.length - frameBodyIndex;
             System.arraycopy(currentFrame.body, frameBodyIndex, b, off, len);
@@ -198,7 +194,7 @@ class AX25InputStream extends InputStream {
             System.arraycopy(currentFrame.body, frameBodyIndex, b, off, len);
             frameBodyIndex += len;
         }
-return len;
+        return len;
     }
 
     /**

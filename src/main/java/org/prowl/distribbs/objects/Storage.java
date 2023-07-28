@@ -24,23 +24,18 @@ import java.util.concurrent.TimeUnit;
 public class Storage {
 
     private static final Log LOG = LogFactory.getLog("Storage");
-
-    private HierarchicalConfiguration config;
-
-    private File locationDir = new File("storage");
-
     private static final String NEWS = "news";
     private static final String CHAT = "chat";
     private static final String APRS = "aprs";
     private static final String USER = "user";
     private static final String QSL = "qsl";
-
-    private static long highestMessageIdSeen = -1;
-
     // Cache of messages
     private static final Cache<String, Message> BIDMIDToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
     private static final Cache<Long, Message> messageIdToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
     private static final Cache<File, Message> messageFileToMsg = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(7, TimeUnit.DAYS).build();
+    private static long highestMessageIdSeen = -1;
+    private HierarchicalConfiguration config;
+    private File locationDir = new File("storage");
 
 
     public Storage(HierarchicalConfiguration config) {
@@ -232,6 +227,7 @@ public class Storage {
 
     /**
      * Get a message based on it's messageId
+     *
      * @param messageId
      * @return
      */
@@ -456,7 +452,7 @@ public class Storage {
         }
 
         // Otherwise load the message from disk.
-        message  = new Message();
+        message = new Message();
         try {
             message.fromPacket(loadData(f));
         } catch (InvalidMessageException e) {
@@ -563,6 +559,7 @@ public class Storage {
 
     /**
      * Get a list of messages in message id order.
+     *
      * @param groupName the group to list messages for, or null for all groups
      * @return a list of messages in message id order.
      */

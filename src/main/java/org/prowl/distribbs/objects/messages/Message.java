@@ -104,12 +104,12 @@ public class Message extends Packetable {
         return route;
     }
 
-    public String getTSLD() {
-        return  type; // for the moment just return the type
-    }
-
     public void setRoute(String route) {
         this.route = route;
+    }
+
+    public String getTSLD() {
+        return type; // for the moment just return the type
     }
 
     /**

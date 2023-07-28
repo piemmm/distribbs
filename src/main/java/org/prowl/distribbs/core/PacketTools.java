@@ -3,32 +3,27 @@ package org.prowl.distribbs.core;
 import net.sf.marineapi.nmea.util.Position;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.aprslib.parser.APRSPacket;
 import org.prowl.aprslib.parser.APRSTypes;
 import org.prowl.aprslib.parser.Parser;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.node.connectivity.gps.GPS;
 import org.prowl.distribbs.utils.Tools;
 
 public class PacketTools {
 
-    private static final Log LOG = LogFactory.getLog("PacketTools");
-
-
     // Reserved destinations
     public static final String ANNOUNCE = "ANNOUNCE"; // An announce packet (locator, callsign, etc)
     public static final String APRS = "APRS"; // An APRS packet
-
     // Commands
     public static final String PING = "PING"; // Ping request
-
     // Responses
     public static final String PONG = "PONG"; // Ping reply
-
     // KISS ax25 legacy passthrough
     public static final String KISS = ""; // KISS passthrough
+    private static final Log LOG = LogFactory.getLog("PacketTools");
 
     /**
      * Generate an announce packet - eg:

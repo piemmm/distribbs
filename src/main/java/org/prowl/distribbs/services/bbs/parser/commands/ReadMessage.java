@@ -1,13 +1,11 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.apache.commons.lang.StringUtils;
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.services.bbs.parser.Mode;
-import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
 import java.text.NumberFormat;
@@ -86,7 +84,7 @@ public class ReadMessage extends Command {
         int messageSentCounter = 0;
         for (int i = readMessageStartingPoint; i < messageLines.size(); i++) {
 
-            write(messageLines.get(i)+CR);
+            write(messageLines.get(i) + CR);
 
             if (++messageSentCounter >= 22) { // todo '10' should be configurable by the user
                 setMode(Mode.MESSAGE_READ_PAGINATION);

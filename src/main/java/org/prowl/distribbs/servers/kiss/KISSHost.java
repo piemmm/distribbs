@@ -28,6 +28,11 @@ public class KISSHost {
 
     }
 
+    public static void main(String[] args) {
+        KISSHost host = new KISSHost(8001);
+        host.start();
+    }
+
     /**
      * Start the listening server
      */
@@ -59,11 +64,6 @@ public class KISSHost {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
-    }
-
-    public static void main(String[] args) {
-        KISSHost host = new KISSHost(8001);
-        host.start();
     }
 
 }

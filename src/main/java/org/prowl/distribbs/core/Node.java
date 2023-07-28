@@ -47,37 +47,11 @@ public class Node {
      * Actual frame received - may be null if not applicable
      */
     private AX25Frame frame;
-
-    /**
-     * Enum represenging the station type
-     */
-    public enum Service {
-        BBS("BBS"),
-        NETROM("NET/ROM"),
-        APRS("APRS"), // APRS transmits are NOLVL3 as well.
-        FLEXNET("FLEXNET"),
-        OPENTRAC("OPENTRAC"),
-        TEXNET("TEXNET"),
-        NOLVL3("UI"), // Generic station
-        VJ_IP("VJ-TCP/IP"),
-
-        IP("TCP/IP"); // TCP/IP
-        private String name;
-
-        Service(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-
     /**
      * The signal strength (if applicable), 0 if not.
      */
     private double rssi = Double.MAX_VALUE;
+
 
     public Node(Interface anInterface, String callsign, long lastHeard, double rssi, String destination) {
         this.callsign = callsign;
@@ -134,7 +108,7 @@ public class Node {
     /**
      * Add a node that has been seen to be able to reach this node and converse with it
      *
-     * @param node  The node that can reach this one
+     * @param node The node that can reach this one
      */
     public void addCanReachNodeOrReplace(Node node) {
         canReach.remove(node);
@@ -224,6 +198,31 @@ public class Node {
         } else if (!anInterface.equals(other.anInterface))
             return false;
         return true;
+    }
+
+    /**
+     * Enum represenging the station type
+     */
+    public enum Service {
+        BBS("BBS"),
+        NETROM("NET/ROM"),
+        APRS("APRS"), // APRS transmits are NOLVL3 as well.
+        FLEXNET("FLEXNET"),
+        OPENTRAC("OPENTRAC"),
+        TEXNET("TEXNET"),
+        NOLVL3("UI"), // Generic station
+        VJ_IP("VJ-TCP/IP"),
+
+        IP("TCP/IP"); // TCP/IP
+        private String name;
+
+        Service(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
 

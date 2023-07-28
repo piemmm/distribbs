@@ -1,8 +1,8 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.node.connectivity.Interface;
@@ -25,7 +25,7 @@ public class MHeard extends Command {
             return false;
         }
 
-            write(CR);
+        write(CR);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
         org.prowl.distribbs.statistics.types.MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
         List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();

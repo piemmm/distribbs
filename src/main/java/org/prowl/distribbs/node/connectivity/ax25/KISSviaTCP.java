@@ -13,9 +13,6 @@ import org.prowl.distribbs.node.connectivity.Interface;
 import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
-import org.prowl.distribbs.utils.compression.huffman.BitInputStream;
-import org.prowl.distribbs.utils.compression.huffman.HuffmanDecoder;
-import org.prowl.distribbs.utils.compression.huffman.HuffmanEncoder;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -24,7 +21,6 @@ import java.net.Socket;
 
 /**
  * Implements a KISS type passthrough on a TCP connection
- *
  */
 public class KISSviaTCP extends Interface {
 

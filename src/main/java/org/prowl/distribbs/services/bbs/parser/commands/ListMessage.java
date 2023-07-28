@@ -1,8 +1,8 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
 import org.apache.commons.lang.StringUtils;
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.services.bbs.parser.Mode;
@@ -45,7 +45,6 @@ public class ListMessage extends Command {
             sendMessageList(currentListMessages);
         }
     }
-
 
 
     public void sendMessageList(java.util.List<Message> messages) throws IOException {

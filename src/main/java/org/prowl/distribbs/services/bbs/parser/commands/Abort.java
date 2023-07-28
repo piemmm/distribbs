@@ -1,7 +1,7 @@
 package org.prowl.distribbs.services.bbs.parser.commands;
 
-import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.Messages;
+import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
 

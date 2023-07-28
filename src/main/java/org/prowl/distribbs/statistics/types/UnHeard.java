@@ -3,8 +3,8 @@ package org.prowl.distribbs.statistics.types;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
@@ -31,7 +31,7 @@ public class UnHeard extends MHeard {
     public void heardNode(HeardNodeEvent heardNode) {
 
         String callsignToValidate = heardNode.getNode().getDestination();
-        Node unheard = new Node(heardNode.getNode().getInterface(), callsignToValidate, heardNode.getNode().getLastHeard(),null, null);
+        Node unheard = new Node(heardNode.getNode().getInterface(), callsignToValidate, heardNode.getNode().getLastHeard(), null, null);
         MHeard mHeard = DistriBBS.INSTANCE.getStatistics().getHeard();
 
         // If the callsign is in our heard list, then we don't add it here.
@@ -48,14 +48,14 @@ public class UnHeard extends MHeard {
         AX25Frame frame = heardNode.getNode().getFrame();
         if (frame != null) {
             if (frame.getFrameType() == AX25Frame.FRAMETYPE_S) {
-                LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType() );
+                LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                 int sType = frame.getSType();
                 if (sType != AX25Frame.STYPE_RR && sType != AX25Frame.STYPE_RNR && sType != AX25Frame.STYPE_REJ) {
                     LOG.debug("Ignoring frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                     return;
                 }
             } else {
-                LOG.debug("Ignoring frame type:" + frame.getFrameType() +"   "+frame.toString());
+                LOG.debug("Ignoring frame type:" + frame.getFrameType() + "   " + frame.toString());
                 return;
             }
         }
@@ -67,7 +67,7 @@ public class UnHeard extends MHeard {
 
         // And we ignore any callsigns we are hosting locally.
         List<Service> services = DistriBBS.INSTANCE.getServiceHandler().getServices();
-        for (Service service: services) {
+        for (Service service : services) {
             if (callsignToValidate.equalsIgnoreCase(service.getCallsign())) {
                 return;
             }

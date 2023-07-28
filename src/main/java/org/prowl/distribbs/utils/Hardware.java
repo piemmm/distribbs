@@ -22,10 +22,8 @@ public enum Hardware {
     INSTANCE;
 
     private final Log LOG = LogFactory.getLog("Hardware");
-
-    private float MAX_CPU_TEMP = 75f;
-
     private final Semaphore spiLock = new Semaphore(1, true);
+    private float MAX_CPU_TEMP = 75f;
     private SpiDevice spi;
 
     private Pin dio0 = RaspiPin.GPIO_07;
@@ -167,7 +165,7 @@ public enum Hardware {
                     } catch (IOException e) {
                         LOG.warn("CPU Does not support temperature measurement:" + e.getMessage());
                         break;
-                    } catch(Throwable e) {
+                    } catch (Throwable e) {
                         LOG.error(e.getMessage(), e);
                     }
                 }

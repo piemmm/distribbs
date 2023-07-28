@@ -48,20 +48,16 @@ public class FSKDevice implements Device {
             {200000, 8, 1},
             {250000, 0, 1}
     };
-
-    private Log LOG = LogFactory.getLog("MSKDevice");
-
     public SpiDevice spi = Hardware.INSTANCE.getSPI();
+    public double nextHighestRSSIValue = 0;                              // quietest recorded rssi
+    public double nextRSSIUpdate = 0;                              // When we next update our rssi
+    private Log LOG = LogFactory.getLog("MSKDevice");
     private GpioPinDigitalOutput gpioSS;
-
     private double rssi = 0;
     private int frequency = 0;                              // Our tx/rx freq
     private int deviation = 2600;                           // The deviation to use, in Hz
     private int baud = 9600;                           // The baud rate we will transmit at. Faster speeds need more
-
     private double bufferRssi = 0;
-    public double nextHighestRSSIValue = 0;                              // quietest recorded rssi
-    public double nextRSSIUpdate = 0;                              // When we next update our rssi
     private long lastSent = 0;                              // Time when we last finished sending a packet
     private Semaphore spiLock = Hardware.INSTANCE.getSPILock();
     private Semaphore trxLock = new Semaphore(1, true);
@@ -77,6 +73,8 @@ public class FSKDevice implements Device {
     private SX127x connector;
     private ExecutorService pool = Executors.newFixedThreadPool(5);
     private ExecutorService txpool = Executors.newFixedThreadPool(1);
+    private int packetLength = 0;
+    private boolean lengthRead = false;
 
     public FSKDevice(SX127x connector, int slot, int frequency, int deviation, int baud) {
         LOG = LogFactory.getLog("FSKDevice(" + slot + ")");
@@ -126,7 +124,7 @@ public class FSKDevice implements Device {
 //            setAFCFilter(6300);
 //         } else if (baud == 57600) {
 //            setDemodFilter(31300);
-//            setAFCFilter(41700);  
+//            setAFCFilter(41700);
 //         }
 
             // regpaRamp
@@ -468,9 +466,6 @@ public class FSKDevice implements Device {
             }
         }
     }
-
-    private int packetLength = 0;
-    private boolean lengthRead = false;
 
     public synchronized boolean checkBuffer(boolean completed, int x) {
 

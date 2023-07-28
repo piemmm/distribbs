@@ -19,45 +19,45 @@
     <!-- Interface setup -->
     <interfaces>
 
-<!--        		&lt;!&ndash; Connector types can be: S127x, IPv4, IPv6, GPS &ndash;&gt;-->
-<!--        		<interface>-->
-<!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
-<!--        			&lt;!&ndash; Slot 0 = 144MHz module slot &ndash;&gt;-->
-<!--        			<slot>0</slot>-->
-<!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
-<!--        			<frequency>144637500</frequency>-->
-<!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
-<!--        			<deviation>2600</deviation>-->
-<!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with -->
-<!--        				5000, etc) &ndash;&gt;-->
-<!--        			<baud>4800</baud>-->
-<!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
-<!--        			<modulation>MSK</modulation>-->
-<!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
-<!--        			<announce>true</announce>-->
-<!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
-<!--        			<announcePeriod>60</announcePeriod>-->
-<!--        		</interface>-->
+        <!--        		&lt;!&ndash; Connector types can be: S127x, IPv4, IPv6, GPS &ndash;&gt;-->
+        <!--        		<interface>-->
+        <!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+        <!--        			&lt;!&ndash; Slot 0 = 144MHz module slot &ndash;&gt;-->
+        <!--        			<slot>0</slot>-->
+        <!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+        <!--        			<frequency>144637500</frequency>-->
+        <!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+        <!--        			<deviation>2600</deviation>-->
+        <!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with -->
+        <!--        				5000, etc) &ndash;&gt;-->
+        <!--        			<baud>4800</baud>-->
+        <!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+        <!--        			<modulation>MSK</modulation>-->
+        <!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+        <!--        			<announce>true</announce>-->
+        <!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+        <!--        			<announcePeriod>60</announcePeriod>-->
+        <!--        		</interface>-->
 
 
-<!--        		<interface>-->
-<!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
-<!--        			&lt;!&ndash; Slot 1 = 433MHz module slot &ndash;&gt;-->
-<!--        			<slot>1</slot>-->
-<!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
-<!--        			<frequency>432625000</frequency>-->
-<!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
-<!--        			<deviation>5</deviation>-->
-<!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with-->
-<!--        				5000, etc) &ndash;&gt;-->
-<!--        			<baud>12500</baud>-->
-<!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
-<!--        			<modulation>MSK</modulation>-->
-<!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
-<!--        			<announce>true</announce>-->
-<!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
-<!--        			<announcePeriod>60</announcePeriod>-->
-<!--        		</interface>-->
+        <!--        		<interface>-->
+        <!--        			<type>org.prowl.distribbs.node.connectivity.sx127x.SX127x</type>-->
+        <!--        			&lt;!&ndash; Slot 1 = 433MHz module slot &ndash;&gt;-->
+        <!--        			<slot>1</slot>-->
+        <!--        			&lt;!&ndash; The frequency to transmit and receive, in Hz &ndash;&gt;-->
+        <!--        			<frequency>432625000</frequency>-->
+        <!--        			&lt;!&ndash; The deviation to use in Hz (eg: you want 2600 for 12.5k channel spacing) &ndash;&gt;-->
+        <!--        			<deviation>5</deviation>-->
+        <!--        			&lt;!&ndash; The baud rate to use (max 4k8 baud with 2600Hz deviation, 12.5k with-->
+        <!--        				5000, etc) &ndash;&gt;-->
+        <!--        			<baud>12500</baud>-->
+        <!--        			&lt;!&ndash; MSK modulation. Others are LoRa, GMSK, GFSK &ndash;&gt;-->
+        <!--        			<modulation>MSK</modulation>-->
+        <!--        			&lt;!&ndash; Should we announce (send our callsign) every X minutes? &ndash;&gt;-->
+        <!--        			<announce>true</announce>-->
+        <!--        			&lt;!&ndash; Announces the node every X minutes (minimum 5) &ndash;&gt;-->
+        <!--        			<announcePeriod>60</announcePeriod>-->
+        <!--        		</interface>-->
 
         <!-- Our internal GPS connector -->
         <interface>
@@ -124,18 +124,18 @@
         </interface>
 
         <!-- AX.25 KISS tnc socket to things like the NinoTNC  -->
-<!--        <interface>-->
-<!--            <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaSerial</type>-->
-<!--            <port>ttyACM0</port>-->
-<!--            <baudRate>57600</baudRate>-->
-<!--            <dataBits>8</dataBits>-->
-<!--            <parity>N</parity>-->
-<!--            <stopBits>1</stopBits>-->
-<!--            <frequency>144700000</frequency>-->
-<!--            <services>-->
-<!--                <service>bbs</service>-->
-<!--            </services>-->
-<!--        </interface>-->
+        <!--        <interface>-->
+        <!--            <type>org.prowl.distribbs.node.connectivity.ax25.KISSviaSerial</type>-->
+        <!--            <port>ttyACM0</port>-->
+        <!--            <baudRate>57600</baudRate>-->
+        <!--            <dataBits>8</dataBits>-->
+        <!--            <parity>N</parity>-->
+        <!--            <stopBits>1</stopBits>-->
+        <!--            <frequency>144700000</frequency>-->
+        <!--            <services>-->
+        <!--                <service>bbs</service>-->
+        <!--            </services>-->
+        <!--        </interface>-->
 
 
         <!-- This sync agent talks to an F6FBB BBS using the ASCII style MBL/RLI protocol

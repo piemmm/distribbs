@@ -13,11 +13,9 @@ import java.util.Locale;
  */
 public class RxRFPacket extends BaseEvent {
 
+    private static final Log LOG = LogFactory.getLog("RxRFPacket");
     private long compressedByteCount;
     private long uncompressedByteCount;
-
-    private static final Log LOG = LogFactory.getLog("RxRFPacket");
-
     private long rxTime;
     private byte[] packet;
     private byte[] compressedPacket;

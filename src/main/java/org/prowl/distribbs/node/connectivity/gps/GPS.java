@@ -26,17 +26,15 @@ import java.io.IOException;
 public class GPS extends Interface {
 
     private static final Log LOG = LogFactory.getLog("GPS");
-
-    private HierarchicalConfiguration config;
-    private Serial serial;
-    private SentenceFactory sf;
     private static Position currentPosition;
     private static Double currentCourse;
     private static Double currentHeading;
     private static Double currentSpeed;
     private static Time currentTime;
     private static Date currentDate;
-
+    private HierarchicalConfiguration config;
+    private Serial serial;
+    private SentenceFactory sf;
     /**
      * Set to true to have threads exit
      */
@@ -46,6 +44,35 @@ public class GPS extends Interface {
     public GPS(HierarchicalConfiguration config) {
         this.config = config;
         sf = SentenceFactory.getInstance();
+    }
+
+    /**
+     * Returns the current known position, or null if no fix
+     *
+     * @return
+     */
+    public static Position getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public static Time getCurrentTime() {
+        return currentTime;
+    }
+
+    public static Double getCurrentCourse() {
+        return currentCourse;
+    }
+
+    public static Double getCurrentHeading() {
+        return currentHeading;
+    }
+
+    public static Double getCurrentSpeed() {
+        return currentSpeed;
+    }
+
+    public static Date getCurrentDate() {
+        return currentDate;
     }
 
     public void start() throws IOException {
@@ -143,35 +170,6 @@ public class GPS extends Interface {
     public void stop() {
         quit = true;
         reader.stop();
-    }
-
-    /**
-     * Returns the current known position, or null if no fix
-     *
-     * @return
-     */
-    public static Position getCurrentPosition() {
-        return currentPosition;
-    }
-
-    public static Time getCurrentTime() {
-        return currentTime;
-    }
-
-    public static Double getCurrentCourse() {
-        return currentCourse;
-    }
-
-    public static Double getCurrentHeading() {
-        return currentHeading;
-    }
-
-    public static Double getCurrentSpeed() {
-        return currentSpeed;
-    }
-
-    public static Date getCurrentDate() {
-        return currentDate;
     }
 
     public String getName() {

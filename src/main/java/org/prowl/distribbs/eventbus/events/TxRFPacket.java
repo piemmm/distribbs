@@ -71,10 +71,6 @@ public class TxRFPacket extends BaseEvent {
         }
     }
 
-    public void setConnector(Interface connector) {
-        this.connector = connector;
-    }
-
     public synchronized byte[] getPacket() {
         if (packet == null) {
             try {
@@ -92,6 +88,10 @@ public class TxRFPacket extends BaseEvent {
 
     public Interface getConnector() {
         return connector;
+    }
+
+    public void setConnector(Interface connector) {
+        this.connector = connector;
     }
 
     public String getSource() {
