@@ -4,6 +4,7 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.SingleThreadBus;
 import org.prowl.distribbs.eventbus.events.KISSFrameEvent;
 import org.prowl.distribbs.utils.Tools;
 
@@ -22,7 +23,7 @@ public class KISSClient {
         this.clientSocket = clientSocket;
 
         // Register this client with the event bus so we can send data to it.
-        ServerBus.INSTANCE.register(this);
+        SingleThreadBus.INSTANCE.register(this);
     }
 
     public void start() {
@@ -48,7 +49,7 @@ public class KISSClient {
                         LOG.debug("Frame received from client: " + Tools.byteArrayToHexString(frame.toByteArray()));
                         // Write to all clients.
                         KISSFrameEvent event = new KISSFrameEvent(frame.toByteArray(), this);
-                        ServerBus.INSTANCE.post(event);
+                        SingleThreadBus.INSTANCE.post(event);
                         frame.reset();
                         continue;
                     } else if (ch == 0xC0 && frame.size() == 0) {
@@ -69,7 +70,7 @@ public class KISSClient {
             }
 
             // Deregister for events
-            ServerBus.INSTANCE.unregister(this);
+            SingleThreadBus.INSTANCE.unregister(this);
         });
 
     }

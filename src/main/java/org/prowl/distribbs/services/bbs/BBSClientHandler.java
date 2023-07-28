@@ -79,7 +79,7 @@ public class BBSClientHandler implements ClientHandler {
             // This should be documented on http://wiki.oarc.something.other.if.it.is.accepted
             // If the client sees this, and decides to use them then it should send a [OARC <capabilities>] header containing
             // items previosly seen in our list, to enable them in one go (they take effect immediately)
-            send("[OARC " + DistriBBS.INSTANCE.getStationCapabilities() + "]" + CR);
+            send("[XXXX " + DistriBBS.INSTANCE.getStationCapabilities() + "]" + CR);
 
             // Everything else is just part of our standard welcome message
             send(ANSI.BOLD_CYAN + Messages.get("usesColour") + CR + ANSI.NORMAL + CR);

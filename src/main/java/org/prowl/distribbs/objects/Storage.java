@@ -213,12 +213,16 @@ public class Storage {
         if (group != null) {
             // Get for a group
             File groupFile = new File(locationDir.getAbsolutePath() + File.separator + NEWS, group);
-            getMessageList(files, groupFile);
+            if (groupFile != null) {
+                getMessageList(files, groupFile);
+            }
         } else {
             // Get all messages
             File[] groups = new File(locationDir.getAbsolutePath() + File.separator + NEWS + File.separator).listFiles();
-            for (File fgroup : groups) {
-                getMessageList(files, fgroup);
+            if (groups != null) {
+                for (File fgroup : groups) {
+                    getMessageList(files, fgroup);
+                }
             }
         }
 

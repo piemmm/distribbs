@@ -48,14 +48,14 @@ public class UnHeard extends MHeard {
         AX25Frame frame = heardNode.getNode().getFrame();
         if (frame != null) {
             if (frame.getFrameType() == AX25Frame.FRAMETYPE_S) {
-                LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
+             //   LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                 int sType = frame.getSType();
                 if (sType != AX25Frame.STYPE_RR && sType != AX25Frame.STYPE_RNR && sType != AX25Frame.STYPE_REJ) {
-                    LOG.debug("Ignoring frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
+               //     LOG.debug("Ignoring frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                     return;
                 }
             } else {
-                LOG.debug("Ignoring frame type:" + frame.getFrameType() + "   " + frame.toString());
+             //   LOG.debug("Ignoring frame type:" + frame.getFrameType() + "   " + frame.toString());
                 return;
             }
         }
