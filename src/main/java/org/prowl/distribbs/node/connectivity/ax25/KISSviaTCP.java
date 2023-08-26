@@ -4,15 +4,15 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.annotations.InterfaceDriver;
 import org.prowl.distribbs.ax25.*;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
-import org.prowl.distribbs.eventbus.ServerBus;
+import org.prowl.distribbs.eventbus.SingleThreadBus;
 import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
-import org.prowl.distribbs.node.connectivity.Interface;
-import org.prowl.distribbs.objects.user.User;
 import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
+
 
 import java.io.*;
 import java.net.ConnectException;
@@ -21,35 +21,33 @@ import java.net.Socket;
 
 /**
  * Implements a KISS type passthrough on a TCP connection
+ * <p>
+ * All drivers should implement the @InterfaceDriver annotation so that they can be discovered by the system.
  */
+@InterfaceDriver(name = "KISS via TCP", description = "KISS over TCP/IP", uiName = "fx/TCPConnectionPreference.fxml")
 public class KISSviaTCP extends Interface {
 
     private static final Log LOG = LogFactory.getLog("KISSviaTCP");
 
-    private String address;
-    private int port;
-    private String defaultOutgoingCallsign;
+    private final String address;
+    private final int port;
+    private final String defaultOutgoingCallsign;
 
-    private int pacLen;
-    private int maxFrames;
-    private int baudRate;
-    private int frequency;
-    private int retries;
+    private final int pacLen;
+    private final int maxFrames;
+    private final int baudRate;
+    private final int frequency;
+    private final int retries;
+    private Socket socketConnection;
 
-    private BasicTransmittingConnector connector;
-    private HierarchicalConfiguration config;
-    private boolean running;
+    private BasicTransmittingConnector anInterface;
+
 
     public KISSviaTCP(HierarchicalConfiguration config) {
-        this.config = config;
-    }
-
-    @Override
-    public void start() throws IOException {
-        running = true;
+        super(config);
 
         // The address and port of the KISS interface we intend to connect to (KISS over IP or Direwolf, etc)
-        address = config.getString("address");
+        address = config.getString("ipAddress");
         port = config.getInt("port");
 
         // This is the default callsign used for any frames sent out not using a registered service(with its own call).
@@ -65,6 +63,12 @@ public class KISSviaTCP extends Interface {
         frequency = config.getInt("frequency", 0);
         retries = config.getInt("retries", 6);
 
+    }
+
+    @Override
+    public void start() throws IOException {
+        running = true;
+
         // Check the slot is obtainable.
         if (port < 1) {
             throw new IOException("Configuration problem - port " + port + " needs to be greater than 0");
@@ -75,21 +79,24 @@ public class KISSviaTCP extends Interface {
         });
     }
 
+
     public void setup() {
 
         InputStream in = null;
         OutputStream out = null;
-        int attempts = 10; // We try for a few attempts as this might be at boot and interfaces may still be coming up.
-        while (attempts-- > 0 && running) {
+        // Always try to connect until we are reconfigured or stopped.
+        while (running) {
             Tools.delay(1000);
             try {
                 LOG.info("Connecting to kiss service at: " + address + ":" + port);
-                Socket s = new Socket(InetAddress.getByName(address), port);
-                in = s.getInputStream();
-                out = s.getOutputStream();
+                socketConnection = new Socket(InetAddress.getByName(address), port);
+                in = new BufferedInputStream(socketConnection.getInputStream());
+                out = new BufferedOutputStream(socketConnection.getOutputStream());
+                interfaceStatus = new InterfaceStatus(InterfaceStatus.State.OK,null);
                 LOG.info("Connected to kiss service at: " + address + ":" + port);
                 break;
             } catch (ConnectException e) {
+                interfaceStatus = new InterfaceStatus(InterfaceStatus.State.WARN, "Waiting 30s to connect due to: " + e.getMessage());
                 LOG.warn("Delaying 30s due to unable to connect to " + address + ":" + port + ": " + e.getMessage());
                 Tools.delay(30000);
             } catch (Exception e) {
@@ -99,7 +106,9 @@ public class KISSviaTCP extends Interface {
         }
 
         if (in == null || out == null) {
+            interfaceStatus = new InterfaceStatus(InterfaceStatus.State.ERROR, "Could not connect to remote KISS service at: " + address + ":" + port);
             LOG.error("Unable to connect to kiss service at: " + address + ":" + port + " - this connector is stopping.");
+            running = false;
             return;
         }
 
@@ -107,7 +116,7 @@ public class KISSviaTCP extends Interface {
         // not just this one.
         AX25Callsign defaultCallsign = new AX25Callsign(defaultOutgoingCallsign);
 
-        connector = new BasicTransmittingConnector(pacLen, maxFrames, baudRate, retries, defaultCallsign, in, out, new ConnectionRequestListener() {
+        anInterface = new BasicTransmittingConnector(getUUID(), pacLen, maxFrames, baudRate, retries, defaultCallsign, in, out, new ConnectionRequestListener() {
             /**
              * Determine if we want to respond to this connection request (to *ANY* callsign) - usually we only accept
              * if we are interested in the callsign being sent a connection request.
@@ -119,39 +128,38 @@ public class KISSviaTCP extends Interface {
              */
             @Override
             public boolean acceptInbound(ConnState state, AX25Callsign originator, Connector port) {
+                return checkInboundConnection(state, originator, port);
+            }
 
-                LOG.info("Incoming connection request from " + originator + " to " + state.getDst() + " (" + serviceList.size() + " registered services to check...)");
 
-                for (Service service : serviceList) {
-                    if (service.getCallsign() != null && state.getDst().toString().equalsIgnoreCase(service.getCallsign())) {
-                        LOG.info("Accepting connection request from " + originator + " to " + state.getDst() + " for service " + service.getName());
-                        setupConnectionListener(service, state, originator, port);
+            @Override
+            public boolean isLocal(String callsign) {
+                for (Service service : services) {
+                    if (service.getCallsign() != null && service.getCallsign().equalsIgnoreCase(callsign)) {
                         return true;
                     }
                 }
-                // Do not accept (possibly replace this with a default handler to display a message in the future?)
-                // Maybe use the remoteUISwitch to do it?
-                LOG.info("Rejecting connection request from " + originator + " to " + state.getDst() + " as no service is registered for this callsign");
                 return false;
             }
+
         });
 
         // Tag for debug logs so we know what instance/frequency this connector is
-        connector.setDebugTag(Tools.getNiceFrequency(frequency));
+        //  connector.setDebugTag(Tools.getNiceFrequency(frequency));
 
         // AX Frame listener for things like mheard lists
-        connector.addFrameListener(new AX25FrameListener() {
+        anInterface.addFrameListener(new AX25FrameListener() {
             @Override
             public void consumeAX25Frame(AX25Frame frame, Connector connector) {
-                // Create a node to represent what we've seen - we'll merge this in things like
-                // mheard lists if there is another node there so that capability lists can grow
+                LOG.debug("Got frame: " + frame.toString() + "  body=" + Tools.byteArrayToHexString(frame.getBody()));
+
                 Node node = new Node(KISSviaTCP.this, frame.sender.toString(), frame.rcptTime, frame.dest.toString(), frame);
 
                 // Determine the nodes capabilities from the frame type and add this to the node
                 PacketTools.determineCapabilities(node, frame);
 
                 // Fire off to anything that wants to know about nodes heard
-                ServerBus.INSTANCE.post(new HeardNodeEvent(node));
+                SingleThreadBus.INSTANCE.post(new HeardNodeEvent(node));
             }
         });
 
@@ -165,7 +173,7 @@ public class KISSviaTCP extends Interface {
      * @param originator
      * @param port
      */
-    public void setupConnectionListener(Service service, ConnState state, AX25Callsign originator, Connector port) {
+    public void setupConnectionListener(ConnState state, AX25Callsign originator, Connector port) {
         // If we're going to accept then add a listener so we can keep track of this connection state
         state.listener = new ConnectionEstablishmentListener() {
             @Override
@@ -174,8 +182,8 @@ public class KISSviaTCP extends Interface {
                 Thread tx = new Thread(() -> {
                     // Do inputty and outputty stream stuff here
                     try {
-                        User user = DistriBBS.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
-                        InputStream in = new BufferedInputStream(state.getInputStream());
+                        //User user = KISSterm.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
+                        InputStream in = state.getInputStream();
                         OutputStream out = state.getOutputStream();
 
                         // This wrapper provides a simple way to terminate the connection when the outputstream
@@ -188,7 +196,7 @@ public class KISSviaTCP extends Interface {
 
                         };
 
-                        service.acceptedConnection(user, in, wrapped);
+                        //  service.acceptedConnection(user, in, wrapped);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -199,36 +207,57 @@ public class KISSviaTCP extends Interface {
 
             @Override
             public void connectionNotEstablished(Object sessionIdentifier, Object reason) {
-                LOG.info("Connection not established from " + originator + " to " + state.getDst() + " for service " + service.getName());
+                LOG.info("Connection not established from " + originator + " to " + state.getDst());
             }
 
             @Override
             public void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd) {
-                LOG.info("Connection closed from " + originator + " to " + state.getDst() + " for service " + service.getName());
+                LOG.info("Connection closed from " + originator + " to " + state.getDst());
             }
 
             @Override
             public void connectionLost(Object sessionIdentifier, Object reason) {
-                LOG.info("Connection lost from " + originator + " to " + state.getDst() + " for service " + service.getName());
+                LOG.info("Connection lost from " + originator + " to " + state.getDst());
             }
         };
     }
 
     @Override
     public void stop() {
-        ServerBus.INSTANCE.unregister(this);
         running = false;
+        if (socketConnection != null) {
+            try {
+                socketConnection.close();
+            } catch (Exception e) {
+            }
+        }
     }
 
     @Override
-    public String getName() {
-        return getClass().getSimpleName();
+    public String toString() {
+        return getClass().getSimpleName() + " (" + address + ":" + port + ")";
     }
 
     @Override
-    public int getFrequency() {
-        return frequency;
+    public boolean connect(String to, String from, ConnectionEstablishmentListener connectionEstablishmentListener) throws IOException {
+
+        if (anInterface == null) {
+            throw new IOException("TCP/IP interface to '" + address + ":" + port + "' did not complete startup - please check configuration");
+        }
+
+        anInterface.makeConnection(from, to, connectionEstablishmentListener);
+
+        return true;
     }
 
+    @Override
+    public void cancelConnection(Stream stream) {
+        anInterface.cancelConnection(DistriBBS.INSTANCE.getMyCall(), stream.getRemoteCall());
+    }
+
+    @Override
+    public void disconnect(Stream currentStream) {
+        anInterface.disconnect(DistriBBS.INSTANCE.getMyCall(), currentStream.getRemoteCall());
+    }
 
 }

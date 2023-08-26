@@ -49,7 +49,7 @@ public class KISSHost {
                     Socket incoming = null;
                     while ((incoming = listeningSocket.accept()) != null) {
 
-                        LOG.info("Incoming connection from " + incoming.getInetAddress().getHostAddress());
+                        LOG.info("Incoming connection from " + incoming.getInetAddress().getHostAddress()+":"+incoming.getPort());
 
                         // create a new client thread for each connection
                         KISSClient client = new KISSClient(incoming);

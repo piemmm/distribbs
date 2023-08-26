@@ -20,6 +20,7 @@ package org.prowl.distribbs.ax25;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.Tools;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -55,9 +56,9 @@ class AX25OutputStream extends OutputStream {
      * implementation for this method.
      *
      * @param b the <code>byte</code>.
-     * @throws java.io.IOException if an I/O error occurs. In particular,
-     *                             an <code>IOException</code> may be thrown if the
-     *                             output stream has been closed.
+     * @throws IOException if an I/O error occurs. In particular,
+     *                     an <code>IOException</code> may be thrown if the
+     *                     output stream has been closed.
      */
     public synchronized void write(int b) throws IOException {
         b = b & 0xFF;
@@ -91,9 +92,9 @@ class AX25OutputStream extends OutputStream {
      * @param b   the data.
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
-     * @throws java.io.IOException if an I/O error occurs. In particular,
-     *                             an <code>IOException</code> is thrown if the output
-     *                             stream is closed.
+     * @throws IOException if an I/O error occurs. In particular,
+     *                     an <code>IOException</code> is thrown if the output
+     *                     stream is closed.
      */
     public synchronized void write(byte[] b, int off, int len) throws IOException {
         if (len == 0) {
@@ -117,91 +118,111 @@ class AX25OutputStream extends OutputStream {
      * stream, such bytes should immediately be written to their
      * intended destination.
      *
-     * @throws java.io.IOException if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public synchronized void flush() throws IOException {
-        // synchronized (connState) {
+        synchronized (connState) {
 
-        if (bufIdx > 0) {
-            if (!connState.isOpen()) {
-                throw new EOFException("AX.25 connection closed");
-            }
-            AX25Frame f = new AX25Frame();
-
-            // fill in header
-            if (connState.stack.isLocalDest(connState.src)) {
-                f.sender = connState.src.dup();
-                f.dest = connState.dst.dup();
-                if (connState.via != null) {
-                    AX25Callsign[] digis = new AX25Callsign[connState.via.length];
-                    for (int i = 0; i < connState.via.length; i++) {
-                        digis[i] = connState.via[i].dup();
-                        digis[i].h_c = false;
-                    }
-                    f.digipeaters = digis;
-                }
-            } else {
-                f.sender = connState.dst.dup();
-                f.dest = connState.src.dup();
-                f.digipeaters = connState.stack.reverseDigipeaters(connState.via);
-            }
-            f.ctl = AX25Frame.FRAMETYPE_I;
-            f.mod128 = (ConnState.ConnType.MOD128 == connState.connType);
-            f.setPid(AX25Frame.PID_NOLVL3);
-            f.setCmd(true);
-            f.body = new byte[bufIdx];
-            System.arraycopy(buf, 0, f.body, 0, bufIdx);
-
-            // submit new frame to destination (blocking if window buffer is full)
-            int nextVS;
-            do {
-                nextVS = connState.vs;
-                if (connState.transmitWindow[nextVS] != null) {
-                    nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
-                    while (connState.transmitWindow[nextVS] != null && nextVS != connState.vs) {
-                        nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
-                    }
-                }
-
-                // AX.25 Spec says we can transmit N(R)-1 frames before waiting for an ACK
-                int nextNextVS = (nextVS + 1 + (7 - connState.stack.maxFrames)) % (f.mod128 ? 128 : 8);
-                if (connState.transmitWindow[nextVS] == null) {
-                    break;
-                }
-                // window buffer is completely full, wait until there is room
-                synchronized (connState) {
-                    try {
-                        wait(1000L);
-                    } catch (InterruptedException e) {
-                        // ignore
-                    }
-                }
+            if (bufIdx > 0) {
                 if (!connState.isOpen()) {
                     throw new EOFException("AX.25 connection closed");
                 }
-            } while (true);
+                AX25Frame f = new AX25Frame();
 
-            connState.transmitWindow[nextVS] = f;
-            if (nextVS == connState.vs) {
-                connState.vs = (connState.vs + 1) % (f.mod128 ? 128 : 8);
-            }
-            if (!connState.xmtToRemoteBlocked) {
-                if (connState.connector != null) {
-                    f.setNS(nextVS);
-                    f.setNR(connState.vr);
-                    LOG.debug("sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
-                    //connState.stack.getTransmitting().queue(f);
-                    connState.connector.sendFrame(f);
-                    connState.setResendableFrame(f, connState.stack.getTransmitting().getRetransmitCount()); // Make sure we resend it if we have no ack
+                // fill in header
+                if (connState.stack.isLocalDest(connState.src)) {
+                    f.sender = connState.src.dup();
+                    f.dest = connState.dst.dup();
+                    if (connState.via != null) {
+                        AX25Callsign[] digis = new AX25Callsign[connState.via.length];
+                        for (int i = 0; i < connState.via.length; i++) {
+                            digis[i] = connState.via[i].dup();
+                            digis[i].h_c = false;
+                        }
+                        f.digipeaters = digis;
+                    }
                 } else {
-                    throw new NullPointerException("no TransmittingConnector to send data through");
+                    f.sender = connState.dst.dup();
+                    f.dest = connState.src.dup();
+                    f.digipeaters = connState.stack.reverseDigipeaters(connState.via);
                 }
-            }
+                f.ctl = AX25Frame.FRAMETYPE_I;
+                f.mod128 = (ConnState.ConnType.MOD128 == connState.connType);
+                f.setPid(AX25Frame.PID_NOLVL3);
+                f.setCmd(true);
+                f.body = new byte[bufIdx];
+                System.arraycopy(buf, 0, f.body, 0, bufIdx);
 
-            bufIdx = 0;
+                // ijh this code is just weird (and didn't work)
+                // submit new frame to destination (blocking if window buffer is full)
+                ;
+//                do {
+//                    nextVS = connState.vs;
+//
+////                    if (connState.transmitWindow[nextVS] != null) {
+////                        v
+////                        while (connState.transmitWindow[nextVS] != null && nextVS != connState.vs) {
+////                            nextVS = (nextVS + 1) % (f.mod128 ? 128 : 8);
+////                        }
+////                    }
+//
+//                    // AX.25 Spec says we can transmit N(R)-1 frames before waiting for an ACK
+//                    //  int nextNextVS = (nextVS + 1 + (7 - connState.stack.maxFrames)) % (f.mod128 ? 128 : 8);
+//                    if (connState.transmitWindow[nextVS] == null) {
+//                        break;
+//                    }
+//                    // window buffer is completely full, wait until there is room
+//                    synchronized (connState) {
+//                        try {
+//                            wait(1000L);
+//                        } catch (InterruptedException e) {
+//                            // ignore
+//                        }
+//                    }
+//                    if (!connState.isOpen()) {
+//                        throw new EOFException("AX.25 connection closed");
+//                    }
+//                } while (true);
+
+                // A more sensible way to count the number of frames in the transmit window
+                // keeping to the N(R)-1 rule
+                int nextVS = connState.vs;
+                int counter = 60000;
+                while (counter + 2 >= (f.mod128 ? 128 : 8)) {
+                    counter = 0;
+                    for (AX25Frame frame : connState.transmitWindow) {
+                        if (frame != null) {
+                            counter++;
+                        }
+                    }
+                    if (counter + 2 < (f.mod128 ? 128 : 8) && counter < connState.stack.maxFrames) {
+                        break;
+                    }
+                    Tools.delay(1000);
+                }
+
+                connState.transmitWindow[nextVS] = f;
+
+                if (nextVS == connState.vs) {
+                    connState.vs = (connState.vs + 1) % (f.mod128 ? 128 : 8);
+                }
+                if (!connState.xmtToRemoteBlocked) {
+                    if (connState.connector != null) {
+                        f.setNS(nextVS);
+                        f.setNR(connState.vr);
+                        LOG.debug("sending I frame " + f.sender + "->" + f.dest + " NS=" + f.getNS() + " NR=" + f.getNR() + " #=" + f.body.length);
+                        //connState.stack.getTransmitting().queue(f);
+                        connState.connector.sendFrame(f);
+                        connState.setResendableFrame(f, connState.stack.getTransmitting().getRetransmitCount()); // Make sure we resend it if we have no ack
+                    } else {
+                        throw new NullPointerException("no TransmittingConnector to send data through");
+                    }
+                }
+
+                bufIdx = 0;
+            }
         }
-        //  }
     }
 
     /**
@@ -210,7 +231,7 @@ class AX25OutputStream extends OutputStream {
      * is that it closes the output stream. A closed stream cannot perform
      * output operations and cannot be reopened.
      *
-     * @throws java.io.IOException if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public void close() throws IOException {

@@ -46,7 +46,7 @@ public class ServiceHandler {
 
         // Go create and configure each one.
         for (HierarchicalConfiguration service : services) {
-            String className = service.getString("type");
+            String className = service.getString("className");
             try {
                 Service con = (Service) Class.forName(className).getConstructor(HierarchicalConfiguration.class).newInstance(service);
                 this.services.add(con);

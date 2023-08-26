@@ -3,7 +3,7 @@ package org.prowl.distribbs;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.config.Config;
-import org.prowl.distribbs.node.connectivity.InterfaceHandler;
+import org.prowl.distribbs.node.connectivity.ax25.InterfaceHandler;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.services.ServiceHandler;
 import org.prowl.distribbs.statistics.Statistics;
@@ -80,6 +80,8 @@ public enum DistriBBS {
             // Init interfaces
             interfaceHandler = new InterfaceHandler(configuration.getConfig("interfaces"));
 
+            interfaceHandler.setServices(serviceHandler.getServices());
+
             // Start node services
             serviceHandler.start();
 
@@ -107,8 +109,18 @@ public enum DistriBBS {
         }
     }
 
+    /**
+     * Returns the capabilities of the station
+     * A = ANSI colours
+     * C = Compression
+     * B = BBS
+     * P = PMS
+     * Z = Escape sequences for next block
+     *
+     * @return
+     */
     public String getStationCapabilities() {
-        return "AC";
+        return "ABC";
     }
 
     public Config getConfiguration() {

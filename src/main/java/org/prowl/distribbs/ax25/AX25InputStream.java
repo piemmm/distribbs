@@ -18,9 +18,6 @@ package org.prowl.distribbs.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
@@ -33,7 +30,6 @@ import java.util.List;
  * @author Andrew Pavlin, KA2DDO
  */
 class AX25InputStream extends InputStream {
-    private static final Log LOG = LogFactory.getLog("AX25InputStream");
     private final ConnState connState;
     List<AX25Frame> frameQueue = new LinkedList<AX25Frame>();
     transient AX25Frame currentFrame = null;
@@ -90,9 +86,6 @@ class AX25InputStream extends InputStream {
         } else {
             answer = currentFrame.body[frameBodyIndex++] & 0xFF;
         }
-
-        LOG.debug("READ[byte] called: " + Integer.toString(answer, 16));
-
         return answer;
     }
 
@@ -165,26 +158,6 @@ class AX25InputStream extends InputStream {
                 currentFrame = frameQueue.remove(0);
             }
         }
-
-//        if (len >= currentFrame.body.length - frameBodyIndex) {
-//            len = currentFrame.body.length - frameBodyIndex;
-//        }
-//        LOG.debug("READ[array] start");
-//        int count = 0;
-//        for (int i = 0; i < len; i++) {
-//            int c = read();
-//            if (c == -1) {
-//                return -1;
-//            }
-//            b[off + i] = (byte) c;
-//            count++;
-//        }
-//
-//        LOG.debug("READ[array] end:"+ Tools.byteArrayToHexString(b));
-//
-//        return count;
-
-
         if (len >= currentFrame.body.length - frameBodyIndex) {
             len = currentFrame.body.length - frameBodyIndex;
             System.arraycopy(currentFrame.body, frameBodyIndex, b, off, len);

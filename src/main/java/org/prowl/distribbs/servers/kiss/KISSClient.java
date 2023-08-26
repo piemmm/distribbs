@@ -46,11 +46,11 @@ public class KISSClient {
                     // End of frame, send to all connected clients.
                     if (ch == 0xC0 && frame.size() > 0) {
                         frame.write(ch);
-                        LOG.debug("Frame received from client: " + Tools.byteArrayToHexString(frame.toByteArray()));
+                        LOG.debug("Rx frame("+clientSocket.getInetAddress().getHostAddress()+":"+ clientSocket.getPort()+") -> "+ Tools.byteArrayToHexString(frame.toByteArray()));
                         // Write to all clients.
                         KISSFrameEvent event = new KISSFrameEvent(frame.toByteArray(), this);
                         SingleThreadBus.INSTANCE.post(event);
-                        frame.reset();
+                        frame = new ByteArrayOutputStream();
                         continue;
                     } else if (ch == 0xC0 && frame.size() == 0) {
                         // Start of frame
@@ -84,7 +84,7 @@ public class KISSClient {
                     // Don't send data back to the client that sent it.
                     return;
                 }
-                LOG.debug("Frame received from another client: " + Tools.byteArrayToHexString(frame.getData()));
+                //LOG.debug("Frame received from another client: " + Tools.byteArrayToHexString(frame.getData()));
                 clientOutput.write(frame.getData());
                 clientOutput.flush();
             }

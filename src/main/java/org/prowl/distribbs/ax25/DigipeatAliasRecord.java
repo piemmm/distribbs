@@ -93,7 +93,7 @@ public class DigipeatAliasRecord implements Comparable<DigipeatAliasRecord> {
      * <code>java.org.ka2ddo.util.Hashtable</code>.
      *
      * @return a hash code value for this object.
-     * @see #equals(java.lang.Object)
+     * @see #equals(Object)
      */
     @Override
     public int hashCode() {

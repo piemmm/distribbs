@@ -102,24 +102,33 @@ public class KissEscapeOutputStream extends OutputStream {
             os.write(b);
             byteCount++;
         }
+
         g8bpqCrc ^= (byte) b;
     }
 
     public void write(byte[] body) {
         for (byte b : body) {
             try {
-                write((int) b & 0xFF);
+                write(b);
             } catch (IOException e) {
                 LOG.error("Error writing to stream", e);
             }
         }
     }
 
-    public void write(byte b[], int off, int len) throws IOException {
+    public void write(byte[] b, int off, int len) throws IOException {
         // len == 0 condition implicitly handled by loop bounds
         for (int i = 0; i < len; i++) {
             write(b[off + i]);
         }
+    }
+
+    public void flush() throws IOException {
+        os.flush();
+    }
+
+    public void close() throws IOException {
+        os.close();
     }
 
     /**
@@ -133,14 +142,6 @@ public class KissEscapeOutputStream extends OutputStream {
         byteCount++;
     }
 
-
-    public void flush() throws IOException {
-        os.flush();
-    }
-
-    public void close() throws IOException {
-        os.close();
-    }
 
     /**
      * Get the G8BPQ CRC value for the last sent KISS frame.

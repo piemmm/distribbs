@@ -2,7 +2,7 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 import java.util.Locale;
@@ -77,7 +77,7 @@ public class RxRFPacket extends BaseEvent {
 
         } catch (Throwable e) {
             corrupt = true;
-            LOG.info("Problem with packet(" + connector.getFrequency() + "):" + Tools.byteArrayToHexString(compressedPacket) + "  uncompressed:" + Tools.byteArrayToHexString(compressedPacket));
+            LOG.info("Problem with packet(" + connector.getUUID() + "):" + Tools.byteArrayToHexString(compressedPacket) + "  uncompressed:" + Tools.byteArrayToHexString(compressedPacket));
         }
 
     }

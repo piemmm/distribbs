@@ -5,7 +5,10 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.node.connectivity.Interface;
+
+import org.prowl.distribbs.ax25.ConnectionEstablishmentListener;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Stream;
 import org.prowl.distribbs.objects.Storage;
 import org.prowl.distribbs.objects.messages.Message;
 import org.prowl.distribbs.utils.Tools;
@@ -45,7 +48,7 @@ public class FBBSyncAgent extends Interface {
 
 
     public FBBSyncAgent(HierarchicalConfiguration config) {
-
+        super(config);
         syncHost = config.getString("address");
         syncPort = config.getInt("port", 6300);
         syncUsername = config.getString("username");
@@ -320,10 +323,22 @@ public class FBBSyncAgent extends Interface {
     }
 
 
-    @Override
     public String getName() {
         return getClass().getSimpleName();
     }
 
+    @Override
+    public boolean connect(String to, String from, ConnectionEstablishmentListener connectionEstablishmentListener) throws IOException {
+        return false;
+    }
 
+    @Override
+    public void disconnect(Stream currentStream) {
+
+    }
+
+    @Override
+    public void cancelConnection(Stream stream) {
+
+    }
 }

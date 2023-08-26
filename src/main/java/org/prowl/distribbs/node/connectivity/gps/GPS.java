@@ -15,10 +15,9 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.core.PacketEngine;
-import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Interface;
-import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
+import org.prowl.distribbs.ax25.ConnectionEstablishmentListener;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Stream;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
@@ -42,6 +41,7 @@ public class GPS extends Interface {
     private SentenceReader reader;
 
     public GPS(HierarchicalConfiguration config) {
+        super(config);
         this.config = config;
         sf = SentenceFactory.getInstance();
     }
@@ -176,77 +176,19 @@ public class GPS extends Interface {
         return getClass().getSimpleName();
     }
 
-    public boolean isAnnounce() {
-        return false;
-    }
 
-    public int getAnnouncePeriod() {
-        return 0;
-    }
-
-    public Modulation getModulation() {
-        return Modulation.NONE;
-    }
-
-    public boolean isRF() {
-        return false;
-    }
-
-    public boolean canSend() {
-        return false;
-    }
-
-    public boolean sendPacket(TxRFPacket packet) {
+    @Override
+    public boolean connect(String to, String from, ConnectionEstablishmentListener connectionEstablishmentListener) throws IOException {
         return false;
     }
 
     @Override
-    public PacketEngine getPacketEngine() {
-        return null;
+    public void disconnect(Stream currentStream) {
+
     }
 
     @Override
-    public double getNoiseFloor() {
-        return Double.MAX_VALUE;
+    public void cancelConnection(Stream stream) {
+
     }
-
-    public double getRSSI() {
-        return 0;
-    }
-
-    public int getFrequency() {
-        return 0;
-    }
-
-    @Override
-    public int getSlot() {
-        return -1;
-    }
-
-
-    @Override
-    public long getTxCompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getTxUncompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getRxCompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public long getRxUncompressedByteCount() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-
 }

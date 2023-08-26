@@ -20,10 +20,7 @@ package org.prowl.distribbs.ax25.util;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.AbstractSet;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * This class provides an alternative to the Java PermGen heap section used for String.intern(),
@@ -468,15 +465,11 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
         }
 
         public boolean equals(Object o) {
-            if (!(o instanceof Entry))
+            if (!(o instanceof Entry e))
                 return false;
-            Entry e = (Entry) o;
             Object k1 = get();
             Object k2 = e.get();
-            if (k1 == k2 || (k1 != null && k1.equals(k2))) {
-                return true;
-            }
-            return false;
+            return Objects.equals(k1, k2);
         }
 
         public int hashCode() {
@@ -485,7 +478,7 @@ public abstract class ShareableObjectCache<T> extends AbstractSet<T> {
         }
 
         public String toString() {
-            return "" + getKey();
+            return String.valueOf(getKey());
         }
     }
 

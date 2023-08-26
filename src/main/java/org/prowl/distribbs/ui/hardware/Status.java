@@ -10,7 +10,7 @@ import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
 import org.prowl.distribbs.lcd.US2066;
 import org.prowl.distribbs.leds.StatusLeds;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.utils.EWMAFilter;
 import org.prowl.distribbs.utils.Tools;
 
@@ -64,7 +64,7 @@ public class Status {
             public void run() {
 
                 try {
-                    switch (screen % 4) {
+                    switch (screen % 3) {
                         case 0:
                             screen0();
                             break;
@@ -74,9 +74,9 @@ public class Status {
                         case 2:
                             screen2();
                             break;
-                        case 3:
-                            screen3();
-                            break;
+//                        case 3:
+//                            screen3();
+//                            break;
                     }
                 } catch (Throwable e) {
                     LOG.debug(e.getMessage(), e);
@@ -135,31 +135,31 @@ public class Status {
         setText(topString.toString(), bottomString.toString());
     }
 
-    public void screen3() {
-        long finish = System.currentTimeMillis() + 5000;
-        while (System.currentTimeMillis() < finish) {
-            List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
-            String topString = "2m: Not configured";
-            String bottomString = "70cm: Not configured";
-            for (Interface c : connectors) {
-                int freq = c.getFrequency();
-                if (freq > 143000000 && freq < 147000000) {
-                    float current = rssi2m.addPoint((float) c.getRSSI());
-                    topString = "2m RSSI: -" + (nf.format(current) + " dBm");
-                } else if (freq > 430000000 && freq < 450000000) {
-                    float current = rssi70cm.addPoint((float) c.getRSSI());
-                    bottomString = "70cm RSSI: -" + (nf.format(current) + " dBm");
-
-                }
-            }
-            setText(topString, bottomString);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-        }
-
-    }
+//    public void screen3() {
+//        long finish = System.currentTimeMillis() + 5000;
+//        while (System.currentTimeMillis() < finish) {
+//            List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+//            String topString = "2m: Not configured";
+//            String bottomString = "70cm: Not configured";
+//            for (Interface c : connectors) {
+//                int freq = c.getFrequency();
+//                if (freq > 143000000 && freq < 147000000) {
+//                    float current = rssi2m.addPoint((float) c.getRSSI());
+//                    topString = "2m RSSI: -" + (nf.format(current) + " dBm");
+//                } else if (freq > 430000000 && freq < 450000000) {
+//                    float current = rssi70cm.addPoint((float) c.getRSSI());
+//                    bottomString = "70cm RSSI: -" + (nf.format(current) + " dBm");
+//
+//                }
+//            }
+//            setText(topString, bottomString);
+//            try {
+//                Thread.sleep(100);
+//            } catch (InterruptedException e) {
+//            }
+//        }
+//
+//    }
 
     public void setText(String line1, String line2) {
         lcd.writeText(line1, line2);

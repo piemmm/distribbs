@@ -27,6 +27,7 @@ public class BBSService extends Service {
         super(config);
         callsign = config.getString("callsign");
         bbsAddress = config.getString("bbsAddress");
+        LOG.info("BBS Service set with callsign:"+callsign+" and bbsAddress:"+bbsAddress);
     }
 
     public void acceptedConnection(User user, InputStream in, OutputStream out) {

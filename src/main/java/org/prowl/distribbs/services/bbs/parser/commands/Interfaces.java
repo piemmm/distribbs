@@ -3,17 +3,19 @@ package org.prowl.distribbs.services.bbs.parser.commands;
 import org.apache.commons.lang.StringUtils;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.annotations.BBSCommand;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.InterfaceStatus;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
-import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.List;
 
+/**
+ * Change the current interface (like port on a kantronics)
+ */
 @BBSCommand
 public class Interfaces extends Command {
+
 
     @Override
     public boolean doCommand(String[] data) throws IOException {
@@ -23,35 +25,11 @@ public class Interfaces extends Command {
             return false;
         }
 
-        write(CR);
 
-        NumberFormat nf = NumberFormat.getInstance();
-        nf.setMaximumFractionDigits(4);
-        nf.setMinimumFractionDigits(3);
-
-        NumberFormat nfb = NumberFormat.getInstance();
-        nfb.setMaximumFractionDigits(1);
-        nfb.setMinimumFractionDigits(1);
-
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
-        int port = 0;
-        write(ANSI.UNDERLINE + ANSI.BOLD + "Int   Driver          Freq/IP      Noise Floor  Compress(tx/rx)" + ANSI.NORMAL + CR);
-
-        for (Interface connector : connectors) {
-
-            String noiseFloor = "-";
-            if (connector.getNoiseFloor() != Double.MAX_VALUE) {
-                noiseFloor = "-" + nfb.format(connector.getNoiseFloor()) + " dBm";
-            }
-
-            String freq = Tools.getNiceFrequency(connector.getFrequency());
-            String compressRatio = "-";
-            if (connector.getRxUncompressedByteCount() + connector.getTxCompressedByteCount() != 0) {
-                compressRatio = nf.format(((double) connector.getTxUncompressedByteCount() / (double) connector.getTxCompressedByteCount())) + "/" + nf.format(((double) connector.getRxUncompressedByteCount() / (double) connector.getRxCompressedByteCount()));
-            }
-
-            write(port + "     " + StringUtils.rightPad(connector.getName(), 16) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(noiseFloor, 13) + compressRatio + CR);
-            port++;
+        // No parameter? Just list the interfaces then
+        if (data.length == 1) {
+            showInterfaces();
+            return true;
         }
         return true;
     }
@@ -59,6 +37,31 @@ public class Interfaces extends Command {
 
     @Override
     public String[] getCommandNames() {
-        return new String[]{"int", "ports", "i", "interfaces"};
+        return new String[]{"interface", "int", "port"};
+    }
+
+
+    public void showInterfaces() throws IOException {
+        write(CR + ANSI.BOLD + ANSI.UNDERLINE + "No. State Interface                                      " + ANSI.NORMAL + CR);
+        int i = 0;
+        for (Interface anInterface : DistriBBS.INSTANCE.getInterfaceHandler().getInterfaces()) {
+            InterfaceStatus interfaceStatus = anInterface.getInterfaceStatus();
+            String statusCol;
+            if (interfaceStatus.getState() == InterfaceStatus.State.OK) {
+                statusCol = ANSI.GREEN;
+            } else if (interfaceStatus.getState() == InterfaceStatus.State.WARN) {
+                statusCol = ANSI.YELLOW;
+            } else if (interfaceStatus.getState() == InterfaceStatus.State.ERROR) {
+                statusCol = ANSI.RED;
+            } else {
+                statusCol = ANSI.WHITE;
+            }
+            write(StringUtils.rightPad(Integer.toString(i) + ": ", 4) + statusCol + StringUtils.rightPad(interfaceStatus.getState().name(), 6) + ANSI.NORMAL + anInterface.toString() + CR);
+            if (interfaceStatus.getMessage() != null) {
+                write("      " + statusCol + "\\-" + interfaceStatus.getMessage() + ANSI.NORMAL + CR);
+            }
+            i++;
+        }
+        write(CR);
     }
 }

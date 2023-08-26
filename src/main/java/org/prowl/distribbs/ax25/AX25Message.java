@@ -802,7 +802,7 @@ abstract public class AX25Message implements Comparable<AX25Message>, Serializab
      * Creates and returns a copy of this AX25Message.
      *
      * @return a clone of this instance.
-     * @see java.lang.Cloneable
+     * @see Cloneable
      */
     public AX25Message dup() {
         try {

@@ -337,6 +337,22 @@ public class Tools {
         }
     }
 
+
+
+    public static String byteArrayToReadableASCIIString(byte[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : data) {
+            if (b < 0x20 || b > 0xFA) {
+                sb.append(ANSI.YELLOW + "<");
+                sb.append(String.format("%02X", b));
+                sb.append(">" + ANSI.NORMAL);
+            } else {
+                sb.append((char) b);
+            }
+        }
+        return sb.toString();
+    }
+
     public static String getNiceFrequency(long frequency) {
         NumberFormat nf = NumberFormat.getInstance();
         nf.setMaximumFractionDigits(4);

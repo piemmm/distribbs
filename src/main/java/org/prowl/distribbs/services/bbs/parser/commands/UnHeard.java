@@ -4,11 +4,10 @@ import org.apache.commons.lang.StringUtils;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.core.Node;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.ANSI;
-import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -29,7 +28,7 @@ public class UnHeard extends Command {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
 
         MHeard heard = DistriBBS.INSTANCE.getStatistics().getUnHeard();
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getInterfaces();
         List<Node> nodes = heard.listHeard();
         if (nodes.size() == 0) {
             write("No nearby nodes unheard yet" + CR);
@@ -42,7 +41,7 @@ public class UnHeard extends Command {
                     rssi = "-  ";
                 }
 
-                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
+                String freq = "000.000";// Tools.getNiceFrequency(node.getInterface().getFrequency());
 
                 write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + " " + StringUtils.rightPad(canReach(node), 14) + CR);
             }

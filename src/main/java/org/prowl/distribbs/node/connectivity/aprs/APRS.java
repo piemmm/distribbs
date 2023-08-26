@@ -9,15 +9,15 @@ import org.prowl.aprslib.parser.*;
 import org.prowl.aprslib.position.PositionPacket;
 import org.prowl.aprslib.position.UnparsablePositionException;
 import org.prowl.distribbs.DistriBBS;
+import org.prowl.distribbs.ax25.ConnectionEstablishmentListener;
 import org.prowl.distribbs.config.BadConfigException;
-import org.prowl.distribbs.core.PacketEngine;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Stream;
 import org.prowl.distribbs.node.connectivity.gps.GPS;
-import org.prowl.distribbs.node.connectivity.sx127x.Modulation;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -70,6 +70,7 @@ public class APRS extends Interface {
     private boolean stop;
 
     public APRS(HierarchicalConfiguration config) {
+        super(config);
         this.config = config;
 
         password = config.getString("password", "-1");
@@ -114,6 +115,7 @@ public class APRS extends Interface {
         stop = true;
         ServerBus.INSTANCE.unregister(this);
     }
+
 
     /**
      * Connect to APRS-IS server
@@ -352,7 +354,8 @@ public class APRS extends Interface {
 
                                 APRSPacket packet = new APRSPacket(DistriBBS.INSTANCE.getMyCall(), "", digis, op);
                                 TxRFPacket txPacket = new TxRFPacket(DistriBBS.INSTANCE.getMyCall(), packet.getDigiString(), "", packet.getAprsInformation().toString().getBytes());
-                                DistriBBS.INSTANCE.getInterfaceHandler().getPort(0).sendPacket(txPacket);
+                                // TODO FIXME
+                                // DistriBBS.INSTANCE.getInterfaceHandler().getInterface(0).sendPacket(txPacket);
                                 lastGPSPosition = position;
                                 lastSendTime = System.currentTimeMillis();
                                 lastHeading = currentHeading;
@@ -369,83 +372,19 @@ public class APRS extends Interface {
     }
 
     @Override
-    public String getName() {
-        return getClass().getSimpleName();
-    }
-
-    @Override
-    public boolean isAnnounce() {
+    public boolean connect(String to, String from, ConnectionEstablishmentListener connectionEstablishmentListener) throws IOException {
         return false;
     }
 
     @Override
-    public int getAnnouncePeriod() {
-        return 0;
+    public void disconnect(Stream currentStream) {
+
     }
 
     @Override
-    public Modulation getModulation() {
-        return null;
+    public void cancelConnection(Stream stream) {
+
     }
 
-    @Override
-    public PacketEngine getPacketEngine() {
-        return null;
-    }
-
-    @Override
-    public boolean isRF() {
-        return false;
-    }
-
-    @Override
-    public boolean canSend() {
-        return false;
-    }
-
-    @Override
-    public boolean sendPacket(TxRFPacket packet) {
-        return false;
-    }
-
-    @Override
-    public int getFrequency() {
-        return 0;
-    }
-
-    @Override
-    public double getNoiseFloor() {
-        return 0;
-    }
-
-    @Override
-    public double getRSSI() {
-        return 0;
-    }
-
-    @Override
-    public int getSlot() {
-        return -1;
-    }
-
-    @Override
-    public long getTxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getTxUncompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxCompressedByteCount() {
-        return 0;
-    }
-
-    @Override
-    public long getRxUncompressedByteCount() {
-        return 0;
-    }
 
 }

@@ -99,6 +99,7 @@ public class ConnState implements AX25FrameSource, Closeable {
     transient long lastUpdateInSession = System.currentTimeMillis();
     AX25InputStream in = null;
     AX25OutputStream out = null;
+
     ConnState(AX25Callsign src, AX25Callsign dst, AX25Stack stack) {
         this.src = src;
         this.dst = dst;
@@ -235,7 +236,7 @@ public class ConnState implements AX25FrameSource, Closeable {
      * @param retryCount int number of times this frame should be retried before giving up on a response
      *                   and failing whatever condition the frame was trying to set up
      */
-    public void setResendableFrame(AX25Frame frame, int retryCount) {
+    public void setResendableFrame(final AX25Frame frame, int retryCount) {
         synchronized (MONITOR) {
             clearResendableFrame();
             frameToResend = frame;
@@ -250,12 +251,23 @@ public class ConnState implements AX25FrameSource, Closeable {
                         return;
                     }
 
-                    LOG.debug("T1 timeout on " + ConnState.this + " retriesRemaining=" + retriesRemaining);
+                    LOG.debug("T1 timeout on " + ConnState.this + " retriesRemaining=" + retriesRemaining + " for frame:" + frame + "   frameToResend:" + frameToResend);
                     if (retriesRemaining-- > 0) {
-                        if (localRcvBlocked) {
-                            stack.transmitRNR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
+
+                        // SABM frame.
+                        if (frame.ctl == (byte) (AX25Frame.FRAMETYPE_U | AX25Frame.UTYPE_SABM) || frame.getPid() == (byte) (AX25Frame.FRAMETYPE_U | AX25Frame.UTYPE_SABME)) {
+                            try {
+                                connector.sendFrame(frame);
+                            } catch (Exception e) {
+                                LOG.error("unable to send SABM frame to " + frame.dest, e);
+                            }
                         } else {
-                            stack.transmitRR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
+                            // RNR / RR frames
+                            if (localRcvBlocked) {
+                                stack.transmitRNR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
+                            } else {
+                                stack.transmitRR((Connector) connector, frameToResend.sender, frameToResend.dest, frameToResend.digipeaters, ConnState.this, true, true);
+                            }
                         }
                     } else {
                         if (listener != null) {

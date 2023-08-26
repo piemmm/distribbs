@@ -18,6 +18,7 @@ package org.prowl.distribbs.ax25;
  *  see <http://www.gnu.org/licenses/>.
  */
 
+
 import org.prowl.distribbs.ax25.util.StringCache;
 
 import java.io.IOException;
@@ -254,7 +255,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      */
     public AX25Callsign(byte[] buf, int offset, int length) throws IndexOutOfBoundsException, IllegalArgumentException {
         if (length < 7 || buf.length - offset < length) {
-            throw new IndexOutOfBoundsException("not enough data left for callsign");
+            throw new IndexOutOfBoundsException("not enough data left for callsign: len=" + length + "  buflen=" + buf.length + "  off=" + offset);
         }
         char[] b = new char[6];
         int len = 0;
@@ -493,9 +494,7 @@ public final class AX25Callsign implements Comparable<AX25Callsign>, Cloneable, 
      */
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || !(o instanceof AX25Callsign)) return false;
-
-        AX25Callsign that = (AX25Callsign) o;
+        if (o == null || !(o instanceof AX25Callsign that)) return false;
 
         return (ssid == that.ssid) &&
                 callsign.equals(that.callsign);

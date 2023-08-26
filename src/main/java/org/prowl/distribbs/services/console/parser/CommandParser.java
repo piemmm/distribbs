@@ -3,12 +3,12 @@ package org.prowl.distribbs.services.console.parser;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.lang.StringUtils;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.core.*;
+import org.prowl.distribbs.core.Node;
+import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.ServerBus;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
 import org.prowl.distribbs.eventbus.events.TxRFPacket;
-import org.prowl.distribbs.node.connectivity.Interface;
-import org.prowl.distribbs.node.connectivity.RFConnector;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.statistics.types.MHeard;
 import org.prowl.distribbs.utils.Tools;
 
@@ -65,9 +65,7 @@ public class CommandParser {
             case HELP:
                 showHelp(arguments);
                 break;
-            case PING:
-                pingDevice(arguments);
-                break;
+
             case PORT:
                 changePort(arguments);
                 break;
@@ -89,121 +87,12 @@ public class CommandParser {
             case QUIT:
                 logout();
                 break;
-            case BAUD:
-                changeBaud(arguments);
-                break;
-            case DEVIATION:
-                changeDeviation(arguments);
-                break;
-            case DEMOD:
-                changeDemodFilter(arguments);
-                break;
-            case AFC:
-                changeAFCFilter(arguments);
-                break;
 
             default:
                 unknownCommand();
         }
     }
 
-    public void changeBaud(String[] arguments) {
-
-        if (arguments.length != 2) {
-            write(INCORRECT_ARGS);
-            return;
-        }
-
-        int baud = 0;
-        try {
-            baud = Integer.parseInt(arguments[1]);
-        } catch (NumberFormatException e) {
-            write(INVALID_ARGUMENT);
-            return;
-        }
-
-        Interface connector = DistriBBS.INSTANCE.getInterfaceHandler().getPort(port);
-        if (connector instanceof RFConnector) {
-            int b = ((RFConnector) connector).setBaud(baud);
-            write("Baud set to: " + b);
-        } else {
-            write(PORT_UNSUPPORTED);
-            return;
-        }
-    }
-
-    public void changeDeviation(String[] arguments) {
-        if (arguments.length != 2) {
-            write(INCORRECT_ARGS);
-            return;
-        }
-
-        double dev = 0;
-        try {
-            dev = Double.parseDouble(arguments[1]);
-        } catch (NumberFormatException e) {
-            write(INVALID_ARGUMENT);
-            return;
-        }
-
-        Interface connector = DistriBBS.INSTANCE.getInterfaceHandler().getPort(port);
-        if (connector instanceof RFConnector) {
-            double d = ((RFConnector) connector).setDeviation(dev / 1000d);
-            write("Deviation set to: " + d);
-        } else {
-            write(PORT_UNSUPPORTED);
-            return;
-        }
-    }
-
-    public void changeDemodFilter(String[] arguments) {
-        if (arguments.length != 2) {
-            write(INCORRECT_ARGS);
-            return;
-        }
-
-        int dem = 0;
-        try {
-            dem = Integer.parseInt(arguments[1]);
-        } catch (NumberFormatException e) {
-            write(INVALID_ARGUMENT);
-            return;
-        }
-
-        Interface connector = DistriBBS.INSTANCE.getInterfaceHandler().getPort(port);
-        if (connector instanceof RFConnector) {
-            int d = ((RFConnector) connector).setDemodFilter(dem);
-            write("Demod filter set to: " + d);
-        } else {
-            write(PORT_UNSUPPORTED);
-            return;
-        }
-
-    }
-
-    public void changeAFCFilter(String[] arguments) {
-        if (arguments.length != 2) {
-            write(INCORRECT_ARGS);
-            return;
-        }
-
-        int afc = 0;
-        try {
-            afc = Integer.parseInt(arguments[1]);
-        } catch (NumberFormatException e) {
-            write(INVALID_ARGUMENT);
-            return;
-        }
-
-        Interface connector = DistriBBS.INSTANCE.getInterfaceHandler().getPort(port);
-        if (connector instanceof RFConnector) {
-            int a = ((RFConnector) connector).setAFCFilter(afc);
-            write("AFC Filter set to: " + a);
-        } else {
-            write(PORT_UNSUPPORTED);
-            return;
-        }
-    }
 
     public void logout() {
         screen.terminate();
@@ -243,28 +132,28 @@ public class CommandParser {
         nfb.setMaximumFractionDigits(1);
         nfb.setMinimumFractionDigits(1);
 
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getInterfaces();
         int port = 0;
         write("Port  Driver       RF      Frequency    Noise Floor    Compress(tx/rx)");
         write("----------------------------------------------------------------------");
         for (Interface connector : connectors) {
+// todo
+//            String noiseFloor = "";
+//            if (connector.isRF()) {
+//                noiseFloor = "-" + nfb.format(connector.getNoiseFloor()) + " dBm";
+//            }
+//
+//            String freq = "";
+//            if (connector.isRF()) {
+//                freq = nf.format(connector.getFrequency() / 1000000d);
+//            }
+//
+//            String compressRatio = "-";
+//            if (connector.getRxUncompressedByteCount() + connector.getTxCompressedByteCount() != 0) {
+//                compressRatio = nf.format(((double) connector.getTxUncompressedByteCount() / (double) connector.getTxCompressedByteCount())) + "/" + nf.format(((double) connector.getRxUncompressedByteCount() / (double) connector.getRxCompressedByteCount()));
+//            }
 
-            String noiseFloor = "";
-            if (connector.isRF()) {
-                noiseFloor = "-" + nfb.format(connector.getNoiseFloor()) + " dBm";
-            }
-
-            String freq = "";
-            if (connector.isRF()) {
-                freq = nf.format(connector.getFrequency() / 1000000d);
-            }
-
-            String compressRatio = "-";
-            if (connector.getRxUncompressedByteCount() + connector.getTxCompressedByteCount() != 0) {
-                compressRatio = nf.format(((double) connector.getTxUncompressedByteCount() / (double) connector.getTxCompressedByteCount())) + "/" + nf.format(((double) connector.getRxUncompressedByteCount() / (double) connector.getRxCompressedByteCount()));
-            }
-
-            write(port + ":    " + StringUtils.rightPad(connector.getName(), 13) + StringUtils.rightPad(connector.isRF() ? "yes" : "no", 8) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(noiseFloor, 11) + compressRatio);
+            //   write(port + ":    " + StringUtils.rightPad(connector.getName(), 13) + StringUtils.rightPad(connector.isRF() ? "yes" : "no", 8) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(noiseFloor, 11) + compressRatio);
             port++;
         }
     }
@@ -294,7 +183,7 @@ public class CommandParser {
         if (arguments.length == 2) {
             try {
                 int p = Integer.parseInt(arguments[1]);
-                if (DistriBBS.INSTANCE.getInterfaceHandler().getPort(p) != null) {
+                if (DistriBBS.INSTANCE.getInterfaceHandler().getInterface(p) != null) {
                     port = p;
                     write("Port changed to: " + port);
                 } else {
@@ -308,41 +197,6 @@ public class CommandParser {
         }
     }
 
-    public void pingDevice(String[] arguments) {
-
-        if (arguments.length != 2) {
-            write(INCORRECT_ARGS);
-            return;
-        }
-        if (arguments[1].trim().length() < 2) {
-            write(INVALID_ARGUMENT);
-            return;
-        }
-
-        String callsign = arguments[1].trim().toUpperCase(Locale.ENGLISH);
-        Interface c = DistriBBS.INSTANCE.getInterfaceHandler().getPort(port);
-        PacketEngine p = c.getPacketEngine();
-
-        if (p == null) {
-            write("Command not supported on this port");
-            return;
-        }
-
-        write("Pinging '" + callsign + "' on port " + port + "(" + c.getFrequency() + ")");
-
-        p.ping(callsign,
-                new ResponseListener() {
-
-                    @Override
-                    public void response(Response r) {
-                        if (r.getResponseTime() != -1) {
-                            write(r.getFrom() + " responded in " + r.getResponseTime() + "ms");
-                        } else {
-                            write("No ping response from " + r.getFrom());
-                        }
-                    }
-                });
-    }
 
     public void unknownCommand() {
         screen.write(UNKNOWN_COMMAND);

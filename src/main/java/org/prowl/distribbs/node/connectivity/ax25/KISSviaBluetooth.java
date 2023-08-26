@@ -1,21 +1,13 @@
-// This only works on windows at the moment, and old versions of macos due to native libraries in the bluetooth library needing updating
-
-//package org.prowl.distribbs.node.connectivity.ax25;
+package org.prowl.distribbs.node.connectivity.ax25;//package org.prowl.kisset.io.bluetooth;
 //
 //import org.apache.commons.configuration.HierarchicalConfiguration;
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
-//import org.ka2ddo.ax25.*;
-//import org.ka2ddo.ax25.BasicTransmittingConnector;
-//import org.prowl.distribbs.DistriBBS;
-//import org.prowl.distribbs.core.Node;
-//import org.prowl.distribbs.core.PacketTools;
-//import org.prowl.distribbs.eventbus.ServerBus;
-//import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
-//import org.prowl.distribbs.node.connectivity.Interface;
-//import org.prowl.distribbs.objects.user.User;
-//import org.prowl.distribbs.services.Service;
-//import org.prowl.distribbs.utils.Tools;
+//import org.prowl.kissterm.KISSterm;
+//import org.prowl.kissterm.ax25.*;
+//import org.prowl.kissterm.ax25.io.BasicTransmittingConnector;
+//import org.prowl.kissterm.io.Interface;
+//import org.prowl.kissterm.util.Tools;
 //
 //import javax.bluetooth.*;
 //import javax.microedition.io.StreamConnection;
@@ -68,7 +60,7 @@
 //        // So if I were to say at node level 'broadcast this UI frame on all interfaces' it would use this callsign.
 //        // But if a service wanted to do the same, (eg: BBS service sending an FBB list) then it would use the service
 //        // callsign instead.
-//        defaultOutgoingCallsign = DistriBBS.INSTANCE.getMyCall();
+//        defaultOutgoingCallsign = KISSterm.INSTANCE.getMyCall();
 //
 //        // Settings for timeouts, max frames a
 //        pacLen = config.getInt("pacLen", 120);
@@ -174,12 +166,11 @@
 //        //streamConnection.close();
 //
 //
-//
-//
 //        if (in == null || out == null) {
 //            LOG.error("Unable to connect to kiss service at: " + deviceName + " - this connector is stopping.");
 //            return;
 //        }
+//        LOG.info("Connection made to bluetooth device: " + deviceName+"   "+deviceUrl);
 //
 //        // Our default callsign. acceptInbound can determine if we actually want to accept any callsign requests,
 //        // not just this one.
@@ -197,16 +188,11 @@
 //             */
 //            @Override
 //            public boolean acceptInbound(ConnState state, AX25Callsign originator, Connector port) {
+//                LOG.info("Incoming connection request from " + originator + " to " + state.getDst() );
 //
-//                LOG.info("Incoming connection request from " + originator + " to " + state.getDst() + " (" + serviceList.size() + " registered services to check...)");
+//                //setupConnectionListener(state, originator, port);
 //
-//                for (Service service : serviceList) {
-//                    if (service.getCallsign() != null && state.getDst().toString().equalsIgnoreCase(service.getCallsign())) {
-//                        LOG.info("Accepting connection request from " + originator + " to " + state.getDst() + " for service " + service.getName());
-//                        setupConnectionListener(service, state, originator, port);
-//                        return true;
-//                    }
-//                }
+//
 //                // Do not accept (possibly replace this with a default handler to display a message in the future?)
 //                // Maybe use the remoteUISwitch to do it?
 //                LOG.info("Rejecting connection request from " + originator + " to " + state.getDst() + " as no service is registered for this callsign");
@@ -215,7 +201,7 @@
 //        });
 //
 //        // Tag for debug logs so we know what instance/frequency this connector is
-//        connector.setDebugTag(Tools.getNiceFrequency(frequency));
+//        //connector.setDebugTag(Tools.getNiceFrequency(frequency));
 //
 //        // AX Frame listener for things like mheard lists
 //        connector.addFrameListener(new AX25FrameListener() {
@@ -223,13 +209,13 @@
 //            public void consumeAX25Frame(AX25Frame frame, Connector connector) {
 //                // Create a node to represent what we've seen - we'll merge this in things like
 //                // mheard lists if there is another node there so that capability lists can grow
-//                Node node = new Node(KISSviaBluetooth.this, frame.sender.toString(), frame.rcptTime, frame.dest.toString(), frame);
+//                //Node node = new Node(KISSviaBluetooth.this, frame.sender.toString(), frame.rcptTime, frame.dest.toString(), frame);
 //
 //                // Determine the nodes capabilities from the frame type and add this to the node
-//                PacketTools.determineCapabilities(node, frame);
+//                //PacketTools.determineCapabilities(node, frame);
 //
 //                // Fire off to anything that wants to know about nodes heard
-//                ServerBus.INSTANCE.post(new HeardNodeEvent(node));
+//                //ServerBus.INSTANCE.post(new HeardNodeEvent(node));
 //            }
 //        });
 //
@@ -238,9 +224,7 @@
 //        } catch(IOException e) {
 //            LOG.error(e.getMessage(),e);
 //        }
-//
 //    }
-//
 //
 //    /**
 //     * A connection has been accepted therefore we will set it up and also a listener to handle state changes
@@ -249,58 +233,35 @@
 //     * @param originator
 //     * @param port
 //     */
-//    public void setupConnectionListener(Service service, ConnState state, AX25Callsign originator, Connector port) {
+//    public void setupConnectionListener(ConnState state, AX25Callsign originator, Connector port) {
 //        // If we're going to accept then add a listener so we can keep track of this connection state
 //        state.listener = new ConnectionEstablishmentListener() {
 //            @Override
 //            public void connectionEstablished(Object sessionIdentifier, ConnState conn) {
-//
-//                Thread tx = new Thread(() -> {
-//                    // Do inputty and outputty stream stuff here
-//                    try {
-//                        User user = DistriBBS.INSTANCE.getStorage().loadUser(conn.getSrc().getBaseCallsign());
-//                        InputStream in = state.getInputStream();
-//                        OutputStream out = state.getOutputStream();
-//
-//                        // This wrapper provides a simple way to terminate the connection when the outputstream
-//                        // is also closed.
-//                        OutputStream wrapped = new BufferedOutputStream(out) {
-//                            @Override
-//                            public void close() throws IOException {
-//                                conn.close();
-//                            }
-//
-//                        };
-//
-//                        service.acceptedConnection(user, in, wrapped);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                });
-//                tx.start();
+//                LOG.info("Connection established from " + originator + " to " + state.getDst() );
 //
 //            }
 //
 //            @Override
 //            public void connectionNotEstablished(Object sessionIdentifier, Object reason) {
-//                LOG.info("Connection not established from " + originator + " to " + state.getDst() + " for service " + service.getName());
+//                LOG.info("Connection not established from " + originator + " to " + state.getDst() );
 //            }
 //
 //            @Override
 //            public void connectionClosed(Object sessionIdentifier, boolean fromOtherEnd) {
-//                LOG.info("Connection closed from " + originator + " to " + state.getDst() + " for service " + service.getName());
+//                LOG.info("Connection closed from " + originator + " to " + state.getDst());
 //            }
 //
 //            @Override
 //            public void connectionLost(Object sessionIdentifier, Object reason) {
-//                LOG.info("Connection lost from " + originator + " to " + state.getDst() + " for service " + service.getName());
+//                LOG.info("Connection lost from " + originator + " to " + state.getDst());
 //            }
 //        };
 //    }
 //
 //    @Override
 //    public void stop() {
-//        ServerBus.INSTANCE.unregister(this);
+//        //ServerBus.INSTANCE.unregister(this);
 //        running = false;
 //    }
 //
@@ -309,10 +270,6 @@
 //        return getClass().getSimpleName();
 //    }
 //
-//    @Override
-//    public int getFrequency() {
-//        return frequency;
-//    }
 //
 //
 //}

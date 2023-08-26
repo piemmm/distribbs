@@ -2,7 +2,7 @@ package org.prowl.distribbs.eventbus.events;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.utils.Tools;
 
 import java.io.ByteArrayOutputStream;

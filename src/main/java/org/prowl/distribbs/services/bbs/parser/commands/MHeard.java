@@ -5,10 +5,9 @@ import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.core.Capability;
 import org.prowl.distribbs.core.Node;
-import org.prowl.distribbs.node.connectivity.Interface;
+import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.ANSI;
-import org.prowl.distribbs.utils.Tools;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -28,7 +27,7 @@ public class MHeard extends Command {
         write(CR);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy hh:mm:ss");
         org.prowl.distribbs.statistics.types.MHeard heard = DistriBBS.INSTANCE.getStatistics().getHeard();
-        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getPorts();
+        List<Interface> connectors = DistriBBS.INSTANCE.getInterfaceHandler().getInterfaces();
         List<Node> nodes = heard.listHeard();
         if (nodes.size() == 0) {
             write("No nodes heard" + CR);
@@ -40,7 +39,8 @@ public class MHeard extends Command {
                     rssi = "-  ";
                 }
 
-                String freq = Tools.getNiceFrequency(node.getInterface().getFrequency());
+                // TODO FIXME - need to reimplement this as a configuration string/alias
+                String freq = "000.000";//Tools.getNiceFrequency(node.getInterface().getFrequency());
 
                 write(StringUtils.rightPad(Integer.toString(connectors.indexOf(node.getInterface())), 5) + StringUtils.rightPad(node.getCallsign(), 10) + StringUtils.rightPad(freq, 13) + StringUtils.rightPad(sdf.format(node.getLastHeard()), 18) + StringUtils.leftPad(rssi, 9) + " " + StringUtils.rightPad(listCapabilities(node), 14) + CR);
             }
