@@ -1,4 +1,4 @@
-package org.prowl.distribbs.ax25;
+package org.prowl.ax25;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;

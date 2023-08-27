@@ -13,6 +13,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(OrderAnnotation.class)
 class TestStorage {
 
+    public static final String TEST_BID = "G0SGY-1.GBR.EU";
+    public static final String TEST_TYPE = "B";
+    public static final String TEST_ROUTE = "G0TAI,G0TBG";
+
     private static Storage storage;
     private static Message testMessage;
 
@@ -30,6 +34,9 @@ class TestStorage {
         testMessage.setGroup("TESTING");
         testMessage.setPriority(Priority.LOW);
         testMessage.setDate(1579103633244l);
+        testMessage.setBID_MID(TEST_BID);
+        testMessage.setType(TEST_TYPE);
+        testMessage.setRoute(TEST_ROUTE);
 
         // Ensure our test message does not exist
         storage.getNewsMessageFile(testMessage).delete();
@@ -63,12 +70,14 @@ class TestStorage {
         File f = storage.getNewsMessageFile(testMessage);
         try {
             Message retrieved = storage.loadNewsMessage(f);
-            assertEquals(retrieved.getBody(), testMessage.getBody());
+            assertArrayEquals(retrieved.getBody(), testMessage.getBody());
             assertEquals(retrieved.getDate(), testMessage.getDate());
             assertEquals(retrieved.getFrom(), testMessage.getFrom());
             assertEquals(retrieved.getGroup(), testMessage.getGroup());
             assertEquals(retrieved.getSubject(), testMessage.getSubject());
-
+            assertEquals(retrieved.getBID_MID(), testMessage.getBID_MID());
+            assertEquals(retrieved.getType(), testMessage.getType());
+            assertEquals(retrieved.getRoute(), testMessage.getRoute());
         } catch (IOException e) {
             fail(e.getMessage(), e);
         }

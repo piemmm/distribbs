@@ -1,5 +1,7 @@
-package org.prowl.distribbs.ax25;
+package org.prowl.ax25;
 
+
+import org.prowl.ax25.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
