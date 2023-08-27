@@ -4,9 +4,8 @@ package org.prowl.distribbs.node.connectivity.agents.fbb;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.ax25.ConnectionEstablishmentListener;
 import org.prowl.distribbs.DistriBBS;
-
-import org.prowl.distribbs.ax25.ConnectionEstablishmentListener;
 import org.prowl.distribbs.node.connectivity.ax25.Interface;
 import org.prowl.distribbs.node.connectivity.ax25.Stream;
 import org.prowl.distribbs.objects.Storage;

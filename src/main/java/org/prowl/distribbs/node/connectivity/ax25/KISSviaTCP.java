@@ -3,16 +3,15 @@ package org.prowl.distribbs.node.connectivity.ax25;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.ax25.*;
 import org.prowl.distribbs.DistriBBS;
 import org.prowl.distribbs.annotations.InterfaceDriver;
-import org.prowl.distribbs.ax25.*;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.core.PacketTools;
 import org.prowl.distribbs.eventbus.SingleThreadBus;
 import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
 import org.prowl.distribbs.services.Service;
 import org.prowl.distribbs.utils.Tools;
-
 
 import java.io.*;
 import java.net.ConnectException;
@@ -92,7 +91,7 @@ public class KISSviaTCP extends Interface {
                 socketConnection = new Socket(InetAddress.getByName(address), port);
                 in = new BufferedInputStream(socketConnection.getInputStream());
                 out = new BufferedOutputStream(socketConnection.getOutputStream());
-                interfaceStatus = new InterfaceStatus(InterfaceStatus.State.OK,null);
+                interfaceStatus = new InterfaceStatus(InterfaceStatus.State.OK, null);
                 LOG.info("Connected to kiss service at: " + address + ":" + port);
                 break;
             } catch (ConnectException e) {

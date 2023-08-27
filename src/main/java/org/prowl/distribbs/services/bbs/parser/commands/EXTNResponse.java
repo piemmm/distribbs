@@ -5,10 +5,11 @@ import org.apache.commons.logging.LogFactory;
 import org.prowl.distribbs.annotations.BBSCommand;
 import org.prowl.distribbs.services.bbs.parser.Mode;
 import org.prowl.distribbs.utils.Tools;
-import org.prowl.distribbs.utils.compression.dictblock.CompressedBlockInputStream;
-import org.prowl.distribbs.utils.compression.dictblock.CompressedBlockOutputStream;
+import org.prowl.distribbs.utils.compression.deflate.DeflateOutputStream;
+import org.prowl.distribbs.utils.compression.deflate.InflateInputStream;
 
 import java.io.IOException;
+
 
 @BBSCommand
 public class EXTNResponse extends Command {
@@ -27,7 +28,7 @@ public class EXTNResponse extends Command {
             }
 
             // Now send the response once we have our accepted list.
-            write( CR+"[EXTN " + acceptedExtensions.toString() + "]" + CR);
+            write(CR + "[EXTN " + acceptedExtensions.toString() + "]" + CR);
             client.flush();
 
 
@@ -37,8 +38,8 @@ public class EXTNResponse extends Command {
 
                 // Compression requires is to wrap the input and output streams in a GZIP stream
                 LOG.debug("Compression enabled:" + client.getInputStream().available());
-                client.setOutputStream(new CompressedBlockOutputStream(client.getOutputStream(), 1024));
-                client.useNewInputStream(new CompressedBlockInputStream(client.getInputStream()));
+                client.setOutputStream(new DeflateOutputStream(client.getOutputStream()));
+                client.useNewInputStream(new InflateInputStream(client.getInputStream()));
 
                 Tools.delay(200);
 

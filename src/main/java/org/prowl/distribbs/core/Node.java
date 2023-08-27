@@ -1,7 +1,7 @@
 package org.prowl.distribbs.core;
 
 
-import org.prowl.distribbs.ax25.AX25Frame;
+import org.prowl.ax25.AX25Frame;
 import org.prowl.distribbs.node.connectivity.ax25.Interface;
 
 import java.util.ArrayList;

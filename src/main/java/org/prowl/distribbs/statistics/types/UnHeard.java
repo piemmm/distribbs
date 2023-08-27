@@ -3,8 +3,8 @@ package org.prowl.distribbs.statistics.types;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.ax25.AX25Frame;
 import org.prowl.distribbs.DistriBBS;
-import org.prowl.distribbs.ax25.AX25Frame;
 import org.prowl.distribbs.core.Node;
 import org.prowl.distribbs.eventbus.events.HeardNodeEvent;
 import org.prowl.distribbs.eventbus.events.RxRFPacket;
@@ -48,14 +48,14 @@ public class UnHeard extends MHeard {
         AX25Frame frame = heardNode.getNode().getFrame();
         if (frame != null) {
             if (frame.getFrameType() == AX25Frame.FRAMETYPE_S) {
-             //   LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
+                //   LOG.debug("Frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                 int sType = frame.getSType();
                 if (sType != AX25Frame.STYPE_RR && sType != AX25Frame.STYPE_RNR && sType != AX25Frame.STYPE_REJ) {
-               //     LOG.debug("Ignoring frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
+                    //     LOG.debug("Ignoring frame type:" + frame.getFrameType() + " SType:" + frame.getSType());
                     return;
                 }
             } else {
-             //   LOG.debug("Ignoring frame type:" + frame.getFrameType() + "   " + frame.toString());
+                //   LOG.debug("Ignoring frame type:" + frame.getFrameType() + "   " + frame.toString());
                 return;
             }
         }

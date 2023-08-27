@@ -30,6 +30,7 @@ public class Stream {
 
     public void setStreamState(StreamState streamState) {
         if (streamState.equals(StreamState.DISCONNECTED)) {
+            extensionState = ExtensionState.NONE;
             remoteCall = null;
         }
         this.streamState = streamState;
@@ -79,6 +80,7 @@ public class Stream {
         in.close();
         out.close();
         streamState = StreamState.DISCONNECTED;
+        extensionState = ExtensionState.NONE;
     }
 
     public String getRemoteCall() {
