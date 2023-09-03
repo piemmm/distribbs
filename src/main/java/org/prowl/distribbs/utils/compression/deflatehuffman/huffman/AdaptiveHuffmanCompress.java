@@ -23,7 +23,7 @@
  * whether in an action of contract, tort or otherwise, arising from, out of or in connection with the
  * Software or the use or other dealings in the Software.
  */
-package org.prowl.distribbs.utils.compression.huffman;
+package org.prowl.distribbs.utils.compression.deflatehuffman.huffman;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +61,7 @@ public final class AdaptiveHuffmanCompress {
         int count = 0; // Number of bytes read from the input file
         while (true) {
             // Read and encode one byte
-            int symbol = in.read();
+            int symbol = in.read() & 0xFF;
             if (symbol == -1)
                 break;
             enc.write(symbol);

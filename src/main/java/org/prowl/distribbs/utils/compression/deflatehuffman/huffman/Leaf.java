@@ -23,18 +23,23 @@
  * whether in an action of contract, tort or otherwise, arising from, out of or in connection with the
  * Software or the use or other dealings in the Software.
  */
-package org.prowl.distribbs.utils.compression.huffman;
+package org.prowl.distribbs.utils.compression.deflatehuffman.huffman;
 
 
 /**
- * A node in a code tree. This class has exactly two subclasses: InternalNode, Leaf.
+ * A leaf node in a code tree. It has a symbol value. Immutable.
  *
  * @see CodeTree
  */
-public abstract class Node {
+public final class Leaf extends Node {
 
-    // This constructor is package-private to prevent accidental subclassing outside of this package.
-    Node() {
+    public final int symbol;  // Always non-negative
+
+
+    public Leaf(int sym) {
+        if (sym < 0)
+            throw new IllegalArgumentException("Symbol value must be non-negative");
+        symbol = sym;
     }
 
 }

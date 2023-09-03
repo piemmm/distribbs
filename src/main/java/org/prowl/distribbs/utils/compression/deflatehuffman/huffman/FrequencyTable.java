@@ -23,7 +23,7 @@
  * whether in an action of contract, tort or otherwise, arising from, out of or in connection with the
  * Software or the use or other dealings in the Software.
  */
-package org.prowl.distribbs.utils.compression.huffman;
+package org.prowl.distribbs.utils.compression.deflatehuffman.huffman;
 
 import java.util.Objects;
 import java.util.PriorityQueue;
@@ -95,12 +95,7 @@ public final class FrequencyTable {
             }
         }
         FrequencyTable freqs = new FrequencyTable(initFreqs);
-        byte[] testString = "This is a simple test string that can be used to setup a default frequency table initially favouring plain text1234567890987654321:ANNOUNCE::>>".getBytes();
-        for (byte b : testString) {
-            freqs.increment(b);
-        }
         freqs.buildCodeTree();
-
 
         return freqs;
     }

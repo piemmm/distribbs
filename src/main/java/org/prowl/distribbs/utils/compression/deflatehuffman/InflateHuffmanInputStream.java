@@ -1,18 +1,24 @@
-package org.prowl.distribbs.utils.compression.deflate;
+package org.prowl.distribbs.utils.compression.deflatehuffman;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.prowl.distribbs.utils.compression.deflate.DeflateOutputStream;
+import org.prowl.distribbs.utils.compression.deflate.Dictionary;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.BitInputStream;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.CodeTree;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.FrequencyTable;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.HuffmanDecoder;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
+
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 /**
  * Decompress an input stream using deflate and a dictionary that updates after each block of data
  */
-public class InflateInputStream extends InputStream {
+public class InflateHuffmanInputStream extends InputStream {
 
     // A logger for this class
     private static final Log LOG = LogFactory.getLog("InflateInputStream");
@@ -29,10 +35,16 @@ public class InflateInputStream extends InputStream {
     // The dictionary used to decompress the data which is updated after each block
     private final Dictionary dictionary = new Dictionary();
 
-    public InflateInputStream(InputStream in) {
+    private FrequencyTable freqs = FrequencyTable.getDefault();
+    private HuffmanDecoder huffmanDecoder;
+    private CodeTree codeTree = freqs.buildCodeTree();
+
+
+    public InflateHuffmanInputStream(InputStream in) {
         super();
         this.in = in;
         inflater = new Inflater();
+
     }
 
     /**
@@ -45,7 +57,7 @@ public class InflateInputStream extends InputStream {
      */
     private void inflate() throws IOException {
 
-        // 0x00 = uncompressed, 0x01 = compressed
+        // Compression type - deflate, huffman or uncompressed, etc
         int status = in.read();
         if (status == -1) {
             return;
@@ -71,42 +83,73 @@ public class InflateInputStream extends InputStream {
         }
 
         // If we are uncompressed, then just use that data.
-        if (status == 0x01) {
-            // Uncompressed data
-            byteBuffer = ByteBuffer.wrap(inData, 0, size);
-            dictionary.addToDictionary(inData, 0, size);
-            return;
+        if (status == DeflateHuffmanOutputStream.Compression.NONE.getType()) {
+            // Nothing to do
         }
 
-        // If we got this far then decompress the data - MAX_BLOCK_SIZE is the maximum size of the
-        // output buffer that will be sent by the compressor
-        byte[] output = new byte[DeflateOutputStream.MAX_BLOCK_SIZE];
-        int actualBytesInflated = 0;
-        inflater.setInput(inData, 0, size);
-        try {
-            int dataRead = inflater.inflate(output);
-            if (dataRead == 0 && inflater.needsDictionary()) {
-                inflater.setDictionary(dictionary.getDictionary());
-                actualBytesInflated = inflater.inflate(output);
-                if (actualBytesInflated == 0) {
-                    throw new IOException("Error inflating data");
+        if (status == DeflateHuffmanOutputStream.Compression.HUFFMAN.getType()) {
+            // First decompress the huffman data
+            huffmanDecoder = new HuffmanDecoder(new BitInputStream(new ByteArrayInputStream(inData)));
+            huffmanDecoder.codeTree = freqs.buildCodeTree();
+            ByteArrayOutputStream huffmanDecodedOutputStream = new ByteArrayOutputStream();
+            // Crappy loop.
+            try {
+                while (true) {
+                    int data = huffmanDecoder.read();
+                    if (data == 256) {
+                        break;
+                    }
+                    huffmanDecodedOutputStream.write(data);
+                    freqs.increment(data);
+                    huffmanDecoder.codeTree = freqs.buildCodeTree();
                 }
+            } catch (EOFException e) {
+                LOG.debug(e.getMessage(), e);
             }
-        } catch (DataFormatException e) {
-            throw new IOException("Error decompressing data", e);
+            inData = huffmanDecodedOutputStream.toByteArray();
+            size = inData.length;
+
+        }
+
+
+        if (status == DeflateHuffmanOutputStream.Compression.DEFLATE.getType()) {
+
+            // If we got this far then decompress the data - MAX_BLOCK_SIZE is the maximum size of the
+            // output buffer that will be sent by the compressor
+            byte[] output = new byte[DeflateOutputStream.MAX_BLOCK_SIZE];
+            int actualBytesInflated = 0;
+            inflater.setInput(inData, 0, size);
+            try {
+                int dataRead = inflater.inflate(output);
+                if (dataRead == 0 && inflater.needsDictionary()) {
+                    inflater.setDictionary(dictionary.getDictionary());
+                    actualBytesInflated = inflater.inflate(output);
+                    if (actualBytesInflated == 0) {
+                        throw new IOException("Error inflating data");
+                    }
+                }
+            } catch (DataFormatException e) {
+                throw new IOException("Error decompressing data", e);
+            }
+            inflater.reset();
+
+            inData = output;
+            size = actualBytesInflated;
         }
 
         // Data has been read and decompressed, now update the dictionary
         // and reset the inflater for the next block
-        inflater.reset();
-        dictionary.addToDictionary(output, 0, actualBytesInflated);
+        dictionary.addToDictionary(inData, 0, size);
 
+        // Also update the huffman tables.
+        if (status != DeflateHuffmanOutputStream.Compression.HUFFMAN.getType()) {
+            for (int i = 0; i < size; i++) {
+                freqs.increment(inData[i] & 0xFF);
+            }
+        }
 
         // Now write the decompressed data to the output stream
-        byteBuffer = ByteBuffer.wrap(output, 0, actualBytesInflated);
-
-        // A little bit of debug regarding how well we compressed the data
-        LOG.debug("Decompressed in=" + size + " bytes, out=" + actualBytesInflated);
+        byteBuffer = ByteBuffer.wrap(inData, 0, size);
 
     }
 

@@ -3,10 +3,11 @@ package org.prowl.distribbs.utils;
 import net.sf.marineapi.nmea.util.Position;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.prowl.distribbs.utils.compression.huffman.AdaptiveHuffmanCompress;
-import org.prowl.distribbs.utils.compression.huffman.AdaptiveHuffmanDecompress;
-import org.prowl.distribbs.utils.compression.huffman.BitInputStream;
-import org.prowl.distribbs.utils.compression.huffman.BitOutputStream;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.AdaptiveHuffmanCompress;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.AdaptiveHuffmanDecompress;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.BitInputStream;
+import org.prowl.distribbs.utils.compression.deflatehuffman.huffman.BitOutputStream;
+
 
 import java.io.*;
 import java.math.BigInteger;
@@ -223,8 +224,6 @@ public class Tools {
     /**
      * Convert from GPS to maidenhead locator
      *
-     * @param latitudeIn
-     * @param longitudeIn
      * @return
      */
     public static final String convertToMaidenhead(Position position) {

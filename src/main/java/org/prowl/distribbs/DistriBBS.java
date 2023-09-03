@@ -112,15 +112,19 @@ public enum DistriBBS {
     /**
      * Returns the capabilities of the station
      * A = ANSI colours
-     * C = Compression
      * B = BBS
+     * C = Deflate Compression support
      * P = PMS
-     * Z = Escape sequences for next block
+     * Y = Google Brotli Compression support
+     * Z = Adaptive Huffman+Deflate Compression support
      *
      * @return
      */
     public String getStationCapabilities() {
-        return "ABC";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ABCZ");
+
+        return sb.toString();
     }
 
     public Config getConfiguration() {
